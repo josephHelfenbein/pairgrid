@@ -10,8 +10,20 @@
   },
   "devDependencies": {
     "@nuxt/devtools": "^1.0.3",
+    "@nuxtjs/tailwindcss": "^6.12.2",
     "nuxt": "^3.8.2",
+    "shadcn-nuxt": "0.11.3",
     "vue": "^3.3.8",
     "vue-router": "^4.2.5"
+  },
+  "packageManager": "pnpm@9.15.1+sha512.1acb565e6193efbebda772702950469150cf12bcc764262e7587e71d19dc98a423dff9536e57ea44c49bdf790ff694e83c27be5faa23d67e0c033b583be4bfcf",
+  "dependencies": {
+    "@nuxtjs/color-mode": "^3.5.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.468.0",
+    "radix-vue": "^1.9.11",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss-animate": "^1.0.7"
   }
 }
