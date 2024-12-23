@@ -93,6 +93,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
+  import { useClerk } from '@clerk/vue'
   
   const occupations = [
     'Middle School Student',
@@ -200,9 +201,37 @@
     bio: z.string().min(10).max(250),
   }))
   const {handleSubmit} = useForm({validationSchema: formSchema});
+  const clerk = useClerk();
   const onSubmit = handleSubmit((values)=>{
     setBio(values.bio);
     setOccupation(values.occupation);
-    console.log(preferences)
+    const data = {
+      id: clerk.user.id,
+      bio: preferences.bio,
+      language: preferences.language,
+      specialty: preferences.specialty,
+      interests: preferences.interests,
+      occupation: preferences.occupation
+    };
+
+    fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    }).then(response=>{ 
+      if(response.ok){
+        response.json().then(result=>{
+          console.log('Preferences updated successfully:', result);
+        }).catch(error=>{
+          console.error('Error parsing response:', error);
+        });
+      } else{
+        console.error('Failed to update preferences:', response.statusText);
+      }
+    }).catch(error=>{
+      console.error('Error updating preferences:', error);
+    });
   });
   </script>
