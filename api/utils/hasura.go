@@ -77,6 +77,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 func CreateUserInHasura(user ClerkUser) error {
 	fullName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
+	quotedFullName := quoteIfNotEmpty(fullName)
+	quotedEmail := quoteIfNotEmpty(user.EmailAddresses[0].EmailAddress)
 	query := fmt.Sprintf(`
 		mutation {
 			insert_users(objects: {id: "%s", name: %s, email: "%s"}) {
@@ -87,7 +89,7 @@ func CreateUserInHasura(user ClerkUser) error {
 				}
 			}
 		}
-	`, user.ID, fullName, user.EmailAddresses[0].EmailAddress)
+	`, user.ID, quotedFullName, quotedEmail)
 
 	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
 	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
