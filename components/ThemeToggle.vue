@@ -27,22 +27,16 @@
   
   const toggleTheme = () => {
     isDark.value = !isDark.value
-    
-    // Toggle the 'dark' class on the root element
     document.documentElement.classList.toggle('dark')
-    
-    // Store the preference
     localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
   }
   
   onMounted(() => {
-    // Check for stored theme preference or system preference
     const theme = localStorage.getItem('theme') || 
       (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
     
     isDark.value = theme === 'dark'
     
-    // Apply theme
     if (isDark.value) {
       document.documentElement.classList.add('dark')
     }
