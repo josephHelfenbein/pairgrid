@@ -4,6 +4,10 @@
       {
         "src": "api/userupdate.go",
         "use": "@vercel/go"
+      },
+      {
+        "src": "nuxt.config.ts",
+        "use": "@vercel/nuxt"
       }
     ],
     "routes": [
