@@ -88,7 +88,7 @@
   </template>
   
   <script setup>
-  import { defineProps, ref } from 'vue'
+  import { defineProps, reactive } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -108,7 +108,7 @@
     }
   })
 
-  const preferences = ref(props.preferences) 
+  const preferences = reactive(props.preferences) 
 
   const occupations = [
     'Middle School Student',
@@ -218,6 +218,7 @@
       interests: [...preferences.value.interests],
       occupation: preferences.value.occupation
     };
+    console.log(preferences.value);
 
     fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
@@ -225,7 +226,7 @@
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
-    }).then(response=>{ 
+    }).then((response)=>{ 
       if(response.ok){
         response.json().then(result=>{
           console.log('Preferences updated successfully:', result);
