@@ -45,10 +45,3 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("User with ID %s successfully created in Hasura", user.ID)
 }
-func Handler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/api/userupdate" {
-		WebhookHandler(w, r)
-	} else {
-		http.NotFound(w, r)
-	}
-}
