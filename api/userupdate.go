@@ -4,7 +4,6 @@ import (
 	"api/utils"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -13,15 +12,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received Clerk webhook request")
 
 	var user utils.ClerkUser
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusInternalServerError)
-		log.Printf("Error reading request body: %s", err)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &user); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error unmarshalling JSON: %s", err)
 		return
