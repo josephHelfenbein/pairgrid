@@ -18,7 +18,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	api := e.Group("/api")
-
 	api.GET("/users", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Users endpoint"})
 	})
