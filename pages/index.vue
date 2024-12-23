@@ -9,7 +9,7 @@
         </p>
         <div class="flex justify-center gap-4">
             <NuxtLink to="/dashboard">
-                <Button size="lg">
+                <Button size="lg" class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500">
                     <UserPlus class="mr-2 h-5 w-5" />
                     Find Partners Now
                 </Button>
@@ -57,7 +57,7 @@
       </section>
   
       <section class="container mx-auto px-4 py-24">
-        <Card class="p-12 text-center bg-primary text-primary-foreground">
+        <Card class="p-12 text-center bg-gradient-to-t from-primary to-violet-900 text-primary-foreground">
           <CardHeader>
             <CardTitle class="text-3xl font-bold">Ready to Find Your Coding Partner?</CardTitle>
             <CardDescription class="text-xl text-primary-foreground/90">

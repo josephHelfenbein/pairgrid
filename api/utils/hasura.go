@@ -38,13 +38,6 @@ type ExternalAccount struct {
 	Provider  string `json:"provider"`
 }
 
-func quoteIfNotEmpty(s string) string {
-	if s == "" {
-		return "null"
-	}
-	return fmt.Sprintf(`"%s"`, s)
-}
-
 func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to create user in Hasura")
 
