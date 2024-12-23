@@ -93,7 +93,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import { useClerk } from '@clerk/vue'
+  import { useUser } from '@clerk/vue'
   
   const occupations = [
     'Middle School Student',
@@ -158,7 +158,7 @@
     'Low-level Programming',
     'Graphics Programming',
   ]
-  
+  const {user} = useUser();
   const preferences = ref({
     bio: '',
     language: [],
@@ -166,7 +166,6 @@
     interests: [],
     occupation: '',
   })
-
   const setBio = (bio) => {
     preferences.value.bio = bio;
   }  
@@ -201,17 +200,16 @@
     bio: z.string().min(10).max(250),
   }))
   const {handleSubmit} = useForm({validationSchema: formSchema});
-  const clerk = useClerk();
   const onSubmit = handleSubmit((values)=>{
     setBio(values.bio);
     setOccupation(values.occupation);
     const data = {
-      id: clerk.user.id,
-      bio: preferences.bio,
-      language: preferences.language,
-      specialty: preferences.specialty,
-      interests: preferences.interests,
-      occupation: preferences.occupation
+      id: user.value.id,
+      bio: preferences.value.bio,
+      language: preferences.value.language,
+      specialty: preferences.value.specialty,
+      interests: preferences.value.interests,
+      occupation: preferences.value.occupation
     };
 
     fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
