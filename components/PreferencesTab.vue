@@ -9,7 +9,11 @@
             <FormItem>
               <FormLabel>Bio</FormLabel>
               <FormControl>
-                <Input type="text" placeholder="Tell us about yourself" v-bind="componentField"/>
+                <Input 
+                type="text" 
+                placeholder="Tell us about yourself" 
+                v-bind="componentField" 
+                v-model="preferences.value.bio"/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -34,7 +38,7 @@
             <FormItem>
               <FormLabel>Occupation</FormLabel>
               <FormControl>
-                <Select v-bind="componentField">
+                <Select v-bind="componentField" v-model="preferences.value.occupation">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
