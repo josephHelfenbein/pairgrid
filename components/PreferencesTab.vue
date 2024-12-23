@@ -88,7 +88,6 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
-  import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
   import { toTypedSchema } from '@vee-validate/zod'
   import {useForm} from 'vee-validate'
@@ -100,8 +99,8 @@
     'High School Student',
     'Undergraduate Student',
     'Graduate Student',
-    'Professional Developer',
-    'Hobbyist Developer',
+    'Professional',
+    'Hobbyist',
     'Educator',
   ]
 
@@ -126,9 +125,9 @@
   ]
 
   const specialties = [
-    'Full-stack Developer',
-    'Front-end Developer',
-    'Back-end Developer',
+    'Full Stack Developer',
+    'Front-End Developer',
+    'Back-End Developer',
     'Mobile Developer',
     'Data Scientist',
     'Designer',
@@ -189,13 +188,15 @@
   }
   
   const formSchema = toTypedSchema(z.object({
-    occupation: z.enum(['Middle School Student',
-    'High School Student',
-    'Undergraduate Student',
-    'Graduate Student',
-    'Professional Developer',
-    'Hobbyist Developer',
-    'Educator',], {required_error: 'Please select an occupation'}),
+    occupation: z.enum([
+      'Middle School Student',
+      'High School Student',
+      'Undergraduate Student',
+      'Graduate Student',
+      'Professional',
+      'Hobbyist',
+      'Educator',
+    ], {required_error: 'Please select an occupation'}),
     bio: z.string().min(10).max(250),
   }))
   const {handleSubmit} = useForm({validationSchema: formSchema});

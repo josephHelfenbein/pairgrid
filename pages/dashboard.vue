@@ -1,6 +1,10 @@
 <template>
     <div class="min-h-screen bg-background">
       
+      <SignedOut>
+        <RedirectToSignUp />
+      </SignedOut>
+
       <Tabs default-value="chat" class="w-full p-4">
         <TabsList class="grid w-full grid-cols-3">
           <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -19,11 +23,11 @@
         </TabsContent>
       </Tabs>
     </div>
-  </template>
+</template>
   
-  <script setup>
+<script setup>
   import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
-  </script>
+</script>
