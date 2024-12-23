@@ -7,7 +7,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func Handler(w http.ResponseWriter, r *http.Request) {
+func handle() *echo.Echo {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -25,6 +25,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	api.GET("/test", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Test endpoint"})
 	})
+	return e
+}
+func Handler(w http.ResponseWriter, r *http.Request) {
+	e := handle()
 
 	e.ServeHTTP(w, r)
+}
+
+func main() {
+	e := handle()
+
+	e.Logger.Fatal(e.Start(":8080"))
 }
