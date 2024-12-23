@@ -1,4 +1,4 @@
-module PairGrid
+module api
 
 go 1.23.4
 

@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"net/http"
@@ -25,16 +25,11 @@ func handle() *echo.Echo {
 	api.GET("/test", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"message": "Test endpoint"})
 	})
+
 	return e
 }
 func Handler(w http.ResponseWriter, r *http.Request) {
 	e := handle()
 
 	e.ServeHTTP(w, r)
-}
-
-func main() {
-	e := handle()
-
-	e.Logger.Fatal(e.Start(":8080"))
 }
