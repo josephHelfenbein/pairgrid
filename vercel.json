@@ -19,6 +19,7 @@
         "src": "/(.*)",
         "dest": "/index.html"
       }
-    ]
+    ],
+    "framework": "nuxt"
   }
   
