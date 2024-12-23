@@ -206,9 +206,9 @@
     const data = {
       id: user.value.id,
       bio: preferences.value.bio,
-      language: preferences.value.language,
+      language: [...preferences.value.language],
       specialty: preferences.value.specialty,
-      interests: preferences.value.interests,
+      interests: [...preferences.value.interests],
       occupation: preferences.value.occupation
     };
 
