@@ -1,5 +1,5 @@
 <template>
-    <Card>
+    <Card v-if="preferences">
       <CardHeader>
         <CardTitle>Preferences</CardTitle>
       </CardHeader>
@@ -88,7 +88,7 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { defineProps, ref } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -97,9 +97,19 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import { useUser } from '@clerk/vue'
-  import { onMounted } from 'vue'
+  import {useUser} from '@clerk/vue'
+
+  const {user} = useUser();
   
+  const props = defineProps({
+    preferences: {
+      type: Object,
+      required: true,
+    }
+  })
+
+  const preferences = ref(props.preferences) 
+
   const occupations = [
     'Middle School Student',
     'High School Student',
@@ -163,40 +173,6 @@
     'Low-level Programming',
     'Graphics Programming',
   ]
-  const {user} = useUser();
-  const preferences = ref({
-    bio: '',
-    language: [],
-    specialty: '',
-    interests: [],
-    occupation: '',
-  })
-  async function loadPreferences(){
-    try{
-      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({id: user.value.id}),
-      });
-      if(!response.ok){
-        throw new Error(`Failed to load preferences: ${response.statusText}`);
-      }
-      const data = await response.json();
-      preferences.value = {
-        bio: data.bio || '',
-        language: data.language || [],
-        specialty: data.specialty || '',
-        interests: data.interests || [],
-        occupation: data.occupation || '',
-      };
-      console.log('Preferences loaded successfully:', preferences.value);
-    } catch(error){
-      console.error('Error loading preferences:', error);
-    }
-  }
-  onMounted(()=>loadPreferences());
   const setBio = (bio) => {
     preferences.value.bio = bio;
   }  
