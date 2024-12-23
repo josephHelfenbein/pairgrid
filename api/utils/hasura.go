@@ -10,9 +10,10 @@ import (
 )
 
 type ClerkUser struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        string `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
 }
 
 func quoteIfNotEmpty(s string) string {
@@ -53,6 +54,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUserInHasura(user ClerkUser) error {
+	fullName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	query := fmt.Sprintf(`
 		mutation {
 			insert_users(objects: {id: "%s", name: %s, email: "%s"}) {
@@ -63,7 +65,7 @@ func CreateUserInHasura(user ClerkUser) error {
 				}
 			}
 		}
-	`, user.ID, quoteIfNotEmpty(user.Name), user.Email)
+	`, user.ID, fullName, user.Email)
 
 	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
 	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
