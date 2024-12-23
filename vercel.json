@@ -7,7 +7,7 @@
       },
       {
         "src": "nuxt.config.ts",
-        "use": "@vercel/nuxt"
+        "use": "@vercel/node"
       }
     ],
     "routes": [
