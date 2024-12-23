@@ -1,8 +1,0 @@
-{
-    "functions": {
-      "api/server.go": {
-        "runtime": "vercel-go@0.5.1"
-      }
-    }
-  }
-  
