@@ -24,11 +24,12 @@ func quoteIfNotEmpty(s string) string {
 	return fmt.Sprintf(`"%s"`, s)
 }
 
-func init() {
+func LoadEnv() error {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file %v", err)
 	}
+	return nil
 }
 
 func CreateUserInHasura(user ClerkUser) error {

@@ -4,7 +4,6 @@ import (
 	"api/utils"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -12,10 +11,8 @@ import (
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received Clerk webhook request")
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusBadRequest)
-		log.Printf("Error reading body: %s", err)
+	if err := utils.LoadEnv(); err != nil {
+		http.Error(w, fmt.Sprintf("Error loading environment: %v", err), http.StatusInternalServerError)
 		return
 	}
 
