@@ -13,7 +13,7 @@
                 type="text" 
                 placeholder="Tell us about yourself" 
                 v-bind="componentField" 
-                v-model="preferences.value.bio"/>
+                v-model="preferences.bio"/>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -38,7 +38,7 @@
             <FormItem>
               <FormLabel>Occupation</FormLabel>
               <FormControl>
-                <Select v-bind="componentField" v-model="preferences.value.occupation">
+                <Select v-bind="componentField" v-model="preferences.occupation">
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -98,6 +98,7 @@
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
   import { useUser } from '@clerk/vue'
+  import { onMounted } from 'vue'
   
   const occupations = [
     'Middle School Student',
@@ -195,7 +196,7 @@
       console.error('Error loading preferences:', error);
     }
   }
-  loadPreferences();
+  onMounted(()=>loadPreferences());
   const setBio = (bio) => {
     preferences.value.bio = bio;
   }  
