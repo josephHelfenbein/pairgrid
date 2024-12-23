@@ -30,6 +30,5 @@ func handle() *echo.Echo {
 }
 func Handler(w http.ResponseWriter, r *http.Request) {
 	e := handle()
-
 	e.ServeHTTP(w, r)
 }
