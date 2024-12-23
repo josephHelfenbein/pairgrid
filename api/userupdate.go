@@ -4,6 +4,7 @@ import (
 	"api/utils"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -12,11 +13,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received Clerk webhook request")
 
 	var user utils.ClerkUser
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusBadRequest)
+		log.Printf("Error reading request body: %s", err)
+		return
+	}
+
+	if err := json.Unmarshal(body, &user); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error unmarshalling JSON: %s", err)
 		return
 	}
+
+	log.Printf("Received user: %+v", user)
 
 	if err := utils.CreateUserInHasura(user); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to insert user into Hasura: %s", err), http.StatusInternalServerError)
