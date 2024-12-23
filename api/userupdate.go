@@ -8,11 +8,12 @@ import (
 	"net/http"
 )
 
-func WebhookHandler(w http.ResponseWriter, r *http.Request) {
+func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received Clerk webhook request")
 
-	if err := utils.LoadEnv(); err != nil {
-		http.Error(w, fmt.Sprintf("Error loading environment: %v", err), http.StatusInternalServerError)
+	if err := utils.CreateUserInHasura(user); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to insert user into Hasura: %s", err), http.StatusInternalServerError)
+		log.Printf("Error inserting user into Hasura: %s", err)
 		return
 	}
 
