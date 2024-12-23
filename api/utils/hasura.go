@@ -10,10 +10,32 @@ import (
 )
 
 type ClerkUser struct {
-	ID        string `json:"id"`
+	ID               string            `json:"id"`
+	FirstName        string            `json:"first_name"`
+	LastName         string            `json:"last_name"`
+	EmailAddresses   []EmailAddress    `json:"email_addresses"`
+	ExternalAccounts []ExternalAccount `json:"external_accounts"`
+	ImageURL         string            `json:"image_url"`
+	LastActiveAt     int64             `json:"last_active_at"`
+	LastSignInAt     *int64            `json:"last_sign_in_at,omitempty"`
+	Locked           bool              `json:"locked"`
+	Username         string            `json:"username"`
+}
+
+type EmailAddress struct {
+	EmailAddress string `json:"email_address"`
+	ID           string `json:"id"`
+	Verification struct {
+		Status string `json:"status"`
+	} `json:"verification"`
+}
+
+type ExternalAccount struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
+	Username  string `json:"username"`
+	AvatarURL string `json:"avatar_url"`
+	Provider  string `json:"provider"`
 }
 
 func quoteIfNotEmpty(s string) string {
@@ -65,7 +87,7 @@ func CreateUserInHasura(user ClerkUser) error {
 				}
 			}
 		}
-	`, user.ID, fullName, user.Email)
+	`, user.ID, fullName, user.EmailAddresses[0].EmailAddress)
 
 	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
 	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")

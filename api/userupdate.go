@@ -20,22 +20,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Raw webhook payload: %s", string(body))
 	var rawPayload struct {
 		Data struct {
-			ID        string `json:"id"`
-			FirstName string `json:"first_name"`
-			LastName  string `json:"last_name"`
-			Email     string `json:"email_addresses"`
+			ID               string                  `json:"id"`
+			FirstName        string                  `json:"first_name"`
+			LastName         string                  `json:"last_name"`
+			EmailAddresses   []utils.EmailAddress    `json:"email_addresses"`
+			ExternalAccounts []utils.ExternalAccount `json:"external_accounts"`
 		} `json:"data"`
 	}
+
 	if err := json.Unmarshal(body, &rawPayload); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error unmarshalling JSON: %s", err)
 		return
 	}
 	user := utils.ClerkUser{
-		ID:        rawPayload.Data.ID,
-		FirstName: rawPayload.Data.FirstName,
-		LastName:  rawPayload.Data.LastName,
-		Email:     rawPayload.Data.Email,
+		ID:               rawPayload.Data.ID,
+		FirstName:        rawPayload.Data.FirstName,
+		LastName:         rawPayload.Data.LastName,
+		EmailAddresses:   rawPayload.Data.EmailAddresses,
+		ExternalAccounts: rawPayload.Data.ExternalAccounts,
 	}
 	log.Printf("Received user: %+v", user)
 
