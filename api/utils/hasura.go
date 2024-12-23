@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 type ClerkUser struct {
@@ -22,13 +20,6 @@ func quoteIfNotEmpty(s string) string {
 		return "null"
 	}
 	return fmt.Sprintf(`"%s"`, s)
-}
-
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file %v", err)
-	}
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
