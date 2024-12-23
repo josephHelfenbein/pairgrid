@@ -1,34 +1,22 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
-func handle() *echo.Echo {
-	e := echo.New()
-
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Welcome to Vercel!")
-	})
-
-	api := e.Group("/api")
-	api.GET("/users", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"message": "Users endpoint"})
-	})
-
-	api.GET("/test", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{"message": "Test endpoint"})
-	})
-
-	return e
-}
-func Handler(w http.ResponseWriter, r *http.Request) {
-	e := handle()
-	e.ServeHTTP(w, r)
+func Json(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	resp := make(map[string]string)
+	resp["message"] = "Hello World from Go! 👋"
+	resp["language"] = "go"
+	resp["cloud"] = "Hosted on Vercel! ▲"
+	jsonResp, err := json.Marshal(resp)
+	if err != nil {
+		fmt.Printf("Error happened in JSON marshal. Err: %s", err)
+	} else {
+		w.Write(jsonResp)
+	}
 }
