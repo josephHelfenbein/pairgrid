@@ -1,0 +1,16 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "api/userupdate.go",
+        "use": "@vercel/go"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/api/userupdate",
+        "dest": "/api/userupdate.go"
+      }
+    ]
+  }
+  

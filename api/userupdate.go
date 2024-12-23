@@ -9,12 +9,6 @@ import (
 	"net/http"
 )
 
-type ClerkUser struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
 func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received Clerk webhook request")
 
@@ -25,7 +19,7 @@ func WebhookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user ClerkUser
+	var user utils.ClerkUser
 	if err := json.Unmarshal(body, &user); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error unmarshalling JSON: %s", err)
