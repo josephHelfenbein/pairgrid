@@ -77,30 +77,44 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 func CreateUserInHasura(user ClerkUser) error {
 	fullName := fmt.Sprintf("%s %s", user.FirstName, user.LastName)
-	quotedFullName := quoteIfNotEmpty(fullName)
-	quotedEmail := quoteIfNotEmpty(user.EmailAddresses[0].EmailAddress)
-	query := fmt.Sprintf(`
-		mutation {
-			insert_users(objects: {id: "%s", name: %s, email: "%s"}) {
-				returning {
-					id
-					name
-					email
-				}
-			}
-		}
-	`, user.ID, quotedFullName, quotedEmail)
+	query := `
+        mutation InsertUsers($id: String!, $name: String!, $email: String!) {
+            insert_users(objects: {id: $id, name: $name, email: $email}) {
+                affected_rows
+                returning {
+                    id
+                    name
+                    email
+                    bio
+                    language
+                    specialty
+                    interests
+                    occupation
+                    last_seen
+                    created_at
+                    last_typed
+                }
+            }
+        }
+    `
 
-	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
-	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+	variables := map[string]interface{}{
+		"id":    user.ID,
+		"name":  fullName,
+		"email": user.EmailAddresses[0].EmailAddress,
+	}
 
 	requestBody := map[string]interface{}{
-		"query": query,
+		"query":     query,
+		"variables": variables,
 	}
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
 		return fmt.Errorf("failed to marshal Hasura query: %w", err)
 	}
+
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
 
 	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
