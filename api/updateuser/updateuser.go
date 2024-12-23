@@ -13,7 +13,7 @@ type UpdateUserRequest struct {
 	ID         string   `json:"id"`
 	Bio        string   `json:"bio"`
 	Language   []string `json:"language"`
-	Specialty  []string `json:"specialty"`
+	Specialty  string   `json:"specialty"`
 	Interests  []string `json:"interests"`
 	Occupation string   `json:"occupation"`
 }
