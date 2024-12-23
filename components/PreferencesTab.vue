@@ -166,6 +166,32 @@
     interests: [],
     occupation: '',
   })
+  async function loadPreferences(){
+    try{
+      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({id: user.value.id}),
+      });
+      if(!response.ok){
+        throw new Error(`Failed to load preferences: ${response.statusText}`);
+      }
+      const data = await response.json();
+      preferences.value = {
+        bio: data.bio || '',
+        language: data.language || [],
+        specialty: data.specialty || '',
+        interests: data.interests || [],
+        occupation: data.occupation || '',
+      };
+      console.log('Preferences loaded successfully:', preferences.value);
+    } catch(error){
+      console.error('Error loading preferences:', error);
+    }
+  }
+  loadPreferences();
   const setBio = (bio) => {
     preferences.value.bio = bio;
   }  
