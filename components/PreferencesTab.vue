@@ -129,6 +129,7 @@
     'Java',
     'Ruby',
     'Go',
+    'Dart',
     'C/C++',
     'C#',
     'PHP',
