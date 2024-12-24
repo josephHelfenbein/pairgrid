@@ -67,7 +67,7 @@
         interests: data.interests || [],
         occupation: data.occupation || '',
       })
-      console.log('Preferences loaded successfully:', preferences.value);
+      console.log('Preferences loaded successfully:', preferences);
     } catch(error){
       console.error('Error loading preferences:', error);
     }

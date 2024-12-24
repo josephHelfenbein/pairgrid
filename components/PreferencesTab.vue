@@ -112,9 +112,6 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences })
 
-  console.log(props);
-  console.log(preferences);
-
   const occupations = [
     'Middle School Student',
     'High School Student',
