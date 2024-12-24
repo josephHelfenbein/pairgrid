@@ -19,7 +19,7 @@
           <NetworkingTab />
         </TabsContent>
         <TabsContent value="preferences">
-          <PreferencesTab :preferences="preferences.value" @update-preferences="updatePreferences" />
+          <PreferencesTab :preferences="preferences" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
     </div>

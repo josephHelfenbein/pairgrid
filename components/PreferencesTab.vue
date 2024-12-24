@@ -103,13 +103,10 @@
   const { user } = useUser();
   const { toast } = useToast();
   
-  const props = defineProps({
-    preferences: {
-      type: Object,
-      required: true,
-    }
-  })
-  const emit = defineEmits();
+  defineProps({
+    preferences: Object,
+  });
+  const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences });
 
   const occupations = [
