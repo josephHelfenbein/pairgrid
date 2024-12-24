@@ -19,7 +19,7 @@
           <NetworkingTab />
         </TabsContent>
         <TabsContent value="preferences">
-          <PreferencesTab v-if="preferences" :preferences="preferences" @update-preferences="updatePreferences" />
+          <PreferencesTab v-if="preferences !== null" :preferences="preferences" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
     </div>
@@ -30,7 +30,7 @@
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
-  import { ref, onMounted } from 'vue'
+  import { reactive, onMounted } from 'vue'
   import { useUser } from '@clerk/vue'
 
   const { user } = useUser();
@@ -42,7 +42,7 @@
     occupation: '',
   })
   const updatePreferences = (updatedPreferences) => {
-    preferences.value = updatedPreferences
+    Object.assign(preferences, updatedPreferences)
   }
   async function loadPreferences(){
     try{
@@ -57,13 +57,13 @@
         throw new Error(`Failed to load preferences: ${response.statusText}`);
       }
       const data = await response.json();
-      preferences.value = {
+      Object.assign(preferences, {
         bio: data.bio || '',
         language: data.language || [],
         specialty: data.specialty || '',
         interests: data.interests || [],
         occupation: data.occupation || '',
-      };
+      })
       console.log('Preferences loaded successfully:', preferences.value);
     } catch(error){
       console.error('Error loading preferences:', error);
