@@ -19,7 +19,7 @@
           <NetworkingTab />
         </TabsContent>
         <TabsContent value="preferences">
-          <PreferencesTab :preferences="preferences" @update-preferences="updatePreferences" />
+          <PreferencesTab v-if="preferences" :preferences="preferences" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
     </div>
@@ -34,7 +34,7 @@
   import { useUser } from '@clerk/vue'
 
   const { user } = useUser();
-  const preferences = ref({
+  const preferences = reactive({
     bio: '',
     language: [],
     specialty: '',

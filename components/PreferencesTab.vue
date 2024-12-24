@@ -112,6 +112,9 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences })
 
+  console.log(props);
+  console.log(preferences);
+
   const occupations = [
     'Middle School Student',
     'High School Student',
@@ -175,7 +178,7 @@
     'Low-level Programming',
     'Graphics Programming',
   ]
-  
+
   const toggleSpecialty = (interest) => {
     if(preferences.specialty==interest) preferences.specialty = '';
     else preferences.specialty = interest;
