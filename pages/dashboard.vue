@@ -57,7 +57,7 @@
         throw new Error(`Failed to load preferences: ${response.statusText}`);
       }
       const data = await response.json();
-      preferences.value = {
+      preferences = {
         bio: data.bio || '',
         language: data.language || [],
         specialty: data.specialty || '',
