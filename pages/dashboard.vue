@@ -30,7 +30,7 @@
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
-  import { reactive, onMounted } from 'vue'
+  import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
 
   const { user } = useUser();
@@ -72,14 +72,16 @@
       console.error('Error loading preferences:', error);
     }
   }
-  const isLoading = ref(true);
 
-  onMounted(async () => {
-    if (user.value) {
-      await loadPreferences();
-    } else {
-      console.error('User is not authenticated');
+  watch(() => user.value, (newUser) => {
+    if (newUser) {
+      loadPreferences();
     }
-    isLoading.value = false;
+  });
+
+  onMounted(() => {
+    if (user.value) {
+      loadPreferences();
+    }
   });
 </script>
