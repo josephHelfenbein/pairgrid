@@ -46,6 +46,9 @@
   }
   async function loadPreferences(){
     try{
+      if(!user.value){
+        throw new Error('User not found');
+      }
       const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
         method: 'POST',
         headers: {
@@ -69,8 +72,14 @@
       console.error('Error loading preferences:', error);
     }
   }
-  onMounted(() => {
-    loadPreferences()
-  })
+  const isLoading = ref(true);
 
+  onMounted(async () => {
+    if (user.value) {
+      await loadPreferences();
+    } else {
+      console.error('User is not authenticated');
+    }
+    isLoading.value = false;
+  });
 </script>
