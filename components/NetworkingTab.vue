@@ -26,44 +26,9 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 
-  const recommendedPeople = [
-    { 
-      name: 'David Lee', 
-      specialty: 'Full Stack Developer', 
-      occupation: 'Hobbyist',
-      bio: 'Passionate about Vue.js and Node.js',
-      language: ['JavaScript', 'TypeScript'],
-      interests: ['Web Development', 'Cloud Computing', 'Blockchain']
-    },
-    { 
-      name: 'Emma Wilson', 
-      specialty: 'Designer',
-      occupation: 'Professional', 
-      bio: 'Creating intuitive and beautiful interfaces',
-      language: [],
-      interests: ['UI/UX Design', 'Web Development'],
-    },
-    { 
-      name: 'Sarah Johnson', 
-      specialty: 'DevOps Engineer',
-      occupation: 'Educator', 
-      bio: 'Automating everything with Ansible and Docker',
-      language: ['C/C++', 'Ruby', 'Python', 'PHP', 'JavaScript'],
-      interests: ['DevOps', 'Cloud Computing'],
-    },
-    { 
-      name: 'Alex Rodriguez', 
-      specialty: 'Mobile Developer', 
-      occupation: 'Undergraduate Student',
-      bio: 'Building cross-platform apps with Flutter',
-      language: ['Dart', 'JavaScript'],
-      interests: ['Mobile Development', 'Game Development'],
-    },
-
-  ]
+  const { data: recommendedPeople, error } = await useFetch('https://www.pairgrid.com/api/getusers/getusers');
   
   const connect = (person) => {
-    // In a real app, you'd implement the connection logic here
     alert(`Connecting with ${person.name}`)
   }
   </script>
