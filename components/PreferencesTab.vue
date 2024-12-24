@@ -103,11 +103,14 @@
   const { user } = useUser();
   const { toast } = useToast();
   
-  defineProps({
-    preferences: Object,
-  });
+  const props = defineProps({
+    preferences: {
+      type: Object,
+      required: true,
+    },
+  })
   const emit = defineEmits(['update-preferences']);
-  const preferences = reactive({ ...preferences });
+  const preferences = reactive({ ...props.preferences })
 
   const occupations = [
     'Middle School Student',
@@ -172,12 +175,7 @@
     'Low-level Programming',
     'Graphics Programming',
   ]
-  const setBio = (bio) => {
-    preferences.bio = bio;
-  }  
-  const setOccupation = (occupation) => {
-    preferences.occupation = occupation;
-  }
+  
   const toggleSpecialty = (interest) => {
     if(preferences.specialty==interest) preferences.specialty = '';
     else preferences.specialty = interest;
@@ -210,8 +208,8 @@
     initialValues: props.preferences,
   })
   const onSubmit = handleSubmit((values)=>{
-    setBio(values.bio);
-    setOccupation(values.occupation);
+    preferences.bio = values.bio
+    preferences.occupation = values.occupation
     const data = {
       id: user.value.id,
       bio: preferences.bio,
