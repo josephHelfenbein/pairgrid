@@ -80,7 +80,7 @@
               </div>
             </div>
           </div>
-  
+          <Toaster />
           <Button type="submit">Save Preferences</Button>
         </form>
       </CardContent>
@@ -88,18 +88,20 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive } from 'vue'
+  import { defineProps, reactive, defineEmits, watch } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+  import { useToast } from '@/components/ui/toast/use-toast'
   import { toTypedSchema } from '@vee-validate/zod'
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import {useUser} from '@clerk/vue'
+  import { useUser } from '@clerk/vue'
 
-  const {user} = useUser();
+  const { user } = useUser();
+  const { toast } = useToast();
   
   const props = defineProps({
     preferences: {
@@ -107,8 +109,8 @@
       required: true,
     }
   })
-
-  const preferences = reactive(props.preferences) 
+  const emit = defineEmits();
+  const preferences = reactive({ ...props.preferences });
 
   const occupations = [
     'Middle School Student',
@@ -174,24 +176,24 @@
     'Graphics Programming',
   ]
   const setBio = (bio) => {
-    preferences.value.bio = bio;
+    preferences.bio = bio;
   }  
   const setOccupation = (occupation) => {
-    preferences.value.occupation = occupation;
+    preferences.occupation = occupation;
   }
   const toggleSpecialty = (interest) => {
-    if(preferences.value.specialty==interest) preferences.value.specialty = '';
-    else preferences.value.specialty = interest;
+    if(preferences.specialty==interest) preferences.specialty = '';
+    else preferences.specialty = interest;
   }
   const toggleLanguage = (interest) => {
-    let index = preferences.value.language.indexOf(interest);
-    if(index==-1) preferences.value.language.push(interest);
-    else preferences.value.language.splice(index, 1);
+    let index = preferences.language.indexOf(interest);
+    if(index==-1) preferences.language.push(interest);
+    else preferences.language.splice(index, 1);
   }
   const toggleInterest = (interest) => {
-    let index = preferences.value.interests.indexOf(interest);
-    if(index==-1) preferences.value.interests.push(interest);
-    else preferences.value.interests.splice(index, 1);
+    let index = preferences.interests.indexOf(interest);
+    if(index==-1) preferences.interests.push(interest);
+    else preferences.interests.splice(index, 1);
   }
   
   const formSchema = toTypedSchema(z.object({
@@ -206,19 +208,21 @@
     ], {required_error: 'Please select an occupation'}),
     bio: z.string().min(10).max(250),
   }))
-  const {handleSubmit} = useForm({validationSchema: formSchema});
+  const { handleSubmit } = useForm({
+    validationSchema: formSchema,
+    initialValues: props.preferences,
+  })
   const onSubmit = handleSubmit((values)=>{
     setBio(values.bio);
     setOccupation(values.occupation);
     const data = {
       id: user.value.id,
-      bio: preferences.value.bio,
-      language: [...preferences.value.language],
-      specialty: preferences.value.specialty,
-      interests: [...preferences.value.interests],
-      occupation: preferences.value.occupation
+      bio: preferences.bio,
+      language: [...preferences.language],
+      specialty: preferences.specialty,
+      interests: [...preferences.interests],
+      occupation: preferences.occupation
     };
-    console.log(preferences.value);
 
     fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
@@ -230,14 +234,19 @@
       if(response.ok){
         response.json().then(result=>{
           console.log('Preferences updated successfully:', result);
+          toast({description: 'Saved preferences successfully.'});
         }).catch(error=>{
           console.error('Error parsing response:', error);
+          toast({description: 'Error saving.'});
         });
       } else{
         console.error('Failed to update preferences:', response.statusText);
+        toast({description: 'Error saving.'});
       }
     }).catch(error=>{
       console.error('Error updating preferences:', error);
+      toast({description: 'Error saving.'});
     });
+    emit('update-preferences', preferences);
   });
   </script>

@@ -19,7 +19,7 @@
           <NetworkingTab />
         </TabsContent>
         <TabsContent value="preferences">
-          <PreferencesTab :preferences="preferences" />
+          <PreferencesTab :preferences="preferences" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
     </div>
@@ -30,8 +30,8 @@
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
-  import {ref, onMounted} from 'vue'
-  import {useUser} from '@clerk/vue'
+  import { ref, onMounted } from 'vue'
+  import { useUser } from '@clerk/vue'
 
   const {user} = useUser();
   const preferences = ref({
@@ -41,6 +41,9 @@
     interests: [],
     occupation: '',
   })
+  const updatePreferences = (updatedPreferences) => {
+    preferences.value = updatedPreferences
+  }
   async function loadPreferences(){
     try{
       const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
@@ -67,8 +70,7 @@
     }
   }
   onMounted(() => {
-    if (user.value) {
-      loadPreferences()
-    }
+    loadPreferences()
   })
+
 </script>
