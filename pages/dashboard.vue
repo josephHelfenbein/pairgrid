@@ -19,7 +19,7 @@
           <NetworkingTab />
         </TabsContent>
         <TabsContent value="preferences">
-          <PreferencesTab :preferences="preferences" @update-preferences="updatePreferences" />
+          <PreferencesTab :preferences="preferences.value" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
     </div>
@@ -33,7 +33,7 @@
   import { ref, onMounted } from 'vue'
   import { useUser } from '@clerk/vue'
 
-  const {user} = useUser();
+  const { user } = useUser();
   const preferences = ref({
     bio: '',
     language: [],
@@ -57,7 +57,7 @@
         throw new Error(`Failed to load preferences: ${response.statusText}`);
       }
       const data = await response.json();
-      preferences = {
+      preferences.value = {
         bio: data.bio || '',
         language: data.language || [],
         specialty: data.specialty || '',
