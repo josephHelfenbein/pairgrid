@@ -9,11 +9,11 @@
           </CardHeader>
           <CardContent>
             <p class="mb-2">{{ person.bio }}</p>
-            <div class="flex space-x-2 text-sm mb-2">
-              <p class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 pr-2" v-for="language in person.language">{{ language }}</p>
+            <div class="flex flex-wrap space-x-2 text-sm mb-1">
+              <p class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2" v-for="language in person.language">{{ language }}</p>
             </div>
-            <div class="flex space-x-2 text-sm mb-4">
-              <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 pr-2" v-for="interest in person.interests">{{ interest }}</p>
+            <div class="flex flex-wrap space-x-2 text-sm mb-3">
+              <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2" v-for="interest in person.interests">{{ interest }}</p>
             </div>
             <Button class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500" @click="connect(person)">Connect</Button>
           </CardContent>
