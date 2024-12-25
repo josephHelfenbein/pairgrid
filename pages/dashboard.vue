@@ -43,7 +43,7 @@
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
-  import { BounceLoader } from 'vue-spinner/dist/vue-spinner.min.js';
+  import { BounceLoader } from '@saeris/vue-spinners';
   const loading = ref(true);
 
   const { user } = useUser();
