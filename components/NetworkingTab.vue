@@ -25,7 +25,7 @@
   <script setup>
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-  import { defineProps, defineEmits } from 'vue';
+  import { defineProps, defineEmits, onMounted } from 'vue';
 
   const props = defineProps({
     user: {
@@ -34,12 +34,27 @@
     }
   })
   const user = props.user;
-  const emit = defineEmits(['update-preferences']);
+  const emit = defineEmits(['toast-update']);
 
-  const { data: recommendedPeople, error } = await useFetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`);
-  if(error) {
-    console.error(error);
-  }
+  const recommendedPeople = ref([]);
+  const error = ref(null);
+  const fetchRecommendedPeople = async () =>{
+    try{
+      const response = await fetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`, {
+        method: 'GET',
+      });
+      if(!response.ok) throw new Error('Failed to fetch recommended people');
+      const data = await response.json();
+      recommendedPeople.value = data;
+    } catch (err) {
+      console.error(err);
+      error.value = err.message;
+      emit('toast-update', 'Error fetching recommended connections');
+    }
+  };
+  onMounted(() => {
+    fetchRecommendedPeople();
+  });
   
   const connect = async (person) => {
     try{
