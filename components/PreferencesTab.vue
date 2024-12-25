@@ -80,7 +80,6 @@
               </div>
             </div>
           </div>
-          <Toaster />
           <Button type="submit">Save Preferences</Button>
         </form>
       </CardContent>
@@ -93,7 +92,6 @@
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-  import { useToast } from '@/components/ui/toast/use-toast'
   import { toTypedSchema } from '@vee-validate/zod'
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
@@ -101,7 +99,6 @@
   import { useUser } from '@clerk/vue'
 
   const { user } = useUser();
-  const { toast } = useToast();
   
   const props = defineProps({
     preferences: {
@@ -230,18 +227,14 @@
       if(response.ok){
         response.json().then(result=>{
           console.log('Preferences updated successfully:', result);
-          toast({description: 'Saved preferences successfully.'});
         }).catch(error=>{
           console.error('Error parsing response:', error);
-          toast({description: 'Error saving.'});
         });
       } else{
         console.error('Failed to update preferences:', response.statusText);
-        toast({description: 'Error saving.'});
       }
     }).catch(error=>{
       console.error('Error updating preferences:', error);
-      toast({description: 'Error saving.'});
     });
     emit('update-preferences', preferences);
   });

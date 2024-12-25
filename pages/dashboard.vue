@@ -22,6 +22,7 @@
           <PreferencesTab v-if="preferences !== null" :preferences="preferences" @update-preferences="updatePreferences" />
         </TabsContent>
       </Tabs>
+      <Toaster />
     </div>
 </template>
   
@@ -32,8 +33,10 @@
   import PreferencesTab from '@/components/PreferencesTab.vue'
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
+  import { useToast } from '@/components/ui/toast/use-toast'
 
   const { user } = useUser();
+  const { toast } = useToast();
   const preferences = reactive({
     bio: '',
     language: [],
@@ -42,7 +45,8 @@
     occupation: '',
   })
   const updatePreferences = (updatedPreferences) => {
-    Object.assign(preferences, updatedPreferences)
+    Object.assign(preferences, updatedPreferences);
+    toast({description: 'Saved preferences.'});
   }
   async function loadPreferences(){
     try{
