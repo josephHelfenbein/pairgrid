@@ -12,6 +12,7 @@ import (
 
 type User struct {
 	Name       string   `json:"name"`
+	Email      string   `json:"email"`
 	Bio        string   `json:"bio"`
 	Language   []string `json:"language"`
 	Specialty  string   `json:"specialty"`
@@ -22,7 +23,7 @@ type User struct {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get user from Hasura")
 	offset := 0
-	limit := 0
+	limit := 10
 	query := r.URL.Query()
 	if o := query.Get("offset"); o != "" {
 		if parsedOffset, err := strconv.Atoi(o); err == nil {
@@ -54,6 +55,7 @@ func GetUsersFromHasura(offset, limit int) ([]User, error) {
 		query GetUsers($offset: Int!, $limit: Int!) {
 			users(offset: $offset, limit: $limit) {
 				name
+				email
 				bio
 				language
 				specialty

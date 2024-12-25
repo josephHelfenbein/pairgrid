@@ -25,10 +25,30 @@
   <script setup>
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+  import { useUser } from '@clerk/vue'
+
+  const { user } = useUser();
 
   const { data: recommendedPeople, error } = await useFetch('https://www.pairgrid.com/api/getusers/getusers');
   
-  const connect = (person) => {
-    alert(`Connecting with ${person.name}`)
+  const connect = async (person) => {
+    try{
+      const response = await fetch('https://www.pairgrid.com/api/addfriend/addfriend', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userID: user.value.id,
+          friendEmail: person.email,
+        }),
+      })
+      if(!response.ok) throw new Error('Failed to connect with the user')
+      const data = await response.json()
+      alert(`Successfully connected with ${person.name}`)
+    } catch(err) {
+      console.error(err)
+      alert('Error connecting with the user')
+    }
   }
   </script>
