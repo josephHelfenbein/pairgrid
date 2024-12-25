@@ -35,21 +35,14 @@
   
   const connect = async (person) => {
     try{
-      const response = await fetch('https://www.pairgrid.com/api/addfriend/addfriend', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.value.id,
-          friend_email: person.email,
-        }),
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.value.id}&friend_email=${person.email}`, {
+        method: 'GET',
       })
-      if(!response.ok) throw new Error('Failed to connect with the user')
-      const data = await response.json()
+      if(!response.ok) throw new Error('Failed to connect with the user');
+      const data = await response.json();
       emit('toast-update', `Successfully connected with ${person.name}`);
     } catch(err) {
-      console.error(err)
+      console.error(err);
       emit('toast-update', 'Error connecting with the user');
     }
   }
