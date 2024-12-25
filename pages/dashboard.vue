@@ -16,7 +16,8 @@
           <ChatTab />
         </TabsContent>
         <TabsContent value="networking">
-          <NetworkingTab />
+          <NetworkingTab 
+          @toast-update="toastUpdate" />
         </TabsContent>
         <TabsContent value="preferences">
           <PreferencesTab v-if="preferences !== null" :preferences="preferences" @update-preferences="updatePreferences" />
@@ -47,6 +48,9 @@
   const updatePreferences = (updatedPreferences) => {
     Object.assign(preferences, updatedPreferences);
     toast({description: 'Saved preferences.'});
+  }
+  const toastUpdate = (message) => {
+    toast({description: message});
   }
   async function loadPreferences(){
     try{

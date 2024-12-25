@@ -26,8 +26,10 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
   import { useUser } from '@clerk/vue'
+  import { defineEmits } from 'vue';
 
   const { user } = useUser();
+  const emit = defineEmits(['update-preferences']);
 
   const { data: recommendedPeople, error } = await useFetch('https://www.pairgrid.com/api/getusers/getusers');
   
@@ -39,16 +41,16 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userID: user.value.id,
-          friendEmail: person.email,
+          user_id: user.value.id,
+          friend_email: person.email,
         }),
       })
       if(!response.ok) throw new Error('Failed to connect with the user')
       const data = await response.json()
-      alert(`Successfully connected with ${person.name}`)
+      emit('toast-update', `Successfully connected with ${person.name}`);
     } catch(err) {
       console.error(err)
-      alert('Error connecting with the user')
+      emit('toast-update', 'Error connecting with the user');
     }
   }
   </script>
