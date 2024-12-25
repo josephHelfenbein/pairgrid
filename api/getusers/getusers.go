@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type User struct {
@@ -20,7 +21,20 @@ type User struct {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get user from Hasura")
-	users, err := GetUsersFromHasura()
+	offset := 0
+	limit := 0
+	query := r.URL.Query()
+	if o := query.Get("offset"); o != "" {
+		if parsedOffset, err := strconv.Atoi(o); err == nil {
+			offset = parsedOffset
+		}
+	}
+	if l := query.Get("limit"); l != "" {
+		if parsedLimit, err := strconv.Atoi(l); err == nil {
+			limit = parsedLimit
+		}
+	}
+	users, err := GetUsersFromHasura(offset, limit)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get user from Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error getting user from Hasura: %s", err)
@@ -35,11 +49,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Users successfully retrieved from Hasura")
 }
-func GetUsersFromHasura() ([]User, error) {
+func GetUsersFromHasura(offset, limit int) ([]User, error) {
 	query := `
-		query GetUsers {
-			users(limit: 10) {
-				id
+		query GetUsers($offset: Int!, $limit: Int!) {
+			users(offset: $offset, limit: $limit) {
 				name
 				bio
 				language
@@ -51,6 +64,10 @@ func GetUsersFromHasura() ([]User, error) {
 	`
 	requestBody := map[string]interface{}{
 		"query": query,
+		"variables": map[string]interface{}{
+			"offset": offset,
+			"limit":  limit,
+		},
 	}
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
