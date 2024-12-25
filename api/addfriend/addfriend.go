@@ -146,9 +146,9 @@ func insertFriend(userID, friendID string) error {
 	var responseBody struct {
 		Data struct {
 			Friends []struct {
-				ID       string `json:"id"`
-				ToAccept string `json:"to_accept"`
-				Status   string `json:"status"`
+				ID       interface{} `json:"id"`
+				ToAccept string      `json:"to_accept"`
+				Status   string      `json:"status"`
 			} `json:"friends"`
 		} `json:"data"`
 	}
