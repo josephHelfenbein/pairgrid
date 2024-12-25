@@ -5,9 +5,7 @@
         <RedirectToSignUp />
       </SignedOut>
 
-      <BounceLoader v-if="loading" color="primary" size="60px" class="m-auto mt-20" />
-
-      <div v-else>
+      <div v-if="loading==false">
         <Tabs default-value="chat" class="w-full p-4">
           <TabsList class="grid w-full grid-cols-3">
             <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -43,8 +41,7 @@
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
-  import { BounceLoader } from '@saeris/vue-spinners';
-  const loading = ref(true);
+  const loading = ref(true)
 
   const { user } = useUser();
   const { toast } = useToast();
@@ -93,15 +90,15 @@
 
   watch(() => user.value, (newUser) => {
     if (newUser) {
-      loading.value = false;
       loadPreferences();
+      loading.value = false;
     }
   });
 
   onMounted(() => {
     if (user.value) {
       loadPreferences();
+      loading.value = false;
     }
-    else loading.value = false;
   });
 </script>
