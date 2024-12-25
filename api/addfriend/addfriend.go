@@ -99,6 +99,9 @@ func insertFriend(userID, friendID string) error {
 	if userID > friendID {
 		firstID, secondID = friendID, userID
 	}
+	if userID == friendID {
+		return fmt.Errorf("cannot add self as friend")
+	}
 	query := `
 		query CheckFriendship($first_id: String!, $second_id: String!){
 			friends(where: {
@@ -157,6 +160,12 @@ func insertFriend(userID, friendID string) error {
 	}
 	if len(responseBody.Data.Friends) > 0 {
 		existingFriend := responseBody.Data.Friends[0]
+		if existingFriend.Status == "accepted" {
+			return fmt.Errorf("friendship already exists")
+		}
+		if existingFriend.ToAccept == friendID && existingFriend.Status == "pending" {
+			return fmt.Errorf("friend request already sent")
+		}
 		if existingFriend.ToAccept == userID && existingFriend.Status == "pending" {
 			mutation := `
 				mutation UpdateFriendStatus($id: bigint!, $status: String!) {

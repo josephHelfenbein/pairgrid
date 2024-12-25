@@ -25,10 +25,16 @@
   <script setup>
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-  import { useUser } from '@clerk/vue'
   import { defineEmits } from 'vue';
 
-  const { user } = useUser();
+  const props = defineProps({
+    user: {
+      type: Object,
+      required: true,
+    }
+  })
+  const user = props.user;
+  
   const emit = defineEmits(['update-preferences']);
 
   const { data: recommendedPeople, error } = await useFetch('https://www.pairgrid.com/api/getusers/getusers');

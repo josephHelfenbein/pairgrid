@@ -1,29 +1,37 @@
 <template>
     <div class="min-h-screen bg-background">
-      
+
       <SignedOut>
         <RedirectToSignUp />
       </SignedOut>
 
-      <Tabs default-value="chat" class="w-full p-4">
-        <TabsList class="grid w-full grid-cols-3">
-          <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger value="networking">Networking</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="chat">
-          <ChatTab />
-        </TabsContent>
-        <TabsContent value="networking">
-          <NetworkingTab 
-          @toast-update="toastUpdate" />
-        </TabsContent>
-        <TabsContent value="preferences">
-          <PreferencesTab v-if="preferences !== null" :preferences="preferences" @update-preferences="updatePreferences" />
-        </TabsContent>
-      </Tabs>
-      <Toaster />
+      <BounceLoader v-if="loading" color="primary" size="60px" class="m-auto mt-20" />
+
+      <div v-else>
+        <Tabs default-value="chat" class="w-full p-4">
+          <TabsList class="grid w-full grid-cols-3">
+            <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="networking">Networking</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="chat">
+            <ChatTab />
+          </TabsContent>
+          <TabsContent value="networking">
+            <NetworkingTab 
+            @toast-update="toastUpdate"
+            :user="user"
+            />
+          </TabsContent>
+          <TabsContent value="preferences">
+            <PreferencesTab v-if="preferences !== null" :preferences="preferences" 
+            :user="user"
+            @update-preferences="updatePreferences" />
+          </TabsContent>
+        </Tabs>
+        <Toaster />
+      </div>
     </div>
 </template>
   
@@ -35,6 +43,8 @@
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
+  import { BounceLoader } from 'vue-spinner/dist/vue-spinner.min.js';
+  const loading = ref(true);
 
   const { user } = useUser();
   const { toast } = useToast();
@@ -83,6 +93,7 @@
 
   watch(() => user.value, (newUser) => {
     if (newUser) {
+      loading.value = false;
       loadPreferences();
     }
   });
@@ -91,5 +102,6 @@
     if (user.value) {
       loadPreferences();
     }
+    else loading.value = false;
   });
 </script>

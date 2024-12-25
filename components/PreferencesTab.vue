@@ -96,18 +96,20 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import { useUser } from '@clerk/vue'
-
-  const { user } = useUser();
   
   const props = defineProps({
     preferences: {
       type: Object,
       required: true,
     },
+    user: {
+      type: Object,
+      required: true,
+    }
   })
   const emit = defineEmits(['update-preferences']);
-  const preferences = reactive({ ...props.preferences })
+  const preferences = reactive({ ...props.preferences });
+  const user = props.user;
 
   const occupations = [
     'Middle School Student',
