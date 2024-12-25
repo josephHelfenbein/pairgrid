@@ -211,7 +211,7 @@
     preferences.bio = values.bio
     preferences.occupation = values.occupation
     const data = {
-      id: user.value.id,
+      id: user.id,
       bio: preferences.bio,
       language: [...preferences.language],
       specialty: preferences.specialty,

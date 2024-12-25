@@ -34,14 +34,13 @@
     }
   })
   const user = props.user;
-  
   const emit = defineEmits(['update-preferences']);
 
-  const { data: recommendedPeople, error } = await useFetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.value.id}`);
+  const { data: recommendedPeople, error } = await useFetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`);
   
   const connect = async (person) => {
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.value.id}&friend_email=${person.email}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${person.email}`, {
         method: 'GET',
       })
       if(!response.ok) throw new Error('Failed to connect with the user');
