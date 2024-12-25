@@ -37,7 +37,7 @@
   
   const emit = defineEmits(['update-preferences']);
 
-  const { data: recommendedPeople, error } = await useFetch('https://www.pairgrid.com/api/getusers/getusers');
+  const { data: recommendedPeople, error } = await useFetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.value.id}`);
   
   const connect = async (person) => {
     try{

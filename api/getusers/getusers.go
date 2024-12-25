@@ -24,6 +24,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get user from Hasura")
 	offset := 0
 	limit := 10
+	userID := ""
 	query := r.URL.Query()
 	if o := query.Get("offset"); o != "" {
 		if parsedOffset, err := strconv.Atoi(o); err == nil {
@@ -35,7 +36,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			limit = parsedLimit
 		}
 	}
-	users, err := GetUsersFromHasura(offset, limit)
+	if u := query.Get("user_id"); u != "" {
+		userID = u
+	}
+	users, err := GetUsersFromHasura(offset, limit, userID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get user from Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error getting user from Hasura: %s", err)
@@ -50,10 +54,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Users successfully retrieved from Hasura")
 }
-func GetUsersFromHasura(offset, limit int) ([]User, error) {
+func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 	query := `
-		query GetUsers($offset: Int!, $limit: Int!) {
-			users(offset: $offset, limit: $limit) {
+		query GetUsers($offset: Int!, $limit: Int!, $userID: String!) {
+			users(where: {
+				_and: [
+					{id: {_neq: $userID}},
+					{
+						_or: [
+							{_not: {id: {_in: (select friend_id from friends where user_id = $userID and status = "accepted")}}},
+							{_not: {id: {_in: (select user_id from friends where friend_id = $userID and status = "accepted")}}}
+						]
+					}
+				]
+			}, offset: $offset, limit: $limit) {
 				name
 				email
 				bio
@@ -69,6 +83,7 @@ func GetUsersFromHasura(offset, limit int) ([]User, error) {
 		"variables": map[string]interface{}{
 			"offset": offset,
 			"limit":  limit,
+			"userID": userID,
 		},
 	}
 	jsonBody, err := json.Marshal(requestBody)
