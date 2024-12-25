@@ -62,12 +62,12 @@ func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 					{id: {_neq: $userID}},
 					{
 						id: {
-							_nin: (select friend_id from friends where user_id = $userID and status = "accepted")
+							_nin: [(select friend_id from friends where user_id = $userID and status = "accepted")]
 						}
 					},
 					{
 						id: {
-							_nin: (select user_id from friends where friend_id = $userID and status = "accepted")
+							_nin: [(select user_id from friends where friend_id = $userID and status = "accepted")]
 						}
 					}
 				]
