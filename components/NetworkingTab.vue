@@ -25,7 +25,7 @@
   <script setup>
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-  import { defineEmits } from 'vue';
+  import { defineProps, defineEmits } from 'vue';
 
   const props = defineProps({
     user: {
@@ -37,6 +37,9 @@
   const emit = defineEmits(['update-preferences']);
 
   const { data: recommendedPeople, error } = await useFetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`);
+  if(error) {
+    console.error(error);
+  }
   
   const connect = async (person) => {
     try{
