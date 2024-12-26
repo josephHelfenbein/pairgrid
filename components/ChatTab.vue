@@ -9,8 +9,8 @@
             <div class="space-y-2">
               <Button
                 v-for="friend in friends"
-                :key="friend.id"
-                :variant="selectedFriend?.id === friend.id ? 'secondary' : 'ghost'"
+                :key="friend.email"
+                :variant="selectedFriend?.email === friend.email ? 'secondary' : 'ghost'"
                 class="w-full justify-start"
                 @click="selectFriend(friend)"
               >
@@ -66,12 +66,36 @@
   import { Input } from '@/components/ui/input'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { ScrollArea } from '@/components/ui/scroll-area'
-  
-  const friends = [
-    { id: 1, name: 'Alice' },
-    { id: 2, name: 'Bob' },
-    { id: 3, name: 'Charlie' },
-  ]
+  import { defineProps, defineEmits, onMounted } from 'vue'
+
+  const props = defineProps({
+    user: {
+      type: Object,
+      required: true,
+    }
+  })
+  const user = props.user;
+
+  const friends = ref([]);
+  const error = ref(null);
+  const emit = defineEmits(['toast-update']);
+  const fetchFriends = async () =>{
+    try{
+      const response = await fetch(`https://www.pairgrid.com/api/getfriends/getfriends?user_id=${user.id}`, {
+        method: 'GET',
+      });
+      if(!response.ok) throw new Error('Failed to fetch friends');
+      const data = await response.json();
+      friends.value = data;
+    } catch (err) {
+      console.error(err);
+      error.value = err.message;
+      emit('toast-update', 'Error fetching friends');
+    }
+  };
+  onMounted(() => {
+    fetchFriends();
+  });
   
   const selectedFriend = ref(null)
   const messages = ref([])

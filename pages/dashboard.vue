@@ -14,7 +14,10 @@
           </TabsList>
           
           <TabsContent value="chat">
-            <ChatTab />
+            <ChatTab 
+            @toast-update="toastUpdate"
+            :user="user"
+            />
           </TabsContent>
           <TabsContent value="networking">
             <NetworkingTab 
