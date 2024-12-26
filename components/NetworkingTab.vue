@@ -4,7 +4,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card v-for="person in recommendedPeople">
           <div class="flex items-center">
-            <img :src="person.profilePicture" class="w-16 h-16 rounded-full object-cover" />
+            <img :src="person.profile_picture" class="w-16 h-16 rounded-full object-cover" />
             <CardHeader>
               <CardTitle>{{ person.name }}</CardTitle>
               <CardDescription>{{ person.specialty + ', ' + person.occupation }}</CardDescription>
@@ -49,7 +49,6 @@
       if(!response.ok) throw new Error('Failed to fetch recommended people');
       const data = await response.json();
       recommendedPeople.value = data;
-      console.log(recommendedPeople.value);
     } catch (err) {
       console.error(err);
       error.value = err.message;
