@@ -56,6 +56,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			LastName         string            `json:"last_name"`
 			EmailAddresses   []EmailAddress    `json:"email_addresses"`
 			ExternalAccounts []ExternalAccount `json:"external_accounts"`
+			ImageURL         string            `json:"image_url"`
 		} `json:"data"`
 	}
 
@@ -70,6 +71,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		LastName:         rawPayload.Data.LastName,
 		EmailAddresses:   rawPayload.Data.EmailAddresses,
 		ExternalAccounts: rawPayload.Data.ExternalAccounts,
+		ImageURL:         rawPayload.Data.ImageURL,
 	}
 	log.Printf("Received user: %+v", user)
 
