@@ -3,7 +3,7 @@
       <h2 class="text-2xl font-bold mb-4">Recommended Connections</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card v-for="person in recommendedPeople">
-          <div class="flex items-center">
+          <div class="ml-2 flex items-center">
             <img :src="person.profile_picture" class="w-16 h-16 rounded-full object-cover" />
             <CardHeader>
               <CardTitle>{{ person.name }}</CardTitle>
