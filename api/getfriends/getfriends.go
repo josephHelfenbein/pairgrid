@@ -10,8 +10,9 @@ import (
 )
 
 type User struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name           string `json:"name"`
+	Email          string `json:"email"`
+	ProfilePicture string `json:"profile_picture"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -123,6 +124,7 @@ func GetUsersInfo(userIDs []string) ([]User, error) {
 			users(where: {id: {_in: $userIDs}}) {
 				name
 				email
+				profile_picture
 			}
 		}
 	`

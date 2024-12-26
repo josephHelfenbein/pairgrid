@@ -3,10 +3,13 @@
       <h2 class="text-2xl font-bold mb-4">Recommended Connections</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card v-for="person in recommendedPeople">
-          <CardHeader>
-            <CardTitle>{{ person.name }}</CardTitle>
-            <CardDescription>{{ person.specialty + ', ' + person.occupation }}</CardDescription>
-          </CardHeader>
+          <div class="flex items-center">
+            <img :src="person.profilePicture" class="w-16 h-16 rounded-full object-cover" />
+            <CardHeader>
+              <CardTitle>{{ person.name }}</CardTitle>
+              <CardDescription>{{ person.specialty + ', ' + person.occupation }}</CardDescription>
+            </CardHeader>
+          </div>
           <CardContent>
             <p class="mb-2">{{ person.bio }}</p>
             <div class="flex flex-wrap space-x-2 text-sm mb-1">

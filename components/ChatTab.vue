@@ -11,10 +11,13 @@
                 v-for="friend in friends"
                 :key="friend.email"
                 :variant="selectedFriend?.email === friend.email ? 'secondary' : 'ghost'"
-                class="w-full justify-start"
+                class="w-full justify-start flex items-center"
                 @click="selectFriend(friend)"
               >
-                {{ friend.name }}
+                <img :src="friend.profilePicture" class="w-16 h-16 rounded-full object-cover" />
+                <p>
+                  {{ friend.name }}
+                </p>
               </Button>
             </div>
           </ScrollArea>

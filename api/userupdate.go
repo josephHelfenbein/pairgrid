@@ -103,8 +103,8 @@ func CreateUserInHasura(user ClerkUser) error {
 	}
 
 	query := `
-        mutation InsertUsers($id: String!, $name: String!, $email: String!) {
-            insert_users(objects: {id: $id, name: $name, email: $email}) {
+        mutation InsertUsers($id: String!, $name: String!, $email: String!, $profile_picture: String!) {
+            insert_users(objects: {id: $id, name: $name, email: $email, profile_picture: $profile_picture}) {
                 affected_rows
                 returning {
                     id
@@ -118,15 +118,17 @@ func CreateUserInHasura(user ClerkUser) error {
                     last_seen
                     created_at
                     last_typed
+					profile_picture
                 }
             }
         }
     `
 
 	variables := map[string]interface{}{
-		"id":    user.ID,
-		"name":  fullName,
-		"email": email,
+		"id":              user.ID,
+		"name":            fullName,
+		"email":           email,
+		"profile_picture": user.ImageURL,
 	}
 
 	requestBody := map[string]interface{}{

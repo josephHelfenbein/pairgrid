@@ -11,13 +11,14 @@ import (
 )
 
 type User struct {
-	Name       string   `json:"name"`
-	Email      string   `json:"email"`
-	Bio        string   `json:"bio"`
-	Language   []string `json:"language"`
-	Specialty  string   `json:"specialty"`
-	Interests  []string `json:"interests"`
-	Occupation string   `json:"occupation"`
+	Name           string   `json:"name"`
+	Email          string   `json:"email"`
+	ProfilePicture string   `json:"profile_picture"`
+	Bio            string   `json:"bio"`
+	Language       []string `json:"language"`
+	Specialty      string   `json:"specialty"`
+	Interests      []string `json:"interests"`
+	Occupation     string   `json:"occupation"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -139,6 +140,7 @@ func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 				specialty
 				interests
 				occupation
+				profile_picture
 			}
 		}
 	`
