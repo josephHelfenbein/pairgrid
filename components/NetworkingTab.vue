@@ -49,6 +49,7 @@
       if(!response.ok) throw new Error('Failed to fetch recommended people');
       const data = await response.json();
       recommendedPeople.value = data;
+      console.log(recommendedPeople.value);
     } catch (err) {
       console.error(err);
       error.value = err.message;
