@@ -48,9 +48,9 @@
         </CardContent>
       </Card>
   
-      <Card class="w-full">
-        <CardHeader class="flex justify-between">
-          <CardTitle class="flex-shrink-0">
+      <Card class="w-2/3">
+        <CardHeader class="flex justify-between items-center">
+          <CardTitle class="flex-shrink-0 flex items-center">
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
           <Dialog>
@@ -98,7 +98,6 @@
               </div>
 
               <DialogFooter>
-                <Button type="submit">Close</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

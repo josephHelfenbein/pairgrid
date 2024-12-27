@@ -19,7 +19,7 @@
               <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2" v-for="interest in person.interests">{{ interest }}</p>
             </div>
             <Button v-if="!sentTo.includes(person)" class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500" @click="connect(person)">Connect</Button>
-            <Button v-else disabled class="bg-gray-400 cursor-not-allowed">Sent</Button>
+            <Button v-else disabled class="bg-gray-500 cursor-not-allowed">Request Sent</Button>
           </CardContent>
         </Card>
       </div>
