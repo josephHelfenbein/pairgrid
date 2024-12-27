@@ -40,10 +40,10 @@
               >
                 <img :src="friend.profile_picture" class="w-8 h-8 rounded-full object-cover" />
                 <div>
-                  <p>
+                  <p class="text-left">
                   {{ friend.name }}
                   </p>
-                  <p class="text-sm text-gray-500">{{ getLastSeenText(friend.last_seen) }}</p>
+                  <p class="text-sm text-left text-gray-500">{{ getLastSeenText(friend.last_seen) }}</p>
                 </div>
               </Button>
             </div>
@@ -252,10 +252,34 @@
       emit('toast-update', 'Error removing friend');
     }
   };
+  const sendMessage = async () => {
+    if(!newMessage.value || !selectedFriend.value) return;
+    try{
+      /*const encryptedMessage = encryptMessage(newMessage.value);
+      const payload = {
+        sender_id: user.id,
+        receiver_email: selectedFriend.value.email,
+        message: encryptedMessage,
+      };
+      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if(!response.ok) throw new Error('Failed to send message');*/
+      messages.value.push({ id: Date.now(), sender: 'me', text: newMessage.value });
+      newMessage.value = '';
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error sending message');
+    }
+  }
   
-  const selectedFriend = ref(null)
-  const messages = ref([])
-  const newMessage = ref('')
+  const selectedFriend = ref(null);
+  const messages = ref([]);
+  const newMessage = ref('');
   const friendProfile = ref(null);
 
   const fetchFriendProfile = async (friend) => {
@@ -286,16 +310,5 @@
       { id: 1, sender: 'me', text: 'Hey there!' },
       { id: 2, sender: friend.name, text: 'Hi! How are you?' },
     ]
-  }
-  
-  const sendMessage = () => {
-    if (newMessage.value.trim()) {
-      messages.value.push({
-        id: messages.value.length + 1,
-        sender: 'me',
-        text: newMessage.value,
-      })
-      newMessage.value = ''
-    }
   }
   </script>

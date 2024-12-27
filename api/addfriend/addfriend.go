@@ -22,7 +22,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	updateseen.UpdateUserInHasura(userID)
-	friendID, err := getFriendIDByEmail(friendEmail)
+	friendID, err := GetFriendIDByEmail(friendEmail)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to find friend by email: %s", err), http.StatusInternalServerError)
 		log.Printf("Error finding friend by email: %s", err)
@@ -39,7 +39,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"message":"Friend added successfully"}`))
 	log.Printf("Friend added successfully")
 }
-func getFriendIDByEmail(email string) (string, error) {
+func GetFriendIDByEmail(email string) (string, error) {
 	query := `
 		query GetUserByEmail($email: String!) {
 			users(where: {email: {_eq: $email}}) {

@@ -179,6 +179,6 @@ func CreateUserInHasura(user ClerkUser) error {
 		return fmt.Errorf("hasura errors: %v", responseBody.Errors)
 	}
 
-	log.Printf("User with ID %s successfully created in Hasura")
+	log.Printf("User with ID %s successfully created in Hasura", user.ID)
 	return nil
 }
