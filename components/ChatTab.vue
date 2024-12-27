@@ -115,7 +115,7 @@
   };
   const fetchRequests = async () => {
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/getfriends/getfriends?user_id=${user.id}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${user.id}`, {
         method: 'GET',
       });
       if(!response.ok) throw new Error('Failed to fetch friend requests');

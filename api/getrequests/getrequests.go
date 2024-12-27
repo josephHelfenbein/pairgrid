@@ -50,10 +50,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 func GetFriendLists(userID string) ([]string, error) {
 	query := `
 		query GetFriends($userID: String!) {
-			friends1: friends(where: {user_id: {_eq: $userID}, status: {_eq: "pending"}}) {
+			friends1: friends(where: {user_id: {_eq: $userID}, status: {_eq: "pending"}, to_accept: {_eq: $userID}}) {
 				friend_id
 			}
-			friends2: friends(where: {friend_id: {_eq: $userID}, status: {_eq: "pending"}}) {
+			friends2: friends(where: {friend_id: {_eq: $userID}, status: {_eq: "pending"}, to_accept: {_eq: $userID}}) {
 				user_id
 			}
 		}
