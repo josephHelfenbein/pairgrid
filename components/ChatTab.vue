@@ -7,6 +7,22 @@
         <CardContent>
           <ScrollArea class="h-[calc(100vh-200px)]">
             <div class="space-y-2">
+              <div
+                v-for="request in requests"
+                :key="request.email"
+                class="w-full justify-between flex items-center"
+              >
+                <div class="flex items-center gap-2">
+                <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
+                  <p>
+                    {{ request.name }}
+                  </p>
+                </div>
+                <div class="flex gap-2">
+                  <Button @click="acceptRequest(request)">Accept</Button>
+                  <Button @click="denyRequest(request)" variant="destructive">Deny</Button>
+                </div>
+              </div>
               <Button
                 v-for="friend in friends"
                 :key="friend.email"
@@ -80,6 +96,7 @@
   const user = props.user;
 
   const friends = ref([]);
+  const requests = ref([]);
   const error = ref(null);
   const emit = defineEmits(['toast-update']);
   const fetchFriends = async () =>{
@@ -96,9 +113,43 @@
       emit('toast-update', 'Error fetching friends');
     }
   };
+  const fetchRequests = async () => {
+    try{
+      const response = await fetch(`https://www.pairgrid.com/api/getfriends/getfriends?user_id=${user.id}`, {
+        method: 'GET',
+      });
+      if(!response.ok) throw new Error('Failed to fetch friend requests');
+      const data = await response.json();
+      requests.value = data;
+    } catch (err) {
+      console.error(err);
+      error.value = err.message;
+      emit('toast-update', 'Error fetching friend requests');
+    }
+  }
   onMounted(() => {
     fetchFriends();
+    fetchRequests();
   });
+  const acceptRequest = async (request) => {
+    try {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${request.email}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to accept friend request');
+      friends.value.push(request);
+      requests.value = requests.value.filter((r) => r.email !== request.email);
+      emit('toast-update', `Successfully connected with ${request.name}`);
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error accepting friend request');
+    }
+  };
+  const denyRequest = (request) => {
+    requests.value = requests.value.filter((r) => r.email !== request.email);
+    // remove friend row
+    emit('toast-update', `${request.name}'s friend request denied`);
+  };
   
   const selectedFriend = ref(null)
   const messages = ref([])
