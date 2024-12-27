@@ -53,7 +53,7 @@
           <CardTitle>
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
-          <DropdownMenu v-if="selectedFriend">
+          <DropdownMenu v-if="selectedFriend" class="w-8">
             <DropdownMenuTrigger>
               <button class="p-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" color="#505050" stroke="currentColor">
@@ -63,7 +63,7 @@
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem @click="viewProfile(selectedFriend)">View Profile</DropdownMenuItem>
-              <DropdownMenuItem @click="denyRequest(selectedFriend)">Delete Friend</DropdownMenuItem>
+              <DropdownMenuItem @click="removeFriend(selectedFriend)">Remove Friend</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </CardHeader>
@@ -214,6 +214,19 @@
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error denying friend request');
+    }
+  };
+  const removeFriend = async (request) => {
+    try {
+      const response = await fetch(`https://www.pairgrid.com/api/deletefriend/deletefriend?user_id=${user.id}&friend_email=${request.email}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to remove friend');
+      friends.value = friends.value.filter((r) => r.email !== request.email);
+      emit('toast-update', `${request.name} removed from friends list`);
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error removing friend');
     }
   };
   

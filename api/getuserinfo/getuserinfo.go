@@ -51,7 +51,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 }
 func GetUserFromHasura(userEmail string) (*User, error) {
 	query := `
-		query GetUser($id: String!) {
+		query GetUser($email: String!) {
 			users(where: {email: {_eq: $email}}) {
 				bio
 				language
@@ -62,7 +62,7 @@ func GetUserFromHasura(userEmail string) (*User, error) {
 		}
 	`
 	variables := map[string]interface{}{
-		"id": userEmail,
+		"email": userEmail,
 	}
 	requestBody := map[string]interface{}{
 		"query":     query,
