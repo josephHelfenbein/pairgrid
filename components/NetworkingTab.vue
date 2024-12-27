@@ -18,7 +18,8 @@
             <div class="flex flex-wrap space-x-2 text-sm mb-3">
               <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2" v-for="interest in person.interests">{{ interest }}</p>
             </div>
-            <Button class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500" @click="connect(person)">Connect</Button>
+            <Button v-if="!sentTo.includes(person)" class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500" @click="connect(person)">Connect</Button>
+            <Button v-else disabled class="bg-gray-400 cursor-not-allowed">Sent</Button>
           </CardContent>
         </Card>
       </div>
@@ -40,6 +41,7 @@
   const emit = defineEmits(['toast-update']);
 
   const recommendedPeople = ref([]);
+  const sentTo = ref([]);
   const error = ref(null);
   const fetchRecommendedPeople = async () =>{
     try{
@@ -66,7 +68,8 @@
       })
       if(!response.ok) throw new Error('Failed to connect with the user');
       const data = await response.json();
-      emit('toast-update', `Successfully connected with ${person.name}`);
+      sentTo.value.push(person);
+      emit('toast-update', `Sent friend request to ${person.name}`);
     } catch(err) {
       console.error(err);
       emit('toast-update', 'Error connecting with the user');
