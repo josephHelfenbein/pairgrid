@@ -5,7 +5,7 @@
           Connect. Code. Create.
         </h1>
         <p class="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Find your perfect coding partner with our real-time matchmaking platform. Connect with developers who share your interests and build amazing things together.
+          Find your perfect coding partner with our real-time matchmaking platform. Connect with developers who share your interests and build amazing things together. (This website is still under construction)
         </p>
         <div class="flex justify-center gap-4">
             <NuxtLink to="/dashboard">
@@ -30,7 +30,7 @@
               <CardTitle>Smart Matchmaking</CardTitle>
             </CardHeader>
             <CardContent>
-              Connect with developers who share your interests, tech stack, and coding goals. Our AI-powered matching system finds your perfect coding partners.
+              Connect with developers who share your interests, tech stack, and coding goals. Our matching system finds your perfect coding partners.
             </CardContent>
           </Card>
   
