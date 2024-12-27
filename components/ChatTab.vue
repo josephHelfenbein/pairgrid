@@ -50,22 +50,58 @@
   
       <Card class="w-full">
         <CardHeader class="flex justify-between">
-          <CardTitle>
+          <CardTitle class="flex-shrink-0">
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
-          <DropdownMenu v-if="selectedFriend" class="w-8">
-            <DropdownMenuTrigger>
-              <button class="p-2 w-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" color="#505050" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01" />
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem @click="viewProfile(selectedFriend)">View Profile</DropdownMenuItem>
-              <DropdownMenuItem @click="removeFriend(selectedFriend)">Remove Friend</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dialog>
+            <DropdownMenu v-if="selectedFriend" class="w-8">
+              <DropdownMenuTrigger>
+                <button class="p-2 w-6 flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" color="#505050" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01" />
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DialogTrigger asChild>
+                  <DropdownMenuItem @click="viewProfile(selectedFriend)">View Profile</DropdownMenuItem>
+                </DialogTrigger>
+                <DropdownMenuItem @click="removeFriend(selectedFriend)">Remove Friend</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{{ selectedFriend?.name }}'s Profile</DialogTitle>
+            </DialogHeader>
+              
+            <div class="space-y-2">
+              <p><strong>Email:</strong> {{ selectedFriend?.email }}</p>
+              <p><strong>Specialty:</strong> {{ friendProfile?.specialty }}</p>
+              <p><strong>Occupation:</strong> {{ friendProfile?.occupation }}</p>
+              <p><strong>Bio:</strong> {{ friendProfile?.bio }}</p>
+              <div>
+                <strong>Languages:</strong>
+                  <div class="flex flex-wrap space-x-2 text-sm">
+                    <p v-for="language in friendProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
+                      {{ language }}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <strong>Interests:</strong>
+                  <div class="flex flex-wrap space-x-2 text-sm">
+                    <p v-for="interest in friendProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
+                      {{ interest }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="submit">Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-300px)]">
@@ -97,41 +133,6 @@
           </div>
         </CardContent>
       </Card>
-      <Dialog v-if="isDialogOpen" @close="isDialogOpen = false">
-        <DialogTrigger></DialogTrigger>
-        <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ selectedFriend?.name }}'s Profile</DialogTitle>
-        </DialogHeader>
-          
-        <div class="space-y-2">
-          <p><strong>Email:</strong> {{ selectedFriend?.email }}</p>
-          <p><strong>Specialty:</strong> {{ friendProfile?.specialty }}</p>
-          <p><strong>Occupation:</strong> {{ friendProfile?.occupation }}</p>
-          <p><strong>Bio:</strong> {{ friendProfile?.bio }}</p>
-          <div>
-            <strong>Languages:</strong>
-              <div class="flex flex-wrap space-x-2 text-sm">
-                <p v-for="language in friendProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
-                  {{ language }}
-                </p>
-              </div>
-            </div>
-            <div>
-              <strong>Interests:</strong>
-              <div class="flex flex-wrap space-x-2 text-sm">
-                <p v-for="interest in friendProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
-                  {{ interest }}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button @click="isDialogOpen = false">Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   </template>
   
@@ -234,7 +235,6 @@
   const messages = ref([])
   const newMessage = ref('')
   const friendProfile = ref(null);
-  const isDialogOpen = ref(false);
 
   const fetchFriendProfile = async (friend) => {
     try {
@@ -256,7 +256,6 @@
   };
   const viewProfile = (friend) => {
     fetchFriendProfile(friend);
-    isDialogOpen.value = true;
   }
   
   const selectFriend = (friend) => {
