@@ -64,6 +64,7 @@ func GetFriendLists(userID string) ([]string, []string, error) {
 						{user_id: {_eq: $userID}, status: {_eq: "accepted"}},
 						{user_id: {_eq: $userID}, status: {_eq: "pending"}, to_accept: {_neq: $userID}}
 					]	
+				}
 				) {
 				friend_id
 			}
@@ -73,6 +74,7 @@ func GetFriendLists(userID string) ([]string, []string, error) {
 						{friend_id: {_eq: $userID}, status: {_eq: "accepted"}},
 						{friend_id: {_eq: $userID}, status: {_eq: "pending"}, to_accept: {_neq: $userID}}
 					]	
+				}
 				) {
 				user_id
 			}

@@ -49,10 +49,23 @@
       </Card>
   
       <Card class="w-2/3">
-        <CardHeader>
+        <CardHeader class="flex justify-between">
           <CardTitle>
-            {{ selectedFriend ? `Chat with ${selectedFriend.name}` : 'Select a friend' }}
+            {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
+          <DropdownMenu v-if="selectedFriend">
+            <DropdownMenuTrigger>
+              <button class="p-2 bg-gray-200 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01" />
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem @click="viewProfile(selectedFriend)">View Profile</DropdownMenuItem>
+              <DropdownMenuItem @click="denyRequest(selectedFriend)">Delete Friend</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardHeader>
         <CardContent>
           <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-300px)]">
@@ -84,6 +97,41 @@
           </div>
         </CardContent>
       </Card>
+      <Dialog v-if="isDialogOpen" @close="isDialogOpen = false">
+        <DialogTrigger></DialogTrigger>
+        <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ selectedFriend?.name }}'s Profile</DialogTitle>
+        </DialogHeader>
+          
+        <div class="space-y-2">
+          <p><strong>Email:</strong> {{ selectedFriend?.email }}</p>
+          <p><strong>Specialty:</strong> {{ friendProfile?.specialty }}</p>
+          <p><strong>Occupation:</strong> {{ friendProfile?.occupation }}</p>
+          <p><strong>Bio:</strong> {{ friendProfile?.bio }}</p>
+          <div>
+            <strong>Languages:</strong>
+              <div class="flex flex-wrap space-x-2 text-sm">
+                <p v-for="language in friendProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
+                  {{ language }}
+                </p>
+              </div>
+            </div>
+            <div>
+              <strong>Interests:</strong>
+              <div class="flex flex-wrap space-x-2 text-sm">
+                <p v-for="interest in friendProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
+                  {{ interest }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button @click="isDialogOpen = false">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </template>
   
@@ -92,8 +140,10 @@
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+  import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
   import { ScrollArea } from '@/components/ui/scroll-area'
   import { defineProps, defineEmits, onMounted } from 'vue'
+  import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
   const props = defineProps({
     user: {
@@ -170,6 +220,25 @@
   const selectedFriend = ref(null)
   const messages = ref([])
   const newMessage = ref('')
+  const friendProfile = ref(null);
+
+  const fetchFriendProfile = async (friend) => {
+    try {
+      const response = await fetch(`https://www.pairgrid.com/api/getuserinfo/getuserinfo?user_id=${friend.email}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to fetch user profile');
+      const data = await response.json();
+      friendProfile.value = data;
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error fetching friend profile');
+    }
+  };
+  const viewProfile = (friend) => {
+    fetchFriendProfile(friend);
+    isDialogOpen.value = true;
+  }
   
   const selectFriend = (friend) => {
     selectedFriend.value = friend
