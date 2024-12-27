@@ -5,7 +5,7 @@
           <CardTitle>Friends</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea class="h-[calc(100vh-200px)]">
+          <ScrollArea class="h-[calc(100vh-400px)]">
             <div class="space-y-2">
               <div
                 v-for="request in requests"
@@ -39,10 +39,12 @@
                 @click="selectFriend(friend)"
               >
                 <img :src="friend.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-                <p>
+                <div>
+                  <p>
                   {{ friend.name }}
-                </p>
-                <p class="text-sm text-gray-500">{{ getLastSeenText(friend.last_seen) }}</p>
+                  </p>
+                  <p class="text-sm text-gray-500">{{ getLastSeenText(friend.last_seen) }}</p>
+                </div>
               </Button>
             </div>
           </ScrollArea>
@@ -104,7 +106,7 @@
           </Dialog>
         </CardHeader>
         <CardContent>
-          <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-300px)]">
+          <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-500px)]">
             <ScrollArea class="flex-grow mb-4">
               <div class="space-y-2">
                 <div
