@@ -55,7 +55,7 @@
           </CardTitle>
           <DropdownMenu v-if="selectedFriend" class="w-8">
             <DropdownMenuTrigger>
-              <button class="p-2">
+              <button class="p-2 w-6">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" color="#505050" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01" />
                 </svg>
@@ -234,6 +234,7 @@
   const messages = ref([])
   const newMessage = ref('')
   const friendProfile = ref(null);
+  const isDialogOpen = ref(false);
 
   const fetchFriendProfile = async (friend) => {
     try {
