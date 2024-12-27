@@ -48,15 +48,15 @@
         </CardContent>
       </Card>
   
-      <Card class="w-2/3">
+      <Card class="w-full">
         <CardHeader class="flex justify-between">
           <CardTitle>
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
           <DropdownMenu v-if="selectedFriend">
             <DropdownMenuTrigger>
-              <button class="p-2 bg-gray-200 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button class="p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" color="#505050" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6h.01M12 12h.01M12 18h.01" />
                 </svg>
               </button>
@@ -224,8 +224,13 @@
 
   const fetchFriendProfile = async (friend) => {
     try {
-      const response = await fetch(`https://www.pairgrid.com/api/getuserinfo/getuserinfo?user_id=${friend.email}`, {
-        method: 'GET',
+      const emailData = { email: friend.email };
+      const response = await fetch('https://www.pairgrid.com/api/getuserinfo/getuserinfo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData),
       });
       if (!response.ok) throw new Error('Failed to fetch user profile');
       const data = await response.json();
