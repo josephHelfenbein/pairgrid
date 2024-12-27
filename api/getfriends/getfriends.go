@@ -13,6 +13,7 @@ type User struct {
 	Name           string `json:"name"`
 	Email          string `json:"email"`
 	ProfilePicture string `json:"profile_picture"`
+	LastSeen       string `json:"last_seen"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -125,6 +126,7 @@ func GetUsersInfo(userIDs []string) ([]User, error) {
 				name
 				email
 				profile_picture
+				last_seen
 			}
 		}
 	`

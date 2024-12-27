@@ -42,6 +42,7 @@
                 <p>
                   {{ friend.name }}
                 </p>
+                <p class="text-sm text-gray-500">{{ getLastSeenText(friend.last_seen) }}</p>
               </Button>
             </div>
           </ScrollArea>
@@ -49,7 +50,7 @@
       </Card>
   
       <Card class="w-2/3">
-        <CardHeader class="flex justify-between items-center">
+        <CardHeader class="flex flex-row justify-between items-center">
           <CardTitle class="flex-shrink-0 flex items-center">
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
           </CardTitle>
@@ -152,6 +153,26 @@
     }
   })
   const user = props.user;
+
+  const getLastSeenText = (lastSeen) => {
+    const now = new Date();
+    const lastSeenDate = new Date(lastSeen);
+    const diffInSeconds = Math.floor((now - lastSeenDate) / 1000);
+
+    if (diffInSeconds < 60) {
+      return `Last seen just now`;
+    }
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) {
+      return `Last seen ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    }
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) {
+      return `Last seen ${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    }
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `Last seen ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  }
 
   const friends = ref([]);
   const requests = ref([]);
