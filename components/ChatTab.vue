@@ -5,7 +5,7 @@
           <CardTitle>Friends</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea class="h-[calc(100vh-400px)]">
+          <ScrollArea class="h-[calc(100vh-300px)]">
             <div class="space-y-2">
               <div
                 v-for="request in requests"
@@ -106,7 +106,7 @@
           </Dialog>
         </CardHeader>
         <CardContent>
-          <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-500px)]">
+          <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-350px)]">
             <ScrollArea class="flex-grow mb-4">
               <div class="space-y-2">
                 <div

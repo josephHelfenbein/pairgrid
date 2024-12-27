@@ -1,4 +1,4 @@
-package updateuser
+package updateseen
 
 import (
 	"bytes"
@@ -10,24 +10,18 @@ import (
 	"time"
 )
 
-type UpdateUserRequest struct {
-	ID         string   `json:"id"`
-	Bio        string   `json:"bio"`
-	Language   []string `json:"language"`
-	Specialty  string   `json:"specialty"`
-	Interests  []string `json:"interests"`
-	Occupation string   `json:"occupation"`
-}
-
 func Handler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Received request to update user in Hasura")
-	var updateReq UpdateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
-		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
-		log.Printf("Error decoding JSON payload: %s", err)
+	log.Println("Received request to update last seen in Hasura")
+
+	query := r.URL.Query()
+	userID := query.Get("user_id")
+
+	if userID == "" {
+		http.Error(w, "Missing user_id query parameter", http.StatusBadRequest)
 		return
 	}
-	if err := UpdateUserInHasura(updateReq); err != nil {
+
+	if err := UpdateUserInHasura(userID); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update user in Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error updating user in Hasura: %s", err)
 		return
@@ -42,32 +36,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Write(jsonResp)
 	}
-	log.Printf("User with ID %s successfully updated in Hasura", updateReq.ID)
+	log.Printf("User with ID %s successfully updated in Hasura", userID)
 }
-func UpdateUserInHasura(req UpdateUserRequest) error {
+func UpdateUserInHasura(userID string) error {
 	query := `
-		mutation UpdateUser($id: String!, $bio: String, $language: [String!], $specialty: String, $interests: [String!], $occupation: String, $lastSeen: timestamptz!) {
+		mutation UpdateUser($id: String!, $lastSeen: timestamptz!) {
 			update_users_by_pk(
 				pk_columns: {id: $id},
-				_set: {bio: $bio, language: $language, specialty: $specialty, interests: $interests, occupation: $occupation, last_seen: $lastSeen}
-				){
-					id
-					bio
-					language
-					specialty
-					interests
-					occupation
-				}
+				_set: {last_seen: $lastSeen}
+			){
+				last_seen
+			}
 		}
 	`
 	variables := map[string]interface{}{
-		"id":         req.ID,
-		"bio":        req.Bio,
-		"language":   req.Language,
-		"specialty":  req.Specialty,
-		"interests":  req.Interests,
-		"occupation": req.Occupation,
-		"lastSeen":   time.Now().Format(time.RFC3339Nano),
+		"id":       userID,
+		"lastSeen": time.Now().Format(time.RFC3339Nano),
 	}
 	requestBody := map[string]interface{}{
 		"query":     query,

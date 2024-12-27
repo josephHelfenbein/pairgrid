@@ -1,6 +1,7 @@
 package addfriend
 
 import (
+	"api/updateseen"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -20,6 +21,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing user_id or friend_email query parameter", http.StatusBadRequest)
 		return
 	}
+	updateseen.UpdateUserInHasura(userID)
 	friendID, err := getFriendIDByEmail(friendEmail)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to find friend by email: %s", err), http.StatusInternalServerError)

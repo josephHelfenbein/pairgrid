@@ -1,6 +1,7 @@
 package getfriends
 
 import (
+	"api/updateseen"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Missing user_id query parameter", http.StatusBadRequest)
 		return
 	}
+	updateseen.UpdateUserInHasura(userID)
 	friendLists, err := GetFriendLists(userID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get friends from Hasura: %s", err), http.StatusInternalServerError)

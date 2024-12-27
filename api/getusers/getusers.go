@@ -1,6 +1,7 @@
 package getusers
 
 import (
+	"api/updateseen"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -39,6 +40,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	if u := query.Get("user_id"); u != "" {
 		userID = u
+		updateseen.UpdateUserInHasura(userID)
 	}
 	users, err := GetUsersFromHasura(offset, limit, userID)
 	if err != nil {

@@ -1,6 +1,7 @@
 package getuser
 
 import (
+	"api/updateseen"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -35,6 +36,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Missing user ID")
 		return
 	}
+	updateseen.UpdateUserInHasura(getUserReq.ID)
 	user, err := GetUserFromHasura(getUserReq.ID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get user from Hasura: %s", err), http.StatusInternalServerError)
