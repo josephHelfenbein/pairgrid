@@ -19,8 +19,16 @@
                   </p>
                 </div>
                 <div class="flex gap-2">
-                  <Button @click="acceptRequest(request)">Accept</Button>
-                  <Button @click="denyRequest(request)" variant="destructive">Deny</Button>
+                  <button @click="acceptRequest(request)" class="p-2 bg-green-500 text-white rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                  <button @click="denyRequest(request)" class="p-2 bg-red-500 text-white rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
               </div>
               <Button
@@ -145,10 +153,18 @@
       emit('toast-update', 'Error accepting friend request');
     }
   };
-  const denyRequest = (request) => {
-    requests.value = requests.value.filter((r) => r.email !== request.email);
-    // remove friend row
-    emit('toast-update', `${request.name}'s friend request denied`);
+  const denyRequest = async (request) => {
+    try {
+      const response = await fetch(`https://www.pairgrid.com/api/deletefriend/deletefriend?user_id=${user.id}&friend_email=${request.email}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to deny friend request');
+      requests.value = requests.value.filter((r) => r.email !== request.email);
+      emit('toast-update', `${request.name}'s friend request denied`);
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error denying friend request');
+    }
   };
   
   const selectedFriend = ref(null)
