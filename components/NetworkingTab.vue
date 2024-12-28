@@ -63,7 +63,7 @@
   
   const connect = async (person) => {
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${person.email}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${person.email}&operation=add`, {
         method: 'GET',
       })
       if(!response.ok) throw new Error('Failed to connect with the user');

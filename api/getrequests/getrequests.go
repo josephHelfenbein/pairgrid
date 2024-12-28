@@ -1,6 +1,7 @@
 package getrequests
 
 import (
+	"api/updateseen"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -21,17 +22,28 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	userID := query.Get("user_id")
+	kind := query.Get("kind")
 
-	if userID == "" {
-		http.Error(w, "Missing user_id query parameter", http.StatusBadRequest)
+	if userID == "" || kind == "" {
+		http.Error(w, "Missing one or more query parameters", http.StatusBadRequest)
 		return
 	}
-	friendLists, err := GetFriendLists(userID)
+	friendLists := []string(nil)
+	err := error(nil)
+	if kind == "friend" {
+		friendLists, err = GetFriendLists(userID)
+	} else if kind == "request" {
+		friendLists, err = GetRequestLists(userID)
+	} else {
+		http.Error(w, "Invalid kind query parameter", http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get friends from Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error getting friends from Hasura: %s", err)
 		return
 	}
+	updateseen.UpdateUserInHasura(userID)
 	users, err := GetUsersInfo(friendLists)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get users info from Hasura: %s", err), http.StatusInternalServerError)
@@ -49,6 +61,74 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Friends successfully retrieved from Hasura")
 }
 func GetFriendLists(userID string) ([]string, error) {
+	query := `
+		query GetFriends($userID: String!) {
+			friends1: friends(where: {user_id: {_eq: $userID}, status: {_eq: "accepted"}}) {
+				friend_id
+			}
+			friends2: friends(where: {friend_id: {_eq: $userID}, status: {_eq: "accepted"}}) {
+				user_id
+			}
+		}
+	`
+	requestBody := map[string]interface{}{
+		"query": query,
+		"variables": map[string]interface{}{
+			"userID": userID,
+		},
+	}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request body: %w", err)
+	}
+
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+
+	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hasura-admin-secret", hasuraSecret)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request to Hasura: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+	var responseBody struct {
+		Data struct {
+			Friends1 []struct {
+				FriendID string `json:"friend_id"`
+			} `json:"friends1"`
+			Friends2 []struct {
+				UserID string `json:"user_id"`
+			} `json:"friends2"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return nil, fmt.Errorf("failed to decode response body: %w", err)
+	}
+	friendList := []string{}
+	for _, friend := range responseBody.Data.Friends1 {
+		if friend.FriendID != userID {
+			friendList = append(friendList, friend.FriendID)
+		}
+	}
+	for _, friend := range responseBody.Data.Friends2 {
+		if friend.UserID != userID {
+			friendList = append(friendList, friend.UserID)
+		}
+	}
+	return friendList, nil
+}
+func GetRequestLists(userID string) ([]string, error) {
 	query := `
 		query GetFriends($userID: String!) {
 			friends1: friends(where: {user_id: {_eq: $userID}, status: {_eq: "pending"}, to_accept: {_eq: $userID}}) {

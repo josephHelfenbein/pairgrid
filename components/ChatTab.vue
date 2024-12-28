@@ -182,7 +182,7 @@
   const emit = defineEmits(['toast-update']);
   const fetchFriends = async () =>{
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/getfriends/getfriends?user_id=${user.id}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${user.id}&kind=friend`, {
         method: 'GET',
       });
       if(!response.ok) throw new Error('Failed to fetch friends');
@@ -196,7 +196,7 @@
   };
   const fetchRequests = async () => {
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${user.id}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${user.id}&kind=request`, {
         method: 'GET',
       });
       if(!response.ok) throw new Error('Failed to fetch friend requests');
@@ -214,7 +214,7 @@
   });
   const acceptRequest = async (request) => {
     try {
-      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${request.email}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${request.email}&operation=add`, {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Failed to accept friend request');
@@ -228,7 +228,7 @@
   };
   const denyRequest = async (request) => {
     try {
-      const response = await fetch(`https://www.pairgrid.com/api/deletefriend/deletefriend?user_id=${user.id}&friend_email=${request.email}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${request.email}&operation=remove`, {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Failed to deny friend request');
@@ -241,7 +241,7 @@
   };
   const removeFriend = async (request) => {
     try {
-      const response = await fetch(`https://www.pairgrid.com/api/deletefriend/deletefriend?user_id=${user.id}&friend_email=${request.email}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${request.email}&operation=remove`, {
         method: 'GET',
       });
       if (!response.ok) throw new Error('Failed to remove friend');
