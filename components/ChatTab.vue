@@ -197,8 +197,9 @@
 
   const scrollToBottom = () => {
     nextTick(() => {
-      if (scrollArea.value) {
-        scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
+      const el = scrollArea.value?.$el || scrollArea.value; 
+      if (el) {
+        el.scrollTop = el.scrollHeight;
       }
     });
   };
@@ -296,6 +297,11 @@
         body: JSON.stringify(payload),
       });
       if(!response.ok) throw new Error('Failed to send message');
+      messages.value.push({
+        id: new Date().getTime(),
+        sender: 'me',
+        text: newMessage.value,
+      });
       newMessage.value = '';
     } catch (err) {
       console.error(err);
@@ -351,11 +357,13 @@
     channel.value.bind('new-message', (data) => {
       const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key);
 
-      messages.value.push({
-        id: data.created_at,
-        sender: data.sender_id == user.id ? 'me' : selectedFriend.value.name,
-        text: decryptedMessage,
-      });
+      if(data.sender_id != user.id) {
+        messages.value.push({
+          id: data.created_at,
+          sender: data.sender_id == user.id ? 'me' : selectedFriend.value.name,
+          text: decryptedMessage,
+        });
+      }
     });
   }
 
