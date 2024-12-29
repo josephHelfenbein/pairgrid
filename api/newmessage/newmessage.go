@@ -57,7 +57,7 @@ func BroadcastMessage(message Message) {
 		firstID, secondID = message.RecipientID, message.SenderID
 	}
 	channelName := fmt.Sprintf("chat-%s-%s", firstID, secondID)
-
+	log.Printf("channelname, %s", channelName)
 	data := map[string]interface{}{
 		"id":                message.ID,
 		"sender_id":         message.SenderID,
