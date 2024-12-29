@@ -196,12 +196,12 @@
   }
 
   const scrollToBottom = () => {
-    console.log(scrollArea.value);
     nextTick(() => {
-      const el = scrollArea.value?.$refs?.viewport || scrollArea.value?.$el || scrollArea.value;
-      if (el) {
-        el.scrollTop = el.scrollHeight;
-      }
+      const scrollAreaComponent = scrollArea.value;
+      if (scrollAreaComponent?.subTree?.el) {
+          const el = scrollAreaComponent.subTree.el;
+          el.scrollTop = el.scrollHeight;
+      } 
     });
   };
 
