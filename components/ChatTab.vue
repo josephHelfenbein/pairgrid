@@ -147,7 +147,6 @@
   import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
   import Pusher from 'pusher-js'
-  import { useRuntimeConfig } from 'nuxt'
   import CryptoJS from 'crypto-js'
 
   const props = defineProps({
