@@ -190,7 +190,7 @@
   const channel = ref(null);
 
   const pusherConfig = {
-    appKey: useRuntimeConfig().pusherAppKey,
+    appKey: useRuntimeConfig().public.pusherAppKey,
     cluster: "us2",
   }
 
@@ -292,7 +292,7 @@
     }
   }
   const generateEncryptionKey = (userID) => {
-    const serverSideSecret = useRuntimeConfig().serverSideSecret;
+    const serverSideSecret = useRuntimeConfig().public.encryptionKey;
     return CryptoJS.SHA256(userID + serverSideSecret);
   }
   const encryptMessage = (message, key) => {
@@ -328,8 +328,6 @@
     const firstID = user.id < friendID ? user.id : friendID;
     const secondID = user.id > friendID ? user.id : friendID;
     const newChannel = `chat-${firstID}-${secondID}`;
-    console.log(pusherConfig.appKey);
-    console.log(useRuntimeConfig().pusherAppKey);
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
     });
