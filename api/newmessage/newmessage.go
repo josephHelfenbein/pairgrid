@@ -11,11 +11,10 @@ import (
 )
 
 type HasuraEvent struct {
-	Event struct {
-		Data struct {
-			New Message `json:"new"`
-		} `json:"data"`
-	} `json:"event"`
+	Payload struct {
+		New Message `json:"new"`
+	} `json:"payload"`
+	Version string `json:"version"`
 }
 
 type Message struct {
@@ -36,7 +35,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Decoded HasuraEvent: %+v", event)
 
-	message := event.Event.Data.New
+	message := event.Payload.New
 	log.Printf("Extracted Message: %+v", message)
 
 	BroadcastMessage(message)
