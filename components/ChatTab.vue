@@ -147,6 +147,8 @@
   import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
   import Pusher from 'pusher-js'
+  import { useRuntimeConfig } from '@nuxt/runtime'
+  import CryptoJS from 'crypto-js'
 
   const props = defineProps({
     user: {
@@ -188,7 +190,7 @@
   const channel = ref(null);
 
   const pusherConfig = {
-    appKey: process.env.PUSHER_APP_KEY,
+    appKey: useRuntimeConfig().pusherAppKey,
     cluster: "us2",
   }
 
@@ -290,19 +292,29 @@
     }
   }
   const generateEncryptionKey = (userID) => {
-    const serverSideSecret = process.env.ENCRYPTION_SECRET;
-    return crypto.createHash('sha256').update(`${userID + serverSideSecret}`).digest();
+    const serverSideSecret = useRuntimeConfig().serverSideSecret;
+    return CryptoJS.SHA256(userID + serverSideSecret);
   }
   const encryptMessage = (message, key) => {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
-    let encrypted = Buffer.concat([cipher.update(message, "utf8"), cipher.final()]);
-    return { encryptedData: encrypted.toString("hex"), iv: iv.toString("hex") };
+    const iv = CryptoJS.lib.WordArray.random(16);
+    const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv });
+    
+    return {
+      encryptedData: encrypted.ciphertext.toString(CryptoJS.enc.Hex),
+      iv: iv.toString(CryptoJS.enc.Hex)
+    };
   }
   const decryptMessage = (encryptedMessage, key, iv) => {
-    const decipher = crypto.createDecipheriv("aes-256-cbc", key, Buffer.from(iv, "hex"));
-    const decrypted = Buffer.concat([decipher.update(Buffer.from(encryptedMessage, "hex")), decipher.final()]);
-    return decrypted.toString("utf8");
+    const ivWordArray = CryptoJS.enc.Hex.parse(iv);
+    const encryptedWordArray = CryptoJS.enc.Hex.parse(encryptedMessage);
+
+    const decrypted = CryptoJS.AES.decrypt(
+      { ciphertext: encryptedWordArray },
+      key,
+      { iv: ivWordArray }
+    );
+
+    return decrypted.toString(CryptoJS.enc.Utf8);  
   }
   
   const unsubscribeFromChatChannel = () =>{
