@@ -3,6 +3,7 @@ package newmessage
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -27,12 +28,20 @@ type Message struct {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusBadRequest)
+		return
+	}
+	log.Printf("Raw request body: %s", string(body))
+
 	var event HasuraEvent
-	err := json.NewDecoder(r.Body).Decode(&event)
+	err = json.Unmarshal(body, &event)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to decode request body: %s", err), http.StatusBadRequest)
 		return
 	}
+
 	log.Printf("Decoded HasuraEvent: %+v", event)
 
 	message := event.Payload.New
