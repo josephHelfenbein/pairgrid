@@ -197,10 +197,10 @@
 
   const scrollToBottom = () => {
     nextTick(()=>{
-      console.log("full element:", scrollArea.value);
-      if (scrollArea.value?.$el) {
-        console.log('Scrolling:', scrollArea.value.$el)
-        scrollArea.value.$el.scrollTop = scrollArea.value.$el.scrollHeight
+      const viewportEl = scrollArea.value?.scrollAreaViewport?.$el
+      if (viewportEl) {
+        console.log(viewportEl)
+        viewportEl.scrollTop = viewportEl.scrollHeight
       }
     });
   };
