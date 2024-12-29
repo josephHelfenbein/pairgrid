@@ -34,6 +34,9 @@
                   </button>
                 </div>
               </div>
+              <div v-if="friends.length === 0 && !friendsLoading" class="flex justify-center items-center w-full h-full">
+                <p class="text-xs text-center text-gray-500">No friends found. Make friends in the Networking tab!</p>
+              </div>
               <Button
                 v-for="friend in friends"
                 :key="friend.email"

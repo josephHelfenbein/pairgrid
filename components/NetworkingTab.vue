@@ -2,6 +2,12 @@
     <div>
       <h2 class="text-2xl font-bold mb-4">Recommended Connections</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-if="loading" class="flex justify-center items-center w-screen h-64">
+          <Loader size="150px" />
+        </div>
+        <div v-if="recommendedPeople.length === 0 && !loading" class="flex justify-center items-center h-64 w-screen">
+          <p class="text-xs text-center text-gray-500">No recommended connections found</p>
+        </div>
         <Card v-for="person in recommendedPeople">
           <div class="ml-4 flex items-center">
             <img :src="person.profile_picture" class="w-16 h-16 rounded-full object-cover" />
@@ -29,7 +35,9 @@
   <script setup>
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-  import { defineProps, defineEmits, onMounted } from 'vue';
+  import { defineProps, defineEmits, onMounted, ref } from 'vue';
+  import Loader from '@/components/Loader.vue';
+
 
   const props = defineProps({
     user: {
@@ -43,6 +51,7 @@
   const recommendedPeople = ref([]);
   const sentTo = ref([]);
   const error = ref(null);
+  const loading = ref(true);
   const fetchRecommendedPeople = async () =>{
     try{
       const response = await fetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`, {
@@ -51,6 +60,7 @@
       if(!response.ok) throw new Error('Failed to fetch recommended people');
       const data = await response.json();
       recommendedPeople.value = data;
+      loading.value = false;
     } catch (err) {
       console.error(err);
       error.value = err.message;
