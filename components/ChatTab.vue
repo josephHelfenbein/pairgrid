@@ -318,8 +318,13 @@
   }
   
   const unsubscribeFromChatChannel = () =>{
-    if(!pusher.value || !channel.value) return;
-    if(channel.value) pusher.value.unsubscribe(channel.value);
+    if (channel.value) {
+      channel.value.unbind_all();
+      channel.value.unsubscribe();
+    }
+    if (pusher.value) {
+      pusher.value.disconnect();
+    }
   }
   const subscribeToChatChannel = () => {
     if(!selectedFriend.value || !friendProfile.value) return;
@@ -331,10 +336,8 @@
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
     });
-    console.log(newChannel);
     channel.value = pusher.value.subscribe(newChannel);
     channel.value.bind('new-message', (data) => {
-      console.log(data);
       const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key);
 
       messages.value.push({
@@ -353,7 +356,7 @@
   const fetchFriendProfile = async (friend) => {
     try {
       const emailData = { email: friend.email };
-      const response = await fetch('https://www.pairgrid.com/api/getuserinfo/getuserinfo', {
+      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -363,12 +366,27 @@
       if (!response.ok) throw new Error('Failed to fetch user profile');
       const data = await response.json();
       friendProfile.value = data;
+      await getMessages();
       subscribeToChatChannel();
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error fetching friend profile');
     }
   };
+
+  const getMessages = async () => {
+    try {
+      const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${user.id}&friend_id=${friendProfile.value.id}`, {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      const data = await response.json();
+      messages.value = data;
+    } catch (err) {
+      console.error(err);
+      emit('toast-update', 'Error loading chat');
+    }
+  }
   
   const selectFriend = (friend) => {
     selectedFriend.value = friend

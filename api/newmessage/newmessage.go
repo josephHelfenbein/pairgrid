@@ -30,7 +30,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusBadRequest)
 		return
 	}
-	log.Printf("Raw request body: %s", string(body))
 
 	var event HasuraEvent
 	err = json.Unmarshal(body, &event)
@@ -39,10 +38,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Decoded HasuraEvent: %+v", event)
-
 	message := event.Payload
-	log.Printf("Extracted Message: %+v", message)
 
 	BroadcastMessage(message)
 }
@@ -65,12 +61,7 @@ func BroadcastMessage(message Message) {
 		firstID, secondID = message.RecipientID, message.SenderID
 	}
 	channelName := fmt.Sprintf("chat-%s-%s", firstID, secondID)
-	log.Printf("Message ID: %s", message.ID)
-	log.Printf("Sender ID: %s", message.SenderID)
-	log.Printf("Recipient ID: %s", message.RecipientID)
-	log.Printf("Encrypted Content: %s", message.EncryptedContent)
-	log.Printf("Key: %s", message.Key)
-	log.Printf("Created At: %s", message.CreatedAt)
+
 	data := map[string]interface{}{
 		"id":                message.ID,
 		"sender_id":         message.SenderID,
