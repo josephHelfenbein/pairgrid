@@ -196,8 +196,9 @@
   }
 
   const scrollToBottom = () => {
+    console.log(scrollArea.value);
     nextTick(() => {
-      const el = scrollArea.value?.$el || scrollArea.value; 
+      const el = scrollArea.value?.$refs?.viewport || scrollArea.value?.$el || scrollArea.value;
       if (el) {
         el.scrollTop = el.scrollHeight;
       }
@@ -289,6 +290,12 @@
         content: encryptedMessage.encryptedData,
         key: encryptedMessage.iv,
       };
+      messages.value.push({
+        id: new Date().getTime(),
+        sender: 'me',
+        text: newMessage.value,
+      });
+      newMessage.value = '';
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
         method: 'POST',
         headers: {
@@ -297,12 +304,6 @@
         body: JSON.stringify(payload),
       });
       if(!response.ok) throw new Error('Failed to send message');
-      messages.value.push({
-        id: new Date().getTime(),
-        sender: 'me',
-        text: newMessage.value,
-      });
-      newMessage.value = '';
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error sending message');
