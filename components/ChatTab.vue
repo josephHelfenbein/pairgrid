@@ -196,13 +196,13 @@
   }
 
   const scrollToBottom = () => {
-    nextTick(() => {
-      const scrollAreaComponent = scrollArea.value;
-      if (scrollAreaComponent?.subTree?.el) {
-          const el = scrollAreaComponent.subTree.el;
-          el.scrollTop = el.scrollHeight;
-      } 
-    });
+    const scrollAreaComponent = scrollArea.value;
+    console.log(scrollAreaComponent);
+    if (scrollAreaComponent?.subTree?.el) {
+      const el = scrollAreaComponent.subTree.el;
+      console.log(el);
+      el.scrollTop = el.scrollHeight;
+    }
   };
 
   watch(messages, scrollToBottom);
