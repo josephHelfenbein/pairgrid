@@ -200,8 +200,8 @@
       const viewportEl = scrollArea.value?.scrollAreaViewport?.$el
       if (viewportEl) {
         setTimeout(() => {
-          console.log(viewportEl);
-          viewportEl.scrollTop = viewportEl.scrollHeight;
+          console.log(viewportEl.parentElement);
+          viewportEl.parentElement.scrollTop = viewportEl.parentElement.scrollHeight;
         }, 0); 
       }
     });
