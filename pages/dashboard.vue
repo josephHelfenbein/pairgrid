@@ -4,7 +4,6 @@
       <SignedOut>
         <RedirectToSignUp />
       </SignedOut>
-
       <div v-if="loading==false">
         <Tabs default-value="chat" class="w-full p-4">
           <TabsList class="grid w-full grid-cols-3">
@@ -33,6 +32,9 @@
         </Tabs>
         <Toaster />
       </div>
+      <div v-else class="flex justify-center items-center h-screen">
+        <Loader size="150px" />  
+      </div> 
     </div>
 </template>
   
@@ -44,6 +46,7 @@
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
+  import Loader from '@/components/Loader'
   const loading = ref(true)
 
   const { user } = useUser();
@@ -85,7 +88,6 @@
         interests: data.interests || [],
         occupation: data.occupation || '',
       })
-      console.log('Preferences loaded successfully:', preferences);
     } catch(error){
       console.error('Error loading preferences:', error);
     }

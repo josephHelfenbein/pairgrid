@@ -228,7 +228,7 @@
     }).then((response)=>{ 
       if(response.ok){
         response.json().then(result=>{
-          console.log('Preferences updated successfully:', result);
+          console.log('Preferences updated successfully');
         }).catch(error=>{
           console.error('Error parsing response:', error);
         });

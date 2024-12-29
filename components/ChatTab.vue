@@ -6,6 +6,9 @@
         </CardHeader>
         <CardContent>
           <ScrollArea class="h-[calc(100vh-300px)]">
+            <div class="flex justify-center items-center h-full" v-if="friendsLoading">
+              <Loader size="80px" />
+            </div>  
             <div class="space-y-2">
               <div
                 v-for="request in requests"
@@ -108,6 +111,9 @@
         <CardContent>
           <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-350px)]">
             <ScrollArea ref="scrollArea" class="flex-grow mb-4">
+              <div class="flex justify-center items-center h-full" v-if="chatLoading">
+                <Loader size="80px" />
+              </div>
               <div class="space-y-2">
                 <div
                   v-for="message in messages"
@@ -146,6 +152,7 @@
   import { ScrollArea } from '@/components/ui/scroll-area'
   import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount, nextTick } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+  import Loader from '@/components/Loader'
   import Pusher from 'pusher-js'
   import { useRuntimeConfig } from '#app'
   import CryptoJS from 'crypto-js'
@@ -189,6 +196,8 @@
   const pusher = ref(null);
   const channel = ref(null);
   const scrollArea = ref(null);
+  const chatLoading = ref(false);
+  const friendsLoading = ref(true);
 
   const pusherConfig = {
     appKey: useRuntimeConfig().public.pusherAppKey,
@@ -200,7 +209,6 @@
       const viewportEl = scrollArea.value?.scrollAreaViewport?.$el
       if (viewportEl) {
         setTimeout(() => {
-          console.log(viewportEl.parentElement);
           viewportEl.parentElement.scrollTop = viewportEl.parentElement.scrollHeight;
         }, 0); 
       }
@@ -215,6 +223,7 @@
       if(!response.ok) throw new Error('Failed to fetch friends');
       const data = await response.json();
       friends.value = data;
+      friendsLoading.value = false;
     } catch (err) {
       console.error(err);
       error.value = err.message;
@@ -377,6 +386,7 @@
 
   const fetchFriendProfile = async (friend) => {
     try {
+      chatLoading.value = true;
       const emailData = { email: friend.email };
       const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
         method: 'POST',
@@ -417,6 +427,7 @@
           text: decryptedMessage,
         };
       });
+      chatLoading.value = false;
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error loading chat');
