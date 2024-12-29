@@ -328,6 +328,8 @@
     const firstID = user.id < friendID ? user.id : friendID;
     const secondID = user.id > friendID ? user.id : friendID;
     const newChannel = `chat-${firstID}-${secondID}`;
+    console.log(pusherConfig.appKey);
+    console.log(useRuntimeConfig().pusherAppKey);
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
     });

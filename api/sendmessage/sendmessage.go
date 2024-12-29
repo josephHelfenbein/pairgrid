@@ -58,7 +58,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 func InsertMessage(senderID, retrieverID, content, key string) error {
 	query := `
 		mutation InsertMessages($senderID: String!, $recipientID: String!, $content: String!, $key: String!) {
-			insert_messages(objects: {sender_id: $senderID, recipient_id: $recipientID, encrypted_content: $content, encrypted_key: $key}) {
+			insert_messages(objects: {sender_id: $senderID, recipient_id: $recipientID, encrypted_content: $content, key: $key}) {
 				affected_rows
 			}
 		}
