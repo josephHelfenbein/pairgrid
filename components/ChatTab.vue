@@ -196,10 +196,8 @@
   }
 
   const scrollToBottom = () => {
-    const scrollAreaComponent = scrollArea.value;
-    console.log(scrollAreaComponent);
-    if (scrollAreaComponent?.subTree?.el) {
-      const el = scrollAreaComponent.subTree.el;
+    if (scrollArea.value?.subTree?.el) {
+      el = scrollArea.value?.subTree?.el
       console.log(el);
       el.scrollTop = el.scrollHeight;
     }
