@@ -144,7 +144,7 @@
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
   import { ScrollArea } from '@/components/ui/scroll-area'
-  import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+  import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount, nextTick } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
   import Pusher from 'pusher-js'
   import { useRuntimeConfig } from '#app'
@@ -199,13 +199,13 @@
     nextTick(()=>{
       const viewportEl = scrollArea.value?.scrollAreaViewport?.$el
       if (viewportEl) {
-        console.log(viewportEl)
-        viewportEl.scrollTop = viewportEl.scrollHeight
+        setTimeout(() => {
+          console.log(viewportEl);
+          viewportEl.scrollTop = viewportEl.scrollHeight;
+        }, 0); 
       }
     });
   };
-
-  watch(messages, scrollToBottom);
 
   const fetchFriends = async () =>{
     try{
@@ -295,6 +295,7 @@
         sender: 'me',
         text: newMessage.value,
       });
+      scrollToBottom();
       newMessage.value = '';
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
         method: 'POST',
@@ -357,8 +358,9 @@
     channel.value = pusher.value.subscribe(newChannel);
     channel.value.bind('new-message', (data) => {
       const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key);
-
+      
       if(data.sender_id != user.id) {
+        scrollToBottom();
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == user.id ? 'me' : selectedFriend.value.name,
@@ -387,6 +389,7 @@
       const data = await response.json();
       friendProfile.value = data;
       await getMessages();
+      scrollToBottom();
       subscribeToChatChannel();
     } catch (err) {
       console.error(err);
