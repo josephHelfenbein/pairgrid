@@ -107,7 +107,7 @@
         </CardHeader>
         <CardContent>
           <div v-if="selectedFriend" class="flex flex-col h-[calc(100vh-350px)]">
-            <ScrollArea class="flex-grow mb-4">
+            <ScrollArea ref="scrollArea" class="flex-grow mb-4">
               <div class="space-y-2">
                 <div
                   v-for="message in messages"
@@ -144,7 +144,7 @@
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
   import { ScrollArea } from '@/components/ui/scroll-area'
-  import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue'
+  import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
   import Pusher from 'pusher-js'
   import { useRuntimeConfig } from '#app'
@@ -188,11 +188,22 @@
   const friendProfile = ref(null);
   const pusher = ref(null);
   const channel = ref(null);
+  const scrollArea = ref(null);
 
   const pusherConfig = {
     appKey: useRuntimeConfig().public.pusherAppKey,
     cluster: "us2",
   }
+
+  const scrollToBottom = () => {
+    nextTick(() => {
+      if (scrollArea.value) {
+        scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
+      }
+    });
+  };
+
+  watch(messages, scrollToBottom);
 
   const fetchFriends = async () =>{
     try{
