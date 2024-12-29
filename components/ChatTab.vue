@@ -331,18 +331,17 @@
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
     });
+    console.log(newChannel);
     channel.value = pusher.value.subscribe(newChannel);
     channel.value.bind('new-message', (data) => {
-      const { sender_id, encrypted_content: content, key, created_at: createdAt  } = data;
-
-      const encryptionKey = generateEncryptionKey(sender_id);
-      const decryptedMessage = decryptMessage(content, encryptionKey, key);
+      console.log(data);
+      const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key);
 
       messages.value.push({
-        id: createdAt,
-        sender: sender_id == user.id ? 'me' : selectedFriend.value.name,
+        id: data.created_at,
+        sender: data.sender_id == user.id ? 'me' : selectedFriend.value.name,
         text: decryptedMessage,
-      });      
+      });
     });
   }
 
