@@ -34,8 +34,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to decode request body: %s", err), http.StatusBadRequest)
 		return
 	}
-	log.Printf("Received new message: %+v", event.Event.Data.New)
+	log.Printf("Decoded HasuraEvent: %+v", event)
+
 	message := event.Event.Data.New
+	log.Printf("Extracted Message: %+v", message)
 
 	BroadcastMessage(message)
 }
