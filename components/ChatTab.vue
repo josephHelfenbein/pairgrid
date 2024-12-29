@@ -67,7 +67,7 @@
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DialogTrigger asChild>
-                  <DropdownMenuItem @click="viewProfile(selectedFriend)">View Profile</DropdownMenuItem>
+                  <DropdownMenuItem>View Profile</DropdownMenuItem>
                 </DialogTrigger>
                 <DropdownMenuItem @click="removeFriend(selectedFriend)">Remove Friend</DropdownMenuItem>
               </DropdownMenuContent>
@@ -139,14 +139,14 @@
   </template>
   
   <script setup>
-  import { ref } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
   import { ScrollArea } from '@/components/ui/scroll-area'
-  import { defineProps, defineEmits, onMounted } from 'vue'
+  import { ref, defineProps, defineEmits, onMounted, onBeforeUnmount } from 'vue'
   import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+  import Pusher from 'pusher-js'
 
   const props = defineProps({
     user: {
@@ -180,6 +180,18 @@
   const requests = ref([]);
   const error = ref(null);
   const emit = defineEmits(['toast-update']);
+  const selectedFriend = ref(null);
+  const messages = ref([]);
+  const newMessage = ref('');
+  const friendProfile = ref(null);
+  const pusher = ref(null);
+  const channel = ref(null);
+
+  const pusherConfig = {
+    appKey: process.env.PUSHER_APP_KEY,
+    cluster: "us2",
+  }
+
   const fetchFriends = async () =>{
     try{
       const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${user.id}&kind=friend`, {
@@ -255,11 +267,13 @@
   const sendMessage = async () => {
     if(!newMessage.value || !selectedFriend.value) return;
     try{
-      /*const encryptedMessage = encryptMessage(newMessage.value);
+      const encryptionKey = generateEncryptionKey(user.id); 
+      const encryptedMessage = encryptMessage(newMessage.value, encryptionKey);
       const payload = {
         sender_id: user.id,
         receiver_email: selectedFriend.value.email,
-        message: encryptedMessage,
+        content: encryptedMessage.encryptedData,
+        key: encryptedMessage.iv,
       };
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
         method: 'POST',
@@ -268,19 +282,63 @@
         },
         body: JSON.stringify(payload),
       });
-      if(!response.ok) throw new Error('Failed to send message');*/
-      messages.value.push({ id: Date.now(), sender: 'me', text: newMessage.value });
+      if(!response.ok) throw new Error('Failed to send message');
       newMessage.value = '';
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error sending message');
     }
   }
+  const generateEncryptionKey = (userID) => {
+    const serverSideSecret = process.env.ENCRYPTION_SECRET;
+    return crypto.createHash('sha256').update(`${userID + serverSideSecret}`).digest();
+  }
+  const encryptMessage = (message, key) => {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
+    let encrypted = Buffer.concat([cipher.update(message, "utf8"), cipher.final()]);
+    return { encryptedData: encrypted.toString("hex"), iv: iv.toString("hex") };
+  }
+  const decryptMessage = (encryptedMessage, key, iv) => {
+    const decipher = crypto.createDecipheriv("aes-256-cbc", key, Buffer.from(iv, "hex"));
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(encryptedMessage, "hex")), decipher.final()]);
+    return decrypted.toString("utf8");
+  }
   
-  const selectedFriend = ref(null);
-  const messages = ref([]);
-  const newMessage = ref('');
-  const friendProfile = ref(null);
+  const unsubscribeFromChatChannel = () =>{
+    if(!pusher.value || !channel.value) return;
+    if(channel.value) pusher.value.unsubscribe(channel.value);
+  }
+  const subscribeToChatChannel = () => {
+    if(!selectedFriend.value || !friendProfile.value) return;
+    unsubscribeFromChatChannel();
+    const friendID = friendProfile.id;
+    const firstID = user.id < friendID ? user.id : friendID;
+    const secondID = user.id > friendID ? user.id : friendID;
+    const newChannel = `chat-${firstID}-${secondID}`;
+    pusher.value = new Pusher(pusherConfig.appKey, {
+      cluster: pusherConfig.cluster,
+    });
+    channel.value = newChannel;
+    const chatChannel = pusher.value.subscribe(channel.value);
+    chatChannel.bind('new-message', (data) => {
+      const { sender_id, encrypted_content: content, key, created_at: createdAt  } = data;
+
+      const encryptionKey = generateEncryptionKey(sender_id);
+      const decryptedMessage = decryptMessage(content, encryptionKey, key);
+
+      messages.value.push({
+        id: createdAt,
+        sender: sender_id == user.id ? 'me' : selectedFriend.value.name,
+        text: decryptedMessage,
+      });      
+    });
+  }
+
+  onBeforeUnmount(() => {
+    unsubscribeFromChatChannel();
+  });
+  
 
   const fetchFriendProfile = async (friend) => {
     try {
@@ -295,20 +353,16 @@
       if (!response.ok) throw new Error('Failed to fetch user profile');
       const data = await response.json();
       friendProfile.value = data;
+      subscribeToChatChannel();
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error fetching friend profile');
     }
   };
-  const viewProfile = (friend) => {
-    fetchFriendProfile(friend);
-  }
   
   const selectFriend = (friend) => {
     selectedFriend.value = friend
-    messages.value = [
-      { id: 1, sender: 'me', text: 'Hey there!' },
-      { id: 2, sender: friend.name, text: 'Hi! How are you?' },
-    ]
+    messages.value = [];
+    fetchFriendProfile(friend);
   }
   </script>

@@ -14,6 +14,7 @@ type GetUserRequest struct {
 }
 
 type User struct {
+	ID         string   `json:"id"`
 	Bio        string   `json:"bio"`
 	Language   []string `json:"language"`
 	Specialty  string   `json:"specialty"`
@@ -53,6 +54,7 @@ func GetUserFromHasura(userEmail string) (*User, error) {
 	query := `
 		query GetUser($email: String!) {
 			users(where: {email: {_eq: $email}}) {
+				id
 				bio
 				language
 				specialty
