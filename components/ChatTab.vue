@@ -381,7 +381,19 @@
       });
       if (!response.ok) throw new Error('Failed to fetch messages');
       const data = await response.json();
-      messages.value = data;
+      messages.value = data.map(message => {
+        const decryptedMessage = decryptMessage(
+          message.encrypted_content, 
+          generateEncryptionKey(message.sender_id), 
+          message.key
+        );
+
+        return {
+          id: message.created_at,
+          sender: message.sender_id == user.id ? 'me' : selectedFriend.value.name,
+          text: decryptedMessage,
+        };
+      });
     } catch (err) {
       console.error(err);
       emit('toast-update', 'Error loading chat');
