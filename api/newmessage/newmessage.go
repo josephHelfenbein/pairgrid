@@ -29,11 +29,12 @@ type Message struct {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	var event HasuraEvent
-	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&event)
+	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to decode request body: %s", err), http.StatusBadRequest)
 		return
 	}
-
+	log.Printf("Received new message: %+v", event.Event.Data.New)
 	message := event.Event.Data.New
 
 	BroadcastMessage(message)
@@ -57,7 +58,7 @@ func BroadcastMessage(message Message) {
 		firstID, secondID = message.RecipientID, message.SenderID
 	}
 	channelName := fmt.Sprintf("chat-%s-%s", firstID, secondID)
-	log.Printf("channelname, %s", channelName)
+	log.Printf("message body, %s", message)
 	data := map[string]interface{}{
 		"id":                message.ID,
 		"sender_id":         message.SenderID,
