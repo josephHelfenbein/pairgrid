@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/pusher/pusher-http-go/v5"
 )
 
 type Message struct {
@@ -18,6 +20,13 @@ type Message struct {
 	ReceiverEmail string `json:"receiver_email"`
 	Content       string `json:"content"`
 	Key           string `json:"key"`
+}
+type MessagePusher struct {
+	SenderID         string `json:"sender_id"`
+	RecipientID      string `json:"recipient_id"`
+	EncryptedContent string `json:"encrypted_content"`
+	Key              string `json:"key"`
+	CreatedAt        string `json:"created_at"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -56,9 +65,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Message sent from %s to %s", msg.SenderID, msg.ReceiverEmail)
 }
 func InsertMessage(senderID, retrieverID, content, key string) error {
+	createdAt := time.Now().Format(time.RFC3339Nano)
 	query := `
-		mutation InsertMessages($senderID: String!, $recipientID: String!, $content: String!, $key: String!) {
-			insert_messages(objects: {sender_id: $senderID, recipient_id: $recipientID, encrypted_content: $content, key: $key}) {
+		mutation InsertMessages($senderID: String!, $recipientID: String!, $content: String!, $key: String!, $createdAt: timestamptz!) {
+			insert_messages(objects: {sender_id: $senderID, recipient_id: $recipientID, encrypted_content: $content, key: $key, created_at: $createdAt}) {
 				affected_rows
 			}
 		}
@@ -69,6 +79,7 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 		"recipientID": retrieverID,
 		"content":     content,
 		"key":         key,
+		"createdAt":   createdAt,
 	}
 
 	requestBody := map[string]interface{}{
@@ -118,5 +129,45 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 	}
 
 	log.Printf("Sent message in Hasura")
+	BroadcastMessage(MessagePusher{
+		SenderID:         senderID,
+		RecipientID:      retrieverID,
+		EncryptedContent: content,
+		Key:              key,
+		CreatedAt:        createdAt,
+	})
 	return nil
+}
+
+func BroadcastMessage(message MessagePusher) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+
+	firstID, secondID := message.SenderID, message.RecipientID
+	if message.SenderID > message.RecipientID {
+		firstID, secondID = message.RecipientID, message.SenderID
+	}
+	channelName := fmt.Sprintf("chat-%s-%s", firstID, secondID)
+
+	data := map[string]interface{}{
+		"sender_id":         message.SenderID,
+		"recipient_id":      message.RecipientID,
+		"encrypted_content": message.EncryptedContent,
+		"key":               message.Key,
+		"created_at":        message.CreatedAt,
+	}
+
+	err := pusherClient.Trigger(channelName, "new-message", data)
+	if err != nil {
+		log.Println("Error sending message to Pusher:", err)
+	}
 }
