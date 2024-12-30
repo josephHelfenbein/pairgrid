@@ -103,44 +103,98 @@ func CreateUserInHasura(user ClerkUser) error {
 	} else {
 		return fmt.Errorf("user does not have any email addresses")
 	}
-
-	query := `
-        mutation InsertUsers($id: String!, $name: String!, $email: String!, $profile_picture: String!) {
-            insert_users(objects: {id: $id, name: $name, email: $email, profile_picture: $profile_picture}) {
-                affected_rows
-                returning {
-                    id
-                    name
-                    email
-                    bio
-                    language
-                    specialty
-                    interests
-                    occupation
-                    last_seen
-                    created_at
-                    last_typed
-					profile_picture
-                }
+	checkUserQuery := `
+        query CheckUser($id: String!) {
+            users_by_pk(id: $id) {
+                id
             }
         }
     `
 
-	variables := map[string]interface{}{
-		"id":              user.ID,
-		"name":            fullName,
-		"email":           email,
-		"profile_picture": user.ImageURL,
+	checkVariables := map[string]interface{}{
+		"id": user.ID,
 	}
 
-	requestBody := map[string]interface{}{
-		"query":     query,
-		"variables": variables,
+	checkRequestBody := map[string]interface{}{
+		"query":     checkUserQuery,
+		"variables": checkVariables,
 	}
+	if userExists, err := sendHasuraRequest(checkRequestBody); err != nil {
+		return fmt.Errorf("failed to check user existence: %w", err)
+	} else if userExists {
+		updateUserMutation := `
+            mutation UpdateUser($id: String!, $name: String!, $email: String!, $profile_picture: String!) {
+                update_users_by_pk(pk_columns: {id: $id}, _set: {name: $name, email: $email, profile_picture: $profile_picture}) {
+                    id
+                    name
+                    email
+                    profile_picture
+                }
+            }
+        `
+		updateVariables := map[string]interface{}{
+			"id":              user.ID,
+			"name":            fullName,
+			"email":           email,
+			"profile_picture": user.ImageURL,
+		}
 
+		updateRequestBody := map[string]interface{}{
+			"query":     updateUserMutation,
+			"variables": updateVariables,
+		}
+
+		if _, err := sendHasuraRequest(updateRequestBody); err != nil {
+			return fmt.Errorf("failed to update user: %w", err)
+		}
+		log.Printf("User with ID %s successfully updated in Hasura", user.ID)
+	} else {
+		insertUserMutation := `
+			mutation InsertUsers($id: String!, $name: String!, $email: String!, $profile_picture: String!) {
+				insert_users(objects: {id: $id, name: $name, email: $email, profile_picture: $profile_picture}) {
+					affected_rows
+					returning {
+						id
+						name
+						email
+						bio
+						language
+						specialty
+						interests
+						occupation
+						last_seen
+						created_at
+						last_typed
+						profile_picture
+					}
+				}
+			}
+		`
+
+		insertVariables := map[string]interface{}{
+			"id":              user.ID,
+			"name":            fullName,
+			"email":           email,
+			"profile_picture": user.ImageURL,
+		}
+
+		insertRequestBody := map[string]interface{}{
+			"query":     insertUserMutation,
+			"variables": insertVariables,
+		}
+
+		if _, err := sendHasuraRequest(insertRequestBody); err != nil {
+			return fmt.Errorf("failed to insert user: %w", err)
+		}
+		log.Printf("User with ID %s successfully inserted into Hasura", user.ID)
+	}
+	return nil
+}
+
+func sendHasuraRequest(requestBody map[string]interface{}) (bool, error) {
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
-		return fmt.Errorf("failed to marshal Hasura query: %w", err)
+		return false, fmt.Errorf("failed to marshal Hasura request body: %w", err)
 	}
 
 	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
@@ -148,7 +202,7 @@ func CreateUserInHasura(user ClerkUser) error {
 
 	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return false, fmt.Errorf("failed to create Hasura request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -157,28 +211,33 @@ func CreateUserInHasura(user ClerkUser) error {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to send request to Hasura: %w", err)
+		return false, fmt.Errorf("failed to send request to Hasura: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("hasura responded with status: %s, body: %s", resp.Status, string(body))
+		return false, fmt.Errorf("hasura responded with status: %s, body: %s", resp.Status, string(body))
 	}
 
 	var responseBody struct {
-		Data   interface{} `json:"data"`
+		Data   map[string]interface{} `json:"data"`
 		Errors []struct {
 			Message string `json:"message"`
 		} `json:"errors"`
 	}
+
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
-		return fmt.Errorf("failed to decode response body: %w", err)
-	}
-	if len(responseBody.Errors) > 0 {
-		return fmt.Errorf("hasura errors: %v", responseBody.Errors)
+		return false, fmt.Errorf("failed to decode Hasura response: %w", err)
 	}
 
-	log.Printf("User with ID %s successfully created in Hasura", user.ID)
-	return nil
+	if len(responseBody.Errors) > 0 {
+		return false, fmt.Errorf("hasura returned errors: %v", responseBody.Errors)
+	}
+
+	if _, exists := responseBody.Data["users_by_pk"]; exists {
+		return true, nil
+	}
+
+	return false, nil
 }
