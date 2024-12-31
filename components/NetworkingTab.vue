@@ -2,10 +2,10 @@
     <div>
       <h2 class="text-xl md:text-2xl text-center font-bold mb-4">Recommended Connections</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-if="loading" class="flex justify-center items-center w-full h-64">
+        <div v-if="loading" class="flex justify-center items-center w-full md:w-screen h-64">
           <Loader size="120px" />
         </div>
-        <div v-if="recommendedPeople.length === 0 && !loading" class="flex justify-center items-center h-64 w-screen">
+        <div v-if="recommendedPeople.length === 0 && !loading" class="flex justify-center items-center h-64 w-full md:w-screen">
           <p class="text-xs text-center text-gray-500">No recommended connections found</p>
         </div>
         <Card v-for="person in recommendedPeople">
