@@ -252,7 +252,7 @@ Distributed under the Apache 2.0 License. See `LICENSE.txt` for more information
 [linkedin-shield]: https://img.shields.io/badge/LinkedIn-0A66C2.svg?style=for-the-badge&logo=linkedin&logoColor=white
 [linkedin-url-joseph]: https://linkedin.com/in/joseph-j-helfenbein
 [product-screenshot]: images/screenshot.png
-[Nuxt.js]: https://img.shields.io/badge/Nuxt.js-00DC82?style=for-the-badge&logo=nuxt.js&logoColor=white
+[Nuxt.js]: https://img.shields.io/badge/Nuxt.js-00DC82?style=for-the-badge&logo=nuxt&logoColor=white
 [Nuxt.js-url]: https://nuxt.com/
 [Vue.js]: https://img.shields.io/badge/Vue.js-4FC08D?style=for-the-badge&logo=vue.js&logoColor=white
 [Vue.js-url]: https://vuejs.org/
