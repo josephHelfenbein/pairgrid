@@ -4,7 +4,7 @@
       <SignedOut>
         <RedirectToSignUp />
       </SignedOut>
-      <div v-if="loading!=false">
+      <div v-if="loading==false">
         <Tabs default-value="chat" class="w-full p-4">
           <TabsList class="grid w-full grid-cols-3">
             <TabsTrigger value="chat">Chat</TabsTrigger>

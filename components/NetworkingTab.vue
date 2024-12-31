@@ -1,6 +1,6 @@
 <template>
     <div>
-      <h2 class="text-2xl font-bold mb-4">Recommended Connections</h2>
+      <h2 class="text-xl md:text-2xl font-bold mb-4">Recommended Connections</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div v-if="loading" class="flex justify-center items-center w-screen h-64">
           <Loader size="150px" />
