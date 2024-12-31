@@ -143,10 +143,10 @@ func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 	query := `
 		mutation GetSimilarUsers($offset: Int!, $limit: Int!, $userID: String!, $friendIDs: [String!], $userIDs: [String!]) {
 			calculate_similarity_score(args: {user_id: $userID}, limit: $limit, offset: $offset, where: {
-				_and: 
+				_and: [
 					{id: {_nin: $friendIDs}},
 					{id: {_nin: $userIDs}}
-				}
+				]
 			}) {
 				name
 				email
