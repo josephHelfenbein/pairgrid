@@ -86,7 +86,7 @@ Users are able to sign in using Clerk authentication. They then are able to chan
 The Clerk authentication system connects to the Hasura database using webhooks on user creation, modification, or deletion. Using Go serverless endpoints and GraphQL, the database is able to be updated and queried.
 For real-time chat, the frontend encrypts the messages using a server-side key and sends it to Hasura using a Go serverless endpoint and GraphQL. In the same endpoint, it sends the message information to Pusher. If another user is listening to the Pusher channel (has the chat with the user that sent the message open), then it decrypts the message and displays it. When a chat is opened, it also gets all messages in the conversation from the Hasura database.
 
-For ranking the users by similarity, it uses a SQL computation to sort the users from Hasura by weights in descending order, with the weights computed by adding similarities in languages, interests, occupation and specialty. Video chat and screensharing are still to be implemented.
+For ranking the users by similarity, it uses a SQL function to sort the users from Hasura by weights in descending order, with the weights computed by adding similarities in languages, interests, occupation and specialty. Video chat and screensharing are still to be implemented.
 
 
 
@@ -133,8 +133,68 @@ Here are the steps to run the project locally if you want to develop your own pr
    pnpm install
    ```
 
-3. Create a Hasura account at [https://hasura.io/](https://hasura.io/) and start a project on the legacy Hasura dashboard. Get the API keys `HASURA_GRAPHQL_URL, HASURA_GRAPHQL_ADMIN_SECRET` and put them in the environment variables. Additionally, create tables "users", "friends", and "messages" with the same columns found in the [Go serverless endpoints](https://github.com/josephHelfenbein/pairgrid/tree/main/api).
-
+3. Create a Hasura account at [https://hasura.io/](https://hasura.io/) and start a project on the legacy Hasura dashboard. Get the API keys `HASURA_GRAPHQL_URL, HASURA_GRAPHQL_ADMIN_SECRET` and put them in the environment variables. Additionally, create tables "users", "friends", and "messages" with the same columns found in the [Go serverless endpoints](https://github.com/josephHelfenbein/pairgrid/tree/main/api). Create an empty table called 'similarity_result' with the columns:
+    ```
+    id- text, primary key, unique
+    name- text
+    email- text
+    bio- text, nullable
+    language- text[], nullable
+    specialty- text, nullable
+    interests- text[], nullable
+    occupation- text, nullable
+    profile_picture- text
+    similarity_score- bigint
+    ```
+    Run this in the SQL tab to create an SQL function for getting the similarity between two users:
+    ```sql
+    CREATE OR REPLACE FUNCTION calculate_similarity_score(user_id text)
+    RETURNS SETOF similarity_result AS $$
+    WITH target_user AS (
+        SELECT
+            specialty,
+            occupation,
+            language,
+            interests
+        FROM users
+        WHERE id = user_id
+    )
+    SELECT
+        u.id,
+        u.name,
+        u.email,
+        u.bio,
+        u.language,
+        u.specialty,
+        u.interests,
+        u.occupation,
+        u.profile_picture,
+        (
+            SELECT COUNT(*) 
+            FROM UNNEST(u.interests) AS user_interest
+            INNER JOIN UNNEST((SELECT interests FROM target_user)) AS target_interest
+            ON user_interest = target_interest
+        ) +
+        (
+            SELECT COUNT(*) 
+            FROM UNNEST(u.language) AS user_language
+            INNER JOIN UNNEST((SELECT language FROM target_user)) AS target_language
+            ON user_language = target_language
+        ) +
+        CASE 
+            WHEN u.specialty = (SELECT specialty FROM target_user) THEN 4
+            ELSE 0
+        END +
+        CASE 
+            WHEN u.occupation = (SELECT occupation FROM target_user) THEN 2
+            ELSE 0
+        END AS similarity_score
+    FROM users u
+    WHERE u.id != user_id
+    ORDER BY similarity_score DESC;
+    $$ LANGUAGE sql;
+    ```
+  
 4. Create a Pusher account at [https://pusher.com/](https://pusher.com/) and start a project. Get the API keys `PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET` and put them in the environment variables. 
 
 5. Create a Clerk account at [https://clerk.com/](https://clerk.com/), and create a project. Get the API keys `NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY, NUXT_CLERK_SECRET_KEY`

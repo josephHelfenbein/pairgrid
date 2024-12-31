@@ -141,14 +141,13 @@ func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 		return nil, fmt.Errorf("failed to get friend lists: %w", err)
 	}
 	query := `
-		query GetUsers($offset: Int!, $limit: Int!, $userID: String!, $friendIDs: [String!], $userIDs: [String!]) {
-			users(where: {
-				_and: [
-					{id: {_neq: $userID}},
+		mutation GetSimilarUsers($offset: Int!, $limit: Int!, $userID: String!, $friendIDs: [String!], $userIDs: [String!]) {
+			calculate_similarity_score(args: {user_id: $userID}, limit: $limit, offset: $offset, where: {
+				_and: 
 					{id: {_nin: $friendIDs}},
 					{id: {_nin: $userIDs}}
-				]
-			}, offset: $offset, limit: $limit) {
+				}
+			}) {
 				name
 				email
 				bio
@@ -196,7 +195,7 @@ func GetUsersFromHasura(offset, limit int, userID string) ([]User, error) {
 	}
 	var responseBody struct {
 		Data struct {
-			Users []User `json:"users"`
+			Users []User `json:"calculate_similarity_score"`
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
