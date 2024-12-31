@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-[calc(100vh-350px)]">
+    <div class="flex flex-col h-full">
       <ScrollArea ref="scrollArea" class="flex-grow mb-4">
         <div class="flex justify-center items-center h-full" v-if="chatLoading">
           <Loader size="80px" />
