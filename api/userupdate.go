@@ -235,8 +235,10 @@ func sendHasuraRequest(requestBody map[string]interface{}) (bool, error) {
 		return false, fmt.Errorf("hasura returned errors: %v", responseBody.Errors)
 	}
 
-	if _, exists := responseBody.Data["users_by_pk"]; exists {
-		return true, nil
+	if users, ok := responseBody.Data["users_by_pk"].(map[string]interface{}); ok {
+		if users["id"] != nil {
+			return true, nil
+		}
 	}
 
 	return false, nil
