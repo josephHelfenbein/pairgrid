@@ -4,18 +4,18 @@
         <h1 class="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
           Connect. Code. Create.
         </h1>
-        <p class="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+        <p class="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
           Find your perfect coding partner with our real-time matchmaking platform. Connect with developers who share your interests and build amazing things together. (This website is still under construction)
         </p>
         <div class="flex justify-center gap-4">
             <NuxtLink to="/dashboard">
-                <Button size="lg" class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500">
-                    <UserPlus class="mr-2 h-5 w-5" />
+                <Button size="lg" class="pl-2 pr-2 md:pl-5 md:pr-5 bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500">
+                    <UserPlus class="md:mr-2 h-5 w-5" />
                     Find Partners Now
                 </Button>
             </NuxtLink>
-            <Button size="lg" variant="outline">
-                <Play class="mr-2 h-5 w-5" />
+            <Button size="lg" variant="outline" class="pl-4 pr-4 md:pl-5 md:pr-5">
+                <Play class="md:mr-2 h-5 w-5" />
                 Watch Demo
             </Button>
         </div>

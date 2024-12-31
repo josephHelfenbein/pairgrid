@@ -1,7 +1,16 @@
 <template>
-    <div class="flex gap-4">
-      <Card class="w-1/3">
-        <CardHeader>
+    <div class="flex relative h-[calc(100vh-64px)]">
+      <button @click="toggleSidebar" class="md:hidden fixed bottom-5 left-4 z-50 p-2 bg-primary text-primary-foreground rounded-full">
+        <MenuIcon v-if="!sidebarOpen" class="h-6 w-6" />
+        <XIcon v-else class="h-6 w-6" />
+      </button>
+      <div :class="[
+        'transition-all duration-300 ease-in-out',
+        'md:w-1/3 md:relative',
+        sidebarOpen ? 'fixed inset-0 z-40 bg-background' : 'w-0 -translate-x-full md:w-1/3 md:translate-x-0'
+      ]">
+      <Card class="w-full">
+        <CardHeader v-if="sidebarOpen">
           <CardTitle>Friends</CardTitle>
         </CardHeader>
         <CardContent>
@@ -56,8 +65,9 @@
           </ScrollArea>
         </CardContent>
       </Card>
+    </div>
   
-      <Card class="w-2/3">
+      <Card :class="['flex-grow md:w-2/3', sidebarOpen ? 'hidden md:block' : 'w-full']">
         <CardHeader class="flex flex-row justify-between items-center">
           <CardTitle class="flex-shrink-0 flex items-center">
             {{ selectedFriend ? `${selectedFriend.name}` : 'Select a friend' }}
@@ -159,6 +169,7 @@
   import Pusher from 'pusher-js'
   import { useRuntimeConfig } from '#app'
   import CryptoJS from 'crypto-js'
+  import { MenuIcon, XIcon } from 'lucide-vue-next'
 
   const props = defineProps({
     user: {
@@ -201,10 +212,15 @@
   const scrollArea = ref(null);
   const chatLoading = ref(false);
   const friendsLoading = ref(true);
+  const sidebarOpen = ref(false);
 
   const pusherConfig = {
     appKey: useRuntimeConfig().public.pusherAppKey,
     cluster: "us2",
+  }
+
+  const toggleSidebar = () => {
+    sidebarOpen.value = !sidebarOpen.value
   }
 
   const scrollToBottom = () => {
