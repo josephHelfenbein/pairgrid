@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-[calc(100svh-300px)]">
+    <div class="flex flex-col" :style="{ height: `calc(${Math.max(calculatedHeight, 400)}px)` }">
       <ScrollArea ref="scrollArea" class="flex-grow mb-4">
         <div class="flex justify-center items-center h-full" v-if="chatLoading">
           <Loader size="80px" />
@@ -32,7 +32,7 @@
 </template>
   
 <script setup>
-  import { ref, watch, nextTick } from 'vue'
+  import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Input } from '@/components/ui/input'
   import { ScrollArea } from '@/components/ui/scroll-area'
@@ -49,7 +49,21 @@
   
   const scrollArea = ref(null)
   const localNewMessage = ref(props.newMessage)
+  const calculatedHeight = ref(window.innerHeight - 300)
   
+  const updateHeight = () => {
+    calculatedHeight.value = window.innerHeight - 300
+    }
+
+	onMounted(() => {
+    window.addEventListener('resize', updateHeight)
+    updateHeight()
+	})
+
+	onUnmounted(() => {
+    window.removeEventListener('resize', updateHeight)
+	})
+
   watch(() => props.newMessage, (newVal) => {
     localNewMessage.value = newVal
   })
