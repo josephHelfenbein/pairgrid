@@ -29,6 +29,11 @@
           </CardContent>
         </Card>
       </div>
+      <div class="flex justify-center mt-4">
+        <Button v-if="!loading && currentPage>1" @click="fetchRecommendedPeople(currentPage-1)">Previous</Button>
+        <p class="mx-4">{{currentPage}}</p>
+        <Button v-if="!loading && recommendedPeople.length === 10" @click="fetchRecommendedPeople(currentPage+1)">Next</Button>
+      </div>
     </div>
   </template>
   
@@ -52,19 +57,25 @@
   const sentTo = ref([]);
   const error = ref(null);
   const loading = ref(true);
-  const fetchRecommendedPeople = async () =>{
+  const currentPage = ref(1);
+  const fetchRecommendedPeople = async (page = 1) =>{
+    loading.value = true;
     try{
-      const response = await fetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}`, {
+      const limit = 10;
+      const offset = (page - 1) * limit;
+      const response = await fetch(`https://www.pairgrid.com/api/getusers/getusers?user_id=${user.id}&limit=${limit}&offset=${offset}`, {
         method: 'GET',
       });
       if(!response.ok) throw new Error('Failed to fetch recommended people');
       const data = await response.json();
       recommendedPeople.value = data;
-      loading.value = false;
+      currentPage.value = page;
     } catch (err) {
       console.error(err);
       error.value = err.message;
       emit('toast-update', 'Error fetching recommended connections');
+    } finally {
+      loading.value = false;
     }
   };
   onMounted(() => {
