@@ -12,8 +12,8 @@
         >
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-            <DialogTrigger @click="$emit('fetchRequestProfile', request)" asChild>
-            <p>
+            <DialogTrigger @click.stop="$emit('fetchRequestProfile', request)" @touchend.prevent="$emit('fetchRequestProfile', request)" asChild>
+            <p class="cursor-pointer">
               {{ request.name }}
             </p>
             </DialogTrigger>
