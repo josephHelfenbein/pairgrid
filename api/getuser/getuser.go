@@ -114,6 +114,7 @@ func GetUserFromHasura(userID, userEmail string) (*User, error) {
 			query GetUser($email: String!) {
 				users(where: {email: {_eq: $email}}) {
 					id
+					name
 					bio
 					language
 					specialty
