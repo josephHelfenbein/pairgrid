@@ -12,13 +12,17 @@
         >
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-            <button @click="$emit('fetchRequestProfile', request)" @touchstart="$emit('fetchRequestProfile', request)">
-              <DialogTrigger asChild>
-              <p>
-                {{ request.name }}
-              </p>
-              </DialogTrigger>
-            </button>
+            <DialogTrigger asChild>
+              <button 
+                @pointerdown.prevent="$emit('fetchRequestProfile', request)"
+                class="w-full text-left"
+                type="button"
+                role="button"
+                aria-haspopup="dialog"
+              >
+                <p>{{ request.name }}</p>
+              </button>
+            </DialogTrigger>
           </div>
           <div class="flex gap-2">
             <button @click="$emit('acceptRequest', request)" class="p-2 bg-green-500 text-white rounded-full">
