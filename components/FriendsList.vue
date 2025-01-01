@@ -12,7 +12,7 @@
         >
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-            <button @click="$emit('fetchRequestProfile', request)">
+            <button @click="$emit('fetchRequestProfile', request)" @touchstart="$emit('fetchRequestProfile', request)">
               <DialogTrigger asChild>
               <p>
                 {{ request.name }}
