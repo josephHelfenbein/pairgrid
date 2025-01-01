@@ -52,7 +52,7 @@
 
       <div v-else-if="requestProfile" class="h-full">
           <Card class="h-full flex flex-col">
-            <CardHeader>
+            <CardHeader class="flex flex-row justify-between items-center">
               <button @click="deselectFriend" class="p-2">
                 <ChevronLeft class="h-6 w-6" />
               </button>
