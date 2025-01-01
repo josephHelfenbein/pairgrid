@@ -286,6 +286,7 @@
     return decrypted.toString(CryptoJS.enc.Utf8)
   }
   const fetchRequestProfile = async (request) => {
+    console.log(request);
     try {
       const emailData = { email: request.email }
       const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
