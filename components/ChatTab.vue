@@ -12,9 +12,8 @@
               :requests="requests" 
               :friendsLoading="friendsLoading"
               :selectedFriend="selectedFriend"
-              :requestProfile="requestProfile"
               @selectFriend="selectFriend"
-              @fetchRequestProfile="fetchRequestProfile"
+              @selectRequest="selectRequest"
               @acceptRequest="acceptRequest"
               @denyRequest="denyRequest"
             />
@@ -56,7 +55,6 @@
             </CardTitle>
             <FriendOptions 
               :selectedFriend="selectedFriend"
-              :friendProfile="friendProfile"
               @removeFriend="removeFriend"
             />
           </CardHeader>
@@ -82,7 +80,6 @@
         <FriendOptions 
           v-if="selectedFriend"
           :selectedFriend="selectedFriend"
-          :friendProfile="friendProfile"
           @removeFriend="removeFriend"
         />
       </CardHeader>
@@ -96,6 +93,31 @@
           @sendMessage="sendMessage"
           @updateNewMessage="newMessage = $event"
         />
+        <div v-else-if="requestProfile" class="flex justify-center items-center h-full">
+          <div class="space-y-2">
+            <p><strong>Name:</strong> {{ requestProfile?.name }}</p>
+            <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
+            <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
+            <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
+            <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
+            <div>
+              <strong>Languages:</strong>
+              <div class="flex flex-wrap space-x-2 text-sm">
+                <p v-for="language in requestProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
+                  {{ language }}
+                </p>
+              </div>
+            </div>
+            <div>
+              <strong>Interests:</strong>
+              <div class="flex flex-wrap space-x-2 text-sm">
+                <p v-for="interest in requestProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
+                  {{ interest }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div> 
         <div v-else class="flex justify-center items-center h-full">
           <p class="text-gray-500">Select a friend to start chatting</p>
         </div>
@@ -131,7 +153,6 @@
   const selectedFriend = ref(null)
   const messages = ref([])
   const newMessage = ref('')
-  const friendProfile = ref(null)
   const requestProfile = ref(null)
   const pusher = ref(null)
   const channel = ref(null)
@@ -170,10 +191,17 @@
     }
   }
 
-  const selectFriend = (friend) => {
+  const selectRequest = (request) => {
+    requestProfile.value = request
+    selectedFriend.value = null
+  }
+
+  const selectFriend = async (friend) => {
     selectedFriend.value = friend
+    requestProfile.value = null
     messages.value = []
-    fetchFriendProfile(friend)
+    await getMessages()
+    subscribeToChatChannel()
   }
 
   const deselectFriend = () => {
@@ -285,48 +313,10 @@
 
     return decrypted.toString(CryptoJS.enc.Utf8)
   }
-  const fetchRequestProfile = async (request) => {
-    console.log(request);
-    try {
-      const emailData = { email: request.email }
-      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      })
-      if (!response.ok) throw new Error('Failed to fetch user profile')
-      requestProfile.value = await response.json()
-    } catch (err) {
-      console.error(err)
-      emit('toast-update', 'Error fetching friend profile')
-    }
-  } 
-  const fetchFriendProfile = async (friend) => {
-    try {
-      chatLoading.value = true
-      const emailData = { email: friend.email }
-      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      })
-      if (!response.ok) throw new Error('Failed to fetch user profile')
-      friendProfile.value = await response.json()
-      await getMessages()
-      subscribeToChatChannel()
-    } catch (err) {
-      console.error(err)
-      emit('toast-update', 'Error fetching friend profile')
-    }
-  }
 
   const getMessages = async () => {
     try {
-      const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${friendProfile.value.id}`, {
+      const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}`, {
         method: 'GET',
       })
       if (!response.ok) throw new Error('Failed to fetch messages')
@@ -352,9 +342,9 @@
   }
 
   const subscribeToChatChannel = () => {
-    if (!selectedFriend.value || !friendProfile.value) return
+    if (!selectedFriend.value) return
     unsubscribeFromChatChannel()
-    const friendID = friendProfile.value.id
+    const friendID = selectFriend.value.id
     const firstID = props.user.id < friendID ? props.user.id : friendID
     const secondID = props.user.id > friendID ? props.user.id : friendID
     const newChannel = `chat-${firstID}-${secondID}`
