@@ -23,28 +23,7 @@
     </div>
 
     <div class="md:hidden w-full">
-      <div v-if="!selectedFriend" class="h-full">
-        <Card class="h-full">
-          <CardHeader>
-            <CardTitle>Friends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea class="h-[calc(100vh-300px)]">
-              <FriendsList 
-                :friends="friends" 
-                :requests="requests" 
-                :friendsLoading="friendsLoading"
-                :selectedFriend="selectedFriend"
-                @selectFriend="selectFriend"
-                @acceptRequest="acceptRequest"
-                @denyRequest="denyRequest"
-              />
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div v-else class="h-full">
+      <div v-if="selectedFriend" class="h-full">
         <Card class="h-full">
           <CardHeader class="flex flex-row justify-between items-center">
             <button @click="deselectFriend" class="p-2">
@@ -70,12 +49,73 @@
           </CardContent>
         </Card>
       </div>
+
+      <div v-else-if="requestProfile" class="h-full">
+          <Card class="space-y-2 h-full flex justify-center items-center">
+            <CardHeader>
+              <CardTitle>{{ requestProfile?.name }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea class="h-[calc(100vh-300px)]">
+                <p><strong>Name:</strong> {{ requestProfile?.name }}</p>
+                <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
+                <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
+                <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
+                <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
+                <div>
+                  <strong>Languages:</strong>
+                  <div class="flex flex-wrap space-x-2 text-sm">
+                    <p v-for="language in requestProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
+                      {{ language }}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <strong>Interests:</strong>
+                  <div class="flex flex-wrap space-x-2 text-sm">
+                    <p v-for="interest in requestProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
+                      {{ interest }}
+                    </p>
+                  </div>
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div> 
+
+      <div v-else class="h-full">
+        <Card class="h-full">
+          <CardHeader>
+            <CardTitle>Friends</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea class="h-[calc(100vh-300px)]">
+              <FriendsList 
+                :friends="friends" 
+                :requests="requests" 
+                :friendsLoading="friendsLoading"
+                :selectedFriend="selectedFriend"
+                @selectFriend="selectFriend"
+                @selectRequest="selectRequest"
+                @acceptRequest="acceptRequest"
+                @denyRequest="denyRequest"
+              />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
     </div>
 
     <Card class="hidden md:block md:w-2/3">
       <CardHeader class="flex flex-row justify-between items-center">
-        <CardTitle class="flex-shrink-0 flex items-center">
-          {{ selectedFriend ? selectedFriend.name : 'Select a friend' }}
+        <CardTitle v-if="selectedFriend" class="flex-shrink-0 flex items-center">
+          {{selectedFriend.name}}
+        </CardTitle>
+        <CardTitle v-else-if="requestProfile" class="flex-shrink-0 flex items-center">
+          {{requestProfile.name}}
+        </CardTitle>
+        <CardTitle v-else class="flex-shrink-0 flex items-center">
+          Select a friend
         </CardTitle>
         <FriendOptions 
           v-if="selectedFriend"
@@ -95,7 +135,6 @@
         />
         <div v-else-if="requestProfile" class="flex justify-center items-center h-full">
           <div class="space-y-2">
-            <p><strong>Name:</strong> {{ requestProfile?.name }}</p>
             <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
             <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
             <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
