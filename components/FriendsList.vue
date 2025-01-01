@@ -12,9 +12,12 @@
         >
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-            <DialogTrigger asChild>
+            <DialogTrigger 
+              asChild
+              @click="$emit('fetchRequestProfile', request)"
+              @touchstart="$emit('fetchRequestProfile', request)"
+            >
               <button 
-                @pointerdown.prevent="$emit('fetchRequestProfile', request)"
                 class="w-full text-left"
                 type="button"
                 role="button"
