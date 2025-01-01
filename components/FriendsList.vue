@@ -14,8 +14,7 @@
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
             <DialogTrigger 
               asChild
-              @click="$emit('fetchRequestProfile', request)"
-              @touchstart="$emit('fetchRequestProfile', request)"
+              @pointerdown="$emit('fetchRequestProfile', request)"
             >
               <button 
                 class="w-full text-left"
