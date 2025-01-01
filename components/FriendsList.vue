@@ -94,6 +94,7 @@
     requests: Array,
     friendsLoading: Boolean,
     selectedFriend: Object,
+    requestProfile: Object,
   })
   
   const getLastSeenText = (lastSeen) => {
