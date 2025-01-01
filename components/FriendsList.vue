@@ -13,9 +13,9 @@
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
             <DialogTrigger asChild>
-            <p @click="$emit('fetchRequestProfile', request)" class="cursor-pointer">
+            <button @click="$emit('fetchRequestProfile', request)" class="text-white bg-none text-sm">
               {{ request.name }}
-            </p>
+            </button>
             </DialogTrigger>
           </div>
           <div class="flex gap-2">
