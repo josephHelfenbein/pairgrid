@@ -51,14 +51,15 @@
       </div>
 
       <div v-else-if="requestProfile" class="h-full">
-          <Card class="space-y-2 h-full flex justify-center items-center">
+          <Card class="h-full flex flex-col">
             <CardHeader>
-              <CardTitle>{{ requestProfile?.name }}</CardTitle>
+              <button @click="deselectFriend" class="p-2">
+                <ChevronLeft class="h-6 w-6" />
+              </button>
+              <CardTitle class="flex-shrink-0 flex items-center">{{ requestProfile?.name }}</CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea class="h-[calc(100vh-300px)]">
-                <p><strong>Name:</strong> {{ requestProfile?.name }}</p>
-                <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
                 <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
                 <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
                 <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
@@ -135,7 +136,6 @@
         />
         <div v-else-if="requestProfile" class="flex justify-center items-center h-full">
           <div class="space-y-2">
-            <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
             <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
             <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
             <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
@@ -245,6 +245,7 @@
 
   const deselectFriend = () => {
     selectedFriend.value = null
+    requestProfile.value = null
     messages.value = []
   }
 
