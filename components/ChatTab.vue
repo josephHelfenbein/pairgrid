@@ -12,7 +12,9 @@
               :requests="requests" 
               :friendsLoading="friendsLoading"
               :selectedFriend="selectedFriend"
+              :requestProfile="requestProfile"
               @selectFriend="selectFriend"
+              @fetchRequestProfile="fetchRequestProfile"
               @acceptRequest="acceptRequest"
               @denyRequest="denyRequest"
             />
@@ -130,6 +132,7 @@
   const messages = ref([])
   const newMessage = ref('')
   const friendProfile = ref(null)
+  const requestProfile = ref(null)
   const pusher = ref(null)
   const channel = ref(null)
   const chatLoading = ref(false)
@@ -282,7 +285,23 @@
 
     return decrypted.toString(CryptoJS.enc.Utf8)
   }
-
+  const fetchRequestProfile = async (request) => {
+    try {
+      const emailData = { email: request.email }
+      const response = await fetch('https://www.pairgrid.com/api/getuser/getuser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData),
+      })
+      if (!response.ok) throw new Error('Failed to fetch user profile')
+      requestProfile.value = await response.json()
+    } catch (err) {
+      console.error(err)
+      emit('toast-update', 'Error fetching friend profile')
+    }
+  } 
   const fetchFriendProfile = async (friend) => {
     try {
       chatLoading.value = true

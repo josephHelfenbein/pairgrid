@@ -1,4 +1,5 @@
 <template>
+  <Dialog>
     <div>
       <div class="flex justify-center items-center h-full" v-if="friendsLoading">
         <Loader size="80px" />
@@ -11,9 +12,11 @@
         >
           <div class="flex items-center gap-2">
             <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-            <p>
+            <DialogTrigger asChild>
+            <p @click="$emit('fetchRequestProfile', request)" class="cursor-pointer">
               {{ request.name }}
             </p>
+            </DialogTrigger>
           </div>
           <div class="flex gap-2">
             <button @click="$emit('acceptRequest', request)" class="p-2 bg-green-500 text-white rounded-full">
@@ -48,6 +51,38 @@
         </Button>
       </div>
     </div>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{{ requestProfile?.name }}'s Profile</DialogTitle>
+      </DialogHeader>
+      
+      <div class="space-y-2">
+        <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
+        <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
+        <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
+        <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
+        <div>
+          <strong>Languages:</strong>
+          <div class="flex flex-wrap space-x-2 text-sm">
+            <p v-for="language in requestProfile?.language" :key="language" class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2">
+              {{ language }}
+            </p>
+          </div>
+        </div>
+        <div>
+          <strong>Interests:</strong>
+          <div class="flex flex-wrap space-x-2 text-sm">
+            <p v-for="interest in requestProfile?.interests" :key="interest" class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2">
+              {{ interest }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
   </template>
   
 <script setup>

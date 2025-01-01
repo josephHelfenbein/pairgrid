@@ -29,9 +29,9 @@
           </CardContent>
         </Card>
       </div>
-      <div class="flex justify-center mt-4">
+      <div class="flex justify-center mt-16">
         <Button v-if="!loading && currentPage>1" @click="fetchRecommendedPeople(currentPage-1)">Previous</Button>
-        <p class="mx-4">{{currentPage}}</p>
+        <p class="mx-4">Page {{currentPage}}</p>
         <Button v-if="!loading && recommendedPeople.length === 10" @click="fetchRecommendedPeople(currentPage+1)">Next</Button>
       </div>
     </div>
