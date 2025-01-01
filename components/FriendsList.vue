@@ -57,7 +57,6 @@
       </DialogHeader>
       
       <div class="space-y-2">
-        <p><strong>Email:</strong> {{ requestProfile?.email }}</p>
         <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
         <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
         <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
