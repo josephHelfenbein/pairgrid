@@ -23,6 +23,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	log.Printf("Request method: %s, URL: %s", r.Method, r.URL)
+	log.Printf("Headers: %+v", r.Header)
+	log.Printf("Body: %s", string(body))
+
 	clerkSignature := r.Header.Get("Clerk-Signature")
 	if clerkSignature == "" {
 		http.Error(w, "Missing Clerk-Signature header", http.StatusUnauthorized)
