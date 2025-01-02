@@ -136,18 +136,25 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 		return false
 	}
 
+	log.Printf("Received signature header: %s", signature)
+	log.Printf("Received body: %s", string(body))
+
 	svixTimestamp := r.Header.Get("Svix-Timestamp")
 	if svixTimestamp == "" {
 		log.Println("Svix-Timestamp header is missing")
 		return false
 	}
+	log.Printf("Received timestamp: %s", svixTimestamp)
 
 	message := fmt.Sprintf("%s.%s", svixTimestamp, string(body))
+	log.Printf("Constructed message to sign: %s", message)
 
 	signatures := make(map[string]string)
 	for _, part := range strings.Split(signature, " ") {
+		log.Printf("Processing signature part: %s", part)
 		if strings.Contains(part, "v1,") {
 			signatures["v1"] = strings.TrimPrefix(part, "v1,")
+			log.Printf("Extracted v1 signature: %s", signatures["v1"])
 		}
 	}
 
@@ -160,6 +167,8 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(message))
 	expectedMAC := mac.Sum(nil)
+	expectedSignatureBase64 := base64.StdEncoding.EncodeToString(expectedMAC)
+	log.Printf("Expected signature (Base64): %s", expectedSignatureBase64)
 
 	actualMAC, err := base64.StdEncoding.DecodeString(v1Signature)
 	if err != nil {
@@ -167,5 +176,8 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 		return false
 	}
 
-	return hmac.Equal(actualMAC, expectedMAC)
+	isValid := hmac.Equal(actualMAC, expectedMAC)
+	log.Printf("Signature validation result: %v", isValid)
+
+	return isValid
 }
