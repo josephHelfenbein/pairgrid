@@ -126,12 +126,6 @@ func validateSignature(r *http.Request, body []byte) bool {
 	actualSignature := parts[1]
 	log.Printf("Extracted signature: %s", actualSignature)
 
-	decodedSignature, err := base64.StdEncoding.DecodeString(actualSignature)
-	if err != nil {
-		log.Println("Error decoding Clerk-Signature:", err)
-		return false
-	}
-
 	mac := hmac.New(sha256.New, []byte(signingSecret))
 	mac.Write(body)
 	expectedSignature := mac.Sum(nil)
@@ -139,7 +133,7 @@ func validateSignature(r *http.Request, body []byte) bool {
 	expectedSignatureBase64 := base64.StdEncoding.EncodeToString(expectedSignature)
 	log.Printf("Expected signature (Base64): %s", expectedSignatureBase64)
 
-	if !hmac.Equal(decodedSignature, expectedSignature) {
+	if !hmac.Equal([]byte(actualSignature), expectedSignature) {
 		log.Printf("Signature mismatch: expected %s, got %s", expectedSignatureBase64, actualSignature)
 		return false
 	}
