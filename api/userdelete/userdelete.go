@@ -149,34 +149,28 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 	message := fmt.Sprintf("%s.%s", svixTimestamp, string(body))
 	log.Printf("Constructed message to sign: %s", message)
 
-	signatures := make(map[string]string)
-	for _, part := range strings.Split(signature, " ") {
-		log.Printf("Processing signature part: %s", part)
-		if strings.Contains(part, "v1,") {
-			signatures["v1"] = strings.TrimPrefix(part, "v1,")
-			log.Printf("Extracted v1 signature: %s", signatures["v1"])
-		}
-	}
-
-	v1Signature, ok := signatures["v1"]
-	if !ok {
-		log.Println("No v1 signature found")
+	signatureParts := strings.SplitN(signature, ",", 2)
+	if len(signatureParts) != 2 || signatureParts[0] != "v1" {
+		log.Println("Invalid signature format or version")
 		return false
 	}
 
+	providedSignature := signatureParts[1]
+	log.Printf("Extracted signature: %s", providedSignature)
+
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(message))
-	expectedMAC := mac.Sum(nil)
-	expectedSignatureBase64 := base64.StdEncoding.EncodeToString(expectedMAC)
-	log.Printf("Expected signature (Base64): %s", expectedSignatureBase64)
+	computedMAC := mac.Sum(nil)
+	computedSignature := base64.StdEncoding.EncodeToString(computedMAC)
+	log.Printf("Computed signature: %s", computedSignature)
 
-	actualMAC, err := base64.StdEncoding.DecodeString(v1Signature)
+	decodedSignature, err := base64.StdEncoding.DecodeString(providedSignature)
 	if err != nil {
 		log.Printf("Failed to decode signature: %v", err)
 		return false
 	}
 
-	isValid := hmac.Equal(actualMAC, expectedMAC)
+	isValid := hmac.Equal(decodedSignature, computedMAC)
 	log.Printf("Signature validation result: %v", isValid)
 
 	return isValid
