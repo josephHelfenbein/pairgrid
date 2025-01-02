@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -132,10 +132,25 @@ func validateClerkSignature(body []byte, signature, secret string) bool {
 	}
 
 	actualSignature := parts[1]
+	log.Printf("Extracted Clerk-Signature: %s", actualSignature)
 
-	hash := hmac.New(sha256.New, []byte(secret))
-	hash.Write(body)
-	expectedSignature := hex.EncodeToString(hash.Sum(nil))
+	decodedSignature, err := base64.StdEncoding.DecodeString(actualSignature)
+	if err != nil {
+		log.Println("Error decoding Clerk-Signature:", err)
+		return false
+	}
 
-	return hmac.Equal([]byte(actualSignature), []byte(expectedSignature))
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(body)
+	expectedSignature := mac.Sum(nil)
+
+	expectedSignatureBase64 := base64.StdEncoding.EncodeToString(expectedSignature)
+	log.Printf("Expected signature (Base64): %s", expectedSignatureBase64)
+
+	if !hmac.Equal(decodedSignature, expectedSignature) {
+		log.Printf("Signature mismatch: expected %s, got %s", expectedSignatureBase64, actualSignature)
+		return false
+	}
+
+	return true
 }
