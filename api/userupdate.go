@@ -111,35 +111,44 @@ func validateSignature(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	signatureHeader := r.Header.Get("Svix-Signature")
-	if signatureHeader == "" {
+	svixSignature := r.Header.Get("Svix-Signature")
+	if svixSignature == "" {
 		log.Println("Svix-Signature header is missing")
 		return false
 	}
 
-	parts := strings.SplitN(signatureHeader, ",", 2)
-	if len(parts) != 2 {
-		log.Println("Invalid signature format")
+	svixTimestamp := r.Header.Get("Svix-Timestamp")
+	if svixTimestamp == "" {
+		log.Println("Svix-Timestamp header is missing")
 		return false
 	}
 
-	actualSignature := parts[1]
-	log.Printf("Extracted signature: %s", actualSignature)
+	message := fmt.Sprintf("%s.%s", svixTimestamp, string(body))
+
+	signatures := make(map[string]string)
+	for _, part := range strings.Split(svixSignature, " ") {
+		if strings.Contains(part, "v1,") {
+			signatures["v1"] = strings.TrimPrefix(part, "v1,")
+		}
+	}
+
+	v1Signature, ok := signatures["v1"]
+	if !ok {
+		log.Println("No v1 signature found")
+		return false
+	}
 
 	mac := hmac.New(sha256.New, []byte(signingSecret))
-	mac.Write(body)
-	expectedSignature := mac.Sum(nil)
+	mac.Write([]byte(message))
+	expectedMAC := mac.Sum(nil)
 
-	expectedSignatureBase64 := base64.StdEncoding.EncodeToString(expectedSignature)
-	log.Printf("Expected signature (Base64): %s", expectedSignatureBase64)
-
-	if !hmac.Equal([]byte(actualSignature), expectedSignature) {
-		log.Printf("Signature mismatch: expected %s, got %s", expectedSignatureBase64, actualSignature)
+	actualMAC, err := base64.StdEncoding.DecodeString(v1Signature)
+	if err != nil {
+		log.Printf("Failed to decode signature: %v", err)
 		return false
 	}
 
-	return true
-
+	return hmac.Equal(actualMAC, expectedMAC)
 }
 
 func CreateUserInHasura(user ClerkUser) error {
