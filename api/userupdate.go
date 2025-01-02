@@ -112,6 +112,12 @@ func validateSignature(r *http.Request, body []byte) bool {
 		return false
 	}
 
+	secretBytes, err := base64.StdEncoding.DecodeString(strings.Split(signingSecret, "_")[1])
+	if err != nil {
+		log.Printf("Failed to base64 decode the secret: %v", err)
+		return false
+	}
+
 	svixSignature := r.Header.Get("Svix-Signature")
 	if svixSignature == "" {
 		log.Println("Svix-Signature header is missing")
@@ -124,18 +130,16 @@ func validateSignature(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	log.Printf("Received signature header: %s", svixSignature)
-	log.Printf("Received body: %s", string(body))
-	log.Printf("Received timestamp: %s", svixTimestamp)
-
 	svixTimestampInt, err := strconv.ParseInt(svixTimestamp, 10, 64)
 	if err != nil {
 		log.Printf("Error parsing timestamp: %v", err)
 		return false
 	}
-	svixTimestampInt /= 1000
+	if svixTimestampInt > 10000000000 {
+		svixTimestampInt /= 1000
+	}
+
 	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
-	log.Printf("Constructed message to sign: %s", message)
 
 	signatureParts := strings.SplitN(svixSignature, ",", 2)
 	if len(signatureParts) != 2 || signatureParts[0] != "v1" {
@@ -144,13 +148,10 @@ func validateSignature(r *http.Request, body []byte) bool {
 	}
 
 	providedSignature := signatureParts[1]
-	log.Printf("Extracted signature: %s", providedSignature)
 
-	mac := hmac.New(sha256.New, []byte(signingSecret))
+	mac := hmac.New(sha256.New, secretBytes)
 	mac.Write([]byte(message))
 	computedMAC := mac.Sum(nil)
-	computedSignature := base64.StdEncoding.EncodeToString(computedMAC)
-	log.Printf("Computed signature: %s", computedSignature)
 
 	decodedSignature, err := base64.StdEncoding.DecodeString(providedSignature)
 	if err != nil {

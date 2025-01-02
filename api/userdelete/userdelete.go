@@ -137,6 +137,12 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 		return false
 	}
 
+	secretBytes, err := base64.StdEncoding.DecodeString(strings.Split(secret, "_")[1])
+	if err != nil {
+		log.Printf("Failed to base64 decode the secret: %v", err)
+		return false
+	}
+
 	log.Printf("Received signature header: %s", signature)
 	log.Printf("Received body: %s", string(body))
 
@@ -152,9 +158,11 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 		log.Printf("Error parsing timestamp: %v", err)
 		return false
 	}
-	svixTimestampInt /= 1000
-	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
+	if svixTimestampInt > 10000000000 {
+		svixTimestampInt /= 1000
+	}
 
+	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
 	log.Printf("Constructed message to sign: %s", message)
 
 	signatureParts := strings.SplitN(signature, ",", 2)
@@ -166,11 +174,9 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 	providedSignature := signatureParts[1]
 	log.Printf("Extracted signature: %s", providedSignature)
 
-	mac := hmac.New(sha256.New, []byte(secret))
+	mac := hmac.New(sha256.New, secretBytes)
 	mac.Write([]byte(message))
 	computedMAC := mac.Sum(nil)
-	computedSignature := base64.StdEncoding.EncodeToString(computedMAC)
-	log.Printf("Computed signature: %s", computedSignature)
 
 	decodedSignature, err := base64.StdEncoding.DecodeString(providedSignature)
 	if err != nil {
