@@ -158,8 +158,8 @@ func validateClerkSignature(body []byte, signature, secret string, r *http.Reque
 		log.Printf("Error parsing timestamp: %v", err)
 		return false
 	}
-	if svixTimestampInt > 10000000000 {
-		svixTimestampInt /= 1000
+	if svixTimestampInt < 10000000000 {
+		svixTimestampInt *= 1000
 	}
 
 	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
