@@ -2,6 +2,9 @@ package userdelete
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +22,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	clerkSignature := r.Header.Get("Clerk-Signature")
+	if clerkSignature == "" {
+		http.Error(w, "Missing Clerk-Signature header", http.StatusUnauthorized)
+		return
+	}
+
+	clerkSigningSecret := os.Getenv("DELETE_SIGNING_SECRET")
+	if !validateClerkSignature(body, clerkSignature, clerkSigningSecret) {
+		http.Error(w, "Invalid Clerk-Signature", http.StatusUnauthorized)
+		return
+	}
+
 	log.Printf("Raw webhook payload: %s", string(body))
 
 	var payload struct {
@@ -105,4 +121,12 @@ func DeleteUserFromHasura(userID string) error {
 	}
 	log.Printf("User with ID %s successfully deleted from Hasura", userID)
 	return nil
+}
+
+func validateClerkSignature(body []byte, signature, secret string) bool {
+	hash := hmac.New(sha256.New, []byte(secret))
+	hash.Write(body)
+	expectedSignature := hex.EncodeToString(hash.Sum(nil))
+
+	return hmac.Equal([]byte(signature), []byte(expectedSignature))
 }

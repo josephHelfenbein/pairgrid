@@ -2,6 +2,9 @@ package handler
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -46,6 +49,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusInternalServerError)
+		return
+	}
+	if !validateSignature(r, body) {
+		http.Error(w, "Invalid signature", http.StatusUnauthorized)
+		log.Println("Signature validation failed")
 		return
 	}
 	log.Printf("Raw webhook payload: %s", string(body))
@@ -93,6 +101,31 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("User with ID %s successfully created in Hasura", user.ID)
+}
+
+func validateSignature(r *http.Request, body []byte) bool {
+	signingSecret := os.Getenv("UPDATE_SIGNING_SECRET")
+	if signingSecret == "" {
+		log.Println("UPDATE_SIGNING_SECRET is not set")
+		return false
+	}
+
+	signatureHeader := r.Header.Get("Clerk-Signature")
+	if signatureHeader == "" {
+		log.Println("Clerk-Signature header is missing")
+		return false
+	}
+
+	mac := hmac.New(sha256.New, []byte(signingSecret))
+	mac.Write(body)
+	expectedSignature := hex.EncodeToString(mac.Sum(nil))
+
+	if !hmac.Equal([]byte(expectedSignature), []byte(signatureHeader)) {
+		log.Printf("Signature mismatch: expected %s, got %s", expectedSignature, signatureHeader)
+		return false
+	}
+
+	return true
 }
 
 func CreateUserInHasura(user ClerkUser) error {

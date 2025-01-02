@@ -198,8 +198,7 @@ Here are the steps to run the project locally if you want to develop your own pr
 4. Create a Pusher account at [https://pusher.com/](https://pusher.com/) and start a project. Get the API keys `PUSHER_APP_ID, PUSHER_APP_KEY, PUSHER_APP_SECRET` and put them in the environment variables. 
 
 5. Create a Clerk account at [https://clerk.com/](https://clerk.com/), and create a project. Get the API keys `NUXT_PUBLIC_CLERK_PUBLISHABLE_KEY, NUXT_CLERK_SECRET_KEY`
-    and put them in the environment variables. Additionally, create webhooks on Clerk, one of them with endpoint {yourdomain}/api/userdelete/userdelete with a subscribed event of user.deleted, and one of them with endpoint {yourdomain}/api/userupdate with subscribed events user.created
- and user.updated.  
+    and put them in the environment variables. Additionally, create webhooks on Clerk, one of them with endpoint {yourdomain}/api/userdelete/userdelete with a subscribed event of user.deleted, and one of them with endpoint {yourdomain}/api/userupdate with subscribed events user.created and user.updated. Get the signing secrets for both and set them to environment variables `UPDATE_SIGNING_SECRET, DELETE_SIGNING_SECRET`.
 
  6. Create a random server-side encryption key using OpenSSL
     ```bash
