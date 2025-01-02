@@ -23,19 +23,15 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	log.Printf("Request method: %s, URL: %s", r.Method, r.URL)
-	log.Printf("Headers: %+v", r.Header)
-	log.Printf("Body: %s", string(body))
-
-	clerkSignature := r.Header.Get("Clerk-Signature")
+	clerkSignature := r.Header.Get("Svix-Signature")
 	if clerkSignature == "" {
-		http.Error(w, "Missing Clerk-Signature header", http.StatusUnauthorized)
+		http.Error(w, "Missing Svix-Signature header", http.StatusUnauthorized)
 		return
 	}
 
 	clerkSigningSecret := os.Getenv("DELETE_SIGNING_SECRET")
 	if !validateClerkSignature(body, clerkSignature, clerkSigningSecret) {
-		http.Error(w, "Invalid Clerk-Signature", http.StatusUnauthorized)
+		http.Error(w, "Invalid Svix-Signature", http.StatusUnauthorized)
 		return
 	}
 

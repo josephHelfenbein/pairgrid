@@ -110,9 +110,9 @@ func validateSignature(r *http.Request, body []byte) bool {
 		return false
 	}
 
-	signatureHeader := r.Header.Get("Clerk-Signature")
+	signatureHeader := r.Header.Get("Svix-Signature")
 	if signatureHeader == "" {
-		log.Println("Clerk-Signature header is missing")
+		log.Println("Svix-Signature header is missing")
 		return false
 	}
 
