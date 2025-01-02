@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -127,7 +128,13 @@ func validateSignature(r *http.Request, body []byte) bool {
 	log.Printf("Received body: %s", string(body))
 	log.Printf("Received timestamp: %s", svixTimestamp)
 
-	message := fmt.Sprintf("%s.%s", svixTimestamp, string(body))
+	svixTimestampInt, err := strconv.ParseInt(svixTimestamp, 10, 64)
+	if err != nil {
+		log.Printf("Error parsing timestamp: %v", err)
+		return false
+	}
+	svixTimestampInt /= 1000
+	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
 	log.Printf("Constructed message to sign: %s", message)
 
 	signatureParts := strings.SplitN(svixSignature, ",", 2)
