@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -124,9 +125,17 @@ func DeleteUserFromHasura(userID string) error {
 }
 
 func validateClerkSignature(body []byte, signature, secret string) bool {
+	parts := strings.SplitN(signature, ",", 2)
+	if len(parts) != 2 {
+		log.Println("Invalid signature format")
+		return false
+	}
+
+	actualSignature := parts[1]
+
 	hash := hmac.New(sha256.New, []byte(secret))
 	hash.Write(body)
 	expectedSignature := hex.EncodeToString(hash.Sum(nil))
 
-	return hmac.Equal([]byte(signature), []byte(expectedSignature))
+	return hmac.Equal([]byte(actualSignature), []byte(expectedSignature))
 }

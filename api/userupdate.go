@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -116,12 +117,20 @@ func validateSignature(r *http.Request, body []byte) bool {
 		return false
 	}
 
+	parts := strings.SplitN(signatureHeader, ",", 2)
+	if len(parts) != 2 {
+		log.Println("Invalid signature format")
+		return false
+	}
+
+	actualSignature := parts[1]
+
 	mac := hmac.New(sha256.New, []byte(signingSecret))
 	mac.Write(body)
 	expectedSignature := hex.EncodeToString(mac.Sum(nil))
 
-	if !hmac.Equal([]byte(expectedSignature), []byte(signatureHeader)) {
-		log.Printf("Signature mismatch: expected %s, got %s", expectedSignature, signatureHeader)
+	if !hmac.Equal([]byte(expectedSignature), []byte(actualSignature)) {
+		log.Printf("Signature mismatch: expected %s, got %s", expectedSignature, actualSignature)
 		return false
 	}
 
