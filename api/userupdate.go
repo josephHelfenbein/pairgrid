@@ -2,18 +2,15 @@ package handler
 
 import (
 	"bytes"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"time"
+
+	svix "github.com/svix/svix-webhooks/go"
 )
 
 type ClerkUser struct {
@@ -108,61 +105,29 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 func validateSignature(r *http.Request, body []byte) bool {
 	signingSecret := os.Getenv("UPDATE_SIGNING_SECRET")
 	if signingSecret == "" {
-		log.Println("UPDATE_SIGNING_SECRET is not set")
+		log.Println("SVIX_API_KEY is not set")
 		return false
 	}
 
-	secretBytes, err := base64.StdEncoding.DecodeString(strings.Split(signingSecret, "_")[1])
+	wh, err := svix.NewWebhook(signingSecret)
 	if err != nil {
-		log.Printf("Failed to base64 decode the secret: %v", err)
+		log.Printf("Error creating svix webhook: %v", err)
 		return false
 	}
 
-	svixSignature := r.Header.Get("Svix-Signature")
-	if svixSignature == "" {
-		log.Println("Svix-Signature header is missing")
-		return false
-	}
+	headers := r.Header
+	headers.Set("svix-id", r.Header.Get("Svix-ID"))
+	headers.Set("svix-timestamp", r.Header.Get("Svix-Timestamp"))
+	headers.Set("svix-signature", r.Header.Get("Svix-Signature"))
 
-	svixTimestamp := r.Header.Get("Svix-Timestamp")
-	if svixTimestamp == "" {
-		log.Println("Svix-Timestamp header is missing")
-		return false
-	}
-
-	svixTimestampInt, err := strconv.ParseInt(svixTimestamp, 10, 64)
+	err = wh.Verify(body, headers)
 	if err != nil {
-		log.Printf("Error parsing timestamp: %v", err)
-		return false
-	}
-	if svixTimestampInt < 10000000000 {
-		svixTimestampInt *= 1000
-	}
-
-	message := fmt.Sprintf("%d.%s", svixTimestampInt, string(body))
-
-	signatureParts := strings.SplitN(svixSignature, ",", 2)
-	if len(signatureParts) != 2 || signatureParts[0] != "v1" {
-		log.Println("Invalid signature format or version")
+		log.Printf("Signature verification failed: %v", err)
 		return false
 	}
 
-	providedSignature := signatureParts[1]
-
-	mac := hmac.New(sha256.New, secretBytes)
-	mac.Write([]byte(message))
-	computedMAC := mac.Sum(nil)
-
-	decodedSignature, err := base64.StdEncoding.DecodeString(providedSignature)
-	if err != nil {
-		log.Printf("Failed to decode signature: %v", err)
-		return false
-	}
-
-	isValid := hmac.Equal(decodedSignature, computedMAC)
-	log.Printf("Signature validation result: %v", isValid)
-
-	return isValid
+	log.Println("Signature successfully verified.")
+	return true
 }
 
 func CreateUserInHasura(user ClerkUser) error {
