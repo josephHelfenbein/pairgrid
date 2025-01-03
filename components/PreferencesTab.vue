@@ -112,7 +112,7 @@
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
   const { getToken } = useAuth();
-  const token = await getToken.value();
+  const token = await getToken.value;
   console.log(token);
 
   const occupations = [
