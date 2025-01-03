@@ -220,7 +220,7 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
-    getToken.value().then(token=>{
+    getToken().then(token=>{
       fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
         method: 'POST',
         headers: {
