@@ -220,33 +220,32 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
-    updatePreferences(data);
-
-    emit('update-preferences', preferences);
-  });
-  const updatePreferences = async (data)=>{
-    try{
-      const token = await getToken.value();
-      console.log("getToken.value(): ", token);
-
-      if(!token){
-        console.error("Failed to retrieve JWT token.");
-        return;
-      }
-      const response = await fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
+    getToken.value().then(token=>{
+      fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
+      }).then((response)=>{ 
+        if(response.ok){
+          response.json().then(result=>{
+            console.log('Preferences updated successfully');
+          }).catch(error=>{
+            console.error('Error parsing response:', error);
+          });
+        } else{
+          console.error('Failed to update preferences:', response.statusText);
+        }
+      }).catch(error=>{
+        console.error('Error updating preferences:', error);
       });
-      if(response.ok){
-        const result = await response.json();
-        console.log("Preferences updated successfully", result);
-      } else console.error("Failed to update preferences:", response.statusText);
-    } catch(err){
-      console.error("Error updating preferences", err);
-    }
-  }
+    }).catch(error=>{
+      console.error('Error getting token:', error);
+    })
+
+    emit('update-preferences', preferences);
+  });
+
   </script>
