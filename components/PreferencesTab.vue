@@ -209,7 +209,7 @@
     validationSchema: formSchema,
     initialValues: props.preferences,
   })
-  const onSubmit = handleSubmit(async (values)=>{
+  const onSubmit = handleSubmit((values)=>{
     preferences.bio = values.bio
     preferences.occupation = values.occupation
     const data = {
@@ -220,6 +220,11 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
+    updatePreferences(data);
+
+    emit('update-preferences', preferences);
+  });
+  const updatePreferences = async (data)=>{
     try{
       const token = await getToken.value();
       console.log("getToken.value(): ", token);
@@ -243,7 +248,5 @@
     } catch(err){
       console.error("Error updating preferences", err);
     }
-
-    emit('update-preferences', preferences);
-  });
+  }
   </script>
