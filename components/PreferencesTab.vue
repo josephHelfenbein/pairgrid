@@ -87,7 +87,7 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive, defineEmits, ref, watchEffect } from 'vue'
+  import { defineProps, reactive, defineEmits, ref, watch } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -96,7 +96,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import { useAuth } from '@clerk/vue'
+  import { useSession } from '@clerk/vue'
   
   const props = defineProps({
     preferences: {
@@ -112,13 +112,11 @@
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
   const token = ref(null);
-  const { getToken } = useAuth();
-
-  watchEffect(async ()=>{
-    if(!token.value){
-      token.value = await getToken.value();
-      console.log(token.value);
-    }
+  const { session } = useSession();
+  watch(() => session, async (newSession) => {
+    console.log("Getting token...");
+    token.value = await newSession.getToken();
+    console.log(token.value);
   })
 
   const occupations = [
