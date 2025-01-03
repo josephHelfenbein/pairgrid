@@ -96,7 +96,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
-  import { useAuth } from '@clerk/nuxt'
+  import { useAuth } from '@clerk/vue'
   
   const props = defineProps({
     preferences: {
