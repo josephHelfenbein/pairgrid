@@ -114,17 +114,11 @@
   const token = ref(null);
   const { session } = useSession();
   const reactiveSession = ref(session);
-  onMounted(() => {
-    console.log('Session onMounted:', reactiveSession.value);
-  });
 
   watch(reactiveSession, async (newSession, oldSession) => {
-    console.log("Session changed:", newSession);
     if (newSession) {
       try {
-        console.log("Getting token...");
         token.value = await newSession.getToken();
-        console.log("Token:", token.value);
       } catch (error) {
         console.error("Error getting token:", error);
       }

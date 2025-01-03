@@ -10,7 +10,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 
 	"github.com/pusher/pusher-http-go/v5"
 )
@@ -34,8 +39,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
+	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	log.Printf("Found session token %s", sessionToken)
+	claims, err := jwt.Verify(r.Context(), &jwt.VerifyParams{
+		Token: sessionToken,
+	})
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		log.Printf("Session not found")
+		return
+	}
+	usr, err := user.Get(r.Context(), claims.Subject)
+	if err != nil {
+		http.Error(w, "User could not be retrieved from session", http.StatusUnauthorized)
+		log.Printf("User could not be retrieved from session")
+		return
+	}
+	log.Printf("Found user %s", usr.ID)
+
 	var msg Message
-	err := json.NewDecoder(r.Body).Decode(&msg)
+	err = json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error decoding JSON payload: %s", err)
@@ -44,6 +68,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" || msg.Key == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		log.Printf("Missing fields: %+v", msg)
+		return
+	}
+	if msg.SenderID != usr.ID {
+		http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+		log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, msg.SenderID)
 		return
 	}
 	updateseen.UpdateUserInHasura(msg.SenderID)

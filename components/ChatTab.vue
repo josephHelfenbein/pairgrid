@@ -173,6 +173,7 @@
   import { useRuntimeConfig } from '#app'
   import CryptoJS from 'crypto-js'
   import Pusher from 'pusher-js'
+  import { useSession } from '@clerk/vue'
 
   import FriendsList from './FriendsList.vue'
   import FriendOptions from './FriendOptions.vue'
@@ -186,6 +187,19 @@
   })
 
   const emit = defineEmits(['toast-update'])
+  const token = ref(null);
+  const { session } = useSession();
+  const reactiveSession = ref(session);
+
+  watch(reactiveSession, async (newSession, oldSession) => {
+    if (newSession) {
+      try {
+        token.value = await newSession.getToken();
+      } catch (error) {
+        console.error("Error getting token:", error);
+      }
+    }
+  }, { immediate: true });
 
   const friends = ref([])
   const requests = ref([])
@@ -251,8 +265,15 @@
 
   const acceptRequest = async (request) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${request.email}&operation=add`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to accept friend request')
       friends.value.push(request)
@@ -266,8 +287,15 @@
 
   const denyRequest = async (request) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${request.email}&operation=remove`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to deny friend request')
       requests.value = requests.value.filter((r) => r.email !== request.email)
@@ -280,8 +308,15 @@
 
   const removeFriend = async (friend) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${friend.email}&operation=remove`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to remove friend')
       friends.value = friends.value.filter((f) => f.email !== friend.email)
@@ -298,6 +333,10 @@
   const sendMessage = async () => {
     if (!newMessage.value || !selectedFriend.value) return
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const encryptionKey = generateEncryptionKey(props.user.id)
       const encryptedMessage = encryptMessage(newMessage.value, encryptionKey)
       const payload = {
@@ -316,6 +355,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
         },
         body: JSON.stringify(payload),
       })
@@ -356,8 +396,15 @@
 
   const getMessages = async () => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
