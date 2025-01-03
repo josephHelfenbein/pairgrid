@@ -112,6 +112,8 @@
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
   const { getToken } = useAuth();
+  const token = await getToken.value();
+  console.log(token);
 
   const occupations = [
     'Middle School Student',
@@ -220,30 +222,27 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
-    getToken().then(token=>{
-      fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      }).then((response)=>{ 
-        if(response.ok){
-          response.json().then(result=>{
-            console.log('Preferences updated successfully');
-          }).catch(error=>{
-            console.error('Error parsing response:', error);
-          });
-        } else{
-          console.error('Failed to update preferences:', response.statusText);
-        }
-      }).catch(error=>{
-        console.error('Error updating preferences:', error);
-      });
+    
+    fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    }).then((response)=>{ 
+      if(response.ok){
+        response.json().then(result=>{
+          console.log('Preferences updated successfully');
+        }).catch(error=>{
+          console.error('Error parsing response:', error);
+        });
+      } else{
+        console.error('Failed to update preferences:', response.statusText);
+      }
     }).catch(error=>{
-      console.error('Error getting token:', error);
-    })
+      console.error('Error updating preferences:', error);
+    });
 
     emit('update-preferences', preferences);
   });
