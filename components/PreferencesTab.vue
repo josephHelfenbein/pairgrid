@@ -96,6 +96,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
+  import { useAuth } from '@clerk/nuxt'
   
   const props = defineProps({
     preferences: {
@@ -110,7 +111,7 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { getToken } = useAuth();
 
   const occupations = [
     'Middle School Student',
@@ -220,7 +221,7 @@
       occupation: preferences.occupation
     };
 
-    getToken().then((token)=>{
+    getToken.value().then((token)=>{
       if(!token){
         console.error("Failed to retrieve JWT token.");
         return;
