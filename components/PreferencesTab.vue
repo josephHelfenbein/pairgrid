@@ -112,6 +112,7 @@
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
   const token = ref(null);
+  const { getToken } = useAuth();
 
   watchEffect(async ()=>{
     if(!token.value){
