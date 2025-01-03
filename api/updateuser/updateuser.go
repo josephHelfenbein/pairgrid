@@ -7,7 +7,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 )
 
 type UpdateUserRequest struct {
@@ -21,10 +26,31 @@ type UpdateUserRequest struct {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to update user in Hasura")
+	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
+	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	claims, err := jwt.Verify(r.Context(), &jwt.VerifyParams{
+		Token: sessionToken,
+	})
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		log.Printf("Session not found")
+		return
+	}
+	usr, err := user.Get(r.Context(), claims.Subject)
+	if err != nil {
+		http.Error(w, "User could not be retrieved from session", http.StatusUnauthorized)
+		log.Printf("User could not be retrieved from session")
+		return
+	}
 	var updateReq UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error decoding JSON payload: %s", err)
+		return
+	}
+	if usr.ID != updateReq.ID {
+		http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+		log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, updateReq.ID)
 		return
 	}
 	if err := UpdateUserInHasura(updateReq); err != nil {

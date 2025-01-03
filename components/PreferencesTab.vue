@@ -110,6 +110,7 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
+  const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const occupations = [
     'Middle School Student',
@@ -207,7 +208,7 @@
     validationSchema: formSchema,
     initialValues: props.preferences,
   })
-  const onSubmit = handleSubmit((values)=>{
+  const onSubmit = handleSubmit(async (values)=>{
     preferences.bio = values.bio
     preferences.occupation = values.occupation
     const data = {
@@ -219,25 +220,29 @@
       occupation: preferences.occupation
     };
 
-    fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
+    try{
+      const token = await getToken();
+      if (!token) {
+        console.error("Failed to retrieve JWT token.");
+        return;
+      }
+      const response = await fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
-    }).then((response)=>{ 
-      if(response.ok){
-        response.json().then(result=>{
-          console.log('Preferences updated successfully');
-        }).catch(error=>{
-          console.error('Error parsing response:', error);
-        });
-      } else{
-        console.error('Failed to update preferences:', response.statusText);
+      });
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Preferences updated successfully", result);
+      } else {
+        console.error("Failed to update preferences:", response.statusText);
       }
-    }).catch(error=>{
-      console.error('Error updating preferences:', error);
-    });
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+    }
     emit('update-preferences', preferences);
   });
   </script>
