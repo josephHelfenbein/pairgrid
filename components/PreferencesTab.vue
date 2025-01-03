@@ -87,7 +87,7 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive, defineEmits, watch } from 'vue'
+  import { defineProps, reactive, defineEmits, ref } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -220,8 +220,10 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
-
+    console.log("getToken.value(): ", getToken.value());
+    console.log("getToken(): ", getToken());
     getToken.value().then((token)=>{
+      console.log("Token:", token);
       if(!token){
         console.error("Failed to retrieve JWT token.");
         return;
