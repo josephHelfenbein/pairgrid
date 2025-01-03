@@ -87,7 +87,7 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive, defineEmits, ref, onMounted } from 'vue'
+  import { defineProps, reactive, defineEmits, ref, watchEffect } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -113,10 +113,11 @@
   const user = props.user;
   const token = ref(null);
 
-  onMounted(async()=>{
-    const { getToken } = useAuth(); 
-    token.value = await getToken.value();
-    console.log(token.value);
+  watchEffect(async ()=>{
+    if(!token.value){
+      token.value = await getToken.value();
+      console.log(token.value);
+    }
   })
 
   const occupations = [
