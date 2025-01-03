@@ -226,6 +226,7 @@
         console.error("Failed to retrieve JWT token.");
         return;
       }
+      console.log(token);
       const response = await fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
       headers: {

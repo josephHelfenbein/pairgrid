@@ -28,6 +28,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to update user in Hasura")
 	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
 	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	log.Printf("Found session token %s", sessionToken)
 	claims, err := jwt.Verify(r.Context(), &jwt.VerifyParams{
 		Token: sessionToken,
 	})
@@ -42,6 +43,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("User could not be retrieved from session")
 		return
 	}
+	log.Printf("Found user %s", usr.ID)
 	var updateReq UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&updateReq); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
