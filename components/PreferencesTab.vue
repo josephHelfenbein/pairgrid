@@ -113,7 +113,8 @@
   const user = props.user;
   const token = ref(null);
   const { session } = useSession();
-  watch(() => session, async (newSession) => {
+  const reactiveSession = ref(session);
+  watch(() => reactiveSession, async (newSession) => {
     console.log("Getting token...");
     token.value = await newSession.getToken();
     console.log(token.value);
