@@ -87,7 +87,7 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive, defineEmits, ref } from 'vue'
+  import { defineProps, reactive, defineEmits, ref, onMounted } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -111,9 +111,13 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
-  const { getToken } = useAuth();
-  const token = await getToken();
-  console.log(token);
+  const token = ref(null);
+
+  onMounted(async()=>{
+    const { getToken } = useAuth(); 
+    token.value = await getToken.value();
+    console.log(token.value);
+  })
 
   const occupations = [
     'Middle School Student',
@@ -222,12 +226,16 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
+    if (!token.value) {
+      console.error('Token not available');
+      return;
+    }
     
     fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.value}`,
       },
       body: JSON.stringify(data),
     }).then((response)=>{ 
