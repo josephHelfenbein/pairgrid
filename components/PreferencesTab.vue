@@ -208,7 +208,7 @@
     validationSchema: formSchema,
     initialValues: props.preferences,
   })
-  const onSubmit = handleSubmit(async (values)=>{
+  const onSubmit = handleSubmit((values)=>{
     preferences.bio = values.bio
     preferences.occupation = values.occupation
     const data = {
@@ -220,29 +220,30 @@
       occupation: preferences.occupation
     };
 
-    try{
-      const token = await getToken();
-      if (!token) {
+    getToken().then((token)=>{
+      if(!token){
         console.error("Failed to retrieve JWT token.");
         return;
       }
-      const response = await fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
+      fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Preferences updated successfully", result);
-      } else {
-        console.error("Failed to update preferences:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error updating preferences:", error);
-    }
+      }).then((response)=>{
+        if(response.ok) {
+          const result = response.json();
+          console.log("Preferences updated successfully", result);
+        }
+        else console.error("Failed to update preferences:", response.statusText);
+      }).catch((error)=>{
+        console.error("Error updating preferences:", error);
+      })
+    }).catch((error)=>{
+      console.error("Error getting token:", error);
+    });
     emit('update-preferences', preferences);
   });
   </script>
