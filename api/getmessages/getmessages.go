@@ -2,6 +2,10 @@ package getmessages
 
 import (
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -24,6 +28,31 @@ type Message struct {
 	Key              string `json:"key"`
 }
 
+func DecryptMessage(encryptedContent, ivHex string, key []byte) (string, error) {
+	cipherText, err := hex.DecodeString(encryptedContent)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode ciphertext: %w", err)
+	}
+	iv, err := hex.DecodeString(ivHex)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode IV: %w", err)
+	}
+	if len(iv) != aes.BlockSize {
+		return "", fmt.Errorf("invalid IV length: expected %d bytes, got %d", aes.BlockSize, len(iv))
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", fmt.Errorf("failed to create cipher: %w", err)
+	}
+	plainText := make([]byte, len(cipherText))
+	stream := cipher.NewCFBDecrypter(block, iv)
+	stream.XORKeyStream(plainText, cipherText)
+	return string(plainText), nil
+}
+func GenerateEncryptionKey(userID, serverSecret string) []byte {
+	hash := sha256.Sum256([]byte(userID + serverSecret))
+	return hash[:]
+}
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get messages from Hasura")
 	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
@@ -63,6 +92,17 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to get messages from Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error getting messages from Hasura: %s", err)
 		return
+	}
+	serverSecret := os.Getenv("ENCRYPTION_KEY")
+
+	for i, message := range messages {
+		key := GenerateEncryptionKey(message.SenderID, serverSecret)
+		decrypted, err := DecryptMessage(message.EncryptedContent, message.Key, key)
+		if err != nil {
+			log.Printf("Failed to decrypt message ID %s: %s", message.ID, err)
+			continue
+		}
+		messages[i].EncryptedContent = decrypted
 	}
 
 	w.WriteHeader(http.StatusOK)

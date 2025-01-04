@@ -4,8 +4,14 @@ import (
 	"api/addfriend"
 	"api/updateseen"
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,6 +38,25 @@ type MessagePusher struct {
 	EncryptedContent string `json:"encrypted_content"`
 	Key              string `json:"key"`
 	CreatedAt        string `json:"created_at"`
+}
+
+func GenerateEncryptionKey(userID, serverSecret string) []byte {
+	hash := sha256.Sum256([]byte(userID + serverSecret))
+	return hash[:]
+}
+func EncryptMessage(plainText string, key []byte) (string, string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create cipher: %w", err)
+	}
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", "", fmt.Errorf("failed to generate IV: %w", err)
+	}
+	cipherText := make([]byte, len(plainText))
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(cipherText, []byte(plainText))
+	return hex.EncodeToString(cipherText), hex.EncodeToString(iv), nil
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -65,7 +90,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error decoding JSON payload: %s", err)
 		return
 	}
-	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" || msg.Key == "" {
+	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		log.Printf("Missing fields: %+v", msg)
 		return
@@ -82,6 +107,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting receiver ID: %s", err)
 		return
 	}
+	serverSecret := os.Getenv("ENCRYPTION_KEY")
+	encryptionKey := GenerateEncryptionKey(msg.SenderID, serverSecret)
+	encryptedContent, iv, err := EncryptMessage(msg.Content, encryptionKey)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encrypt message: %s", err), http.StatusInternalServerError)
+		log.Printf("Error encrypting message: %s", err)
+		return
+	}
+	msg.Content = encryptedContent
+	msg.Key = iv
 	if err := InsertMessage(msg.SenderID, receiverID, msg.Content, msg.Key); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to insert message: %s", err), http.StatusInternalServerError)
 		log.Printf("Error inserting message: %s", err)

@@ -337,13 +337,10 @@
         console.error("Token not available");
         return;
       }
-      const encryptionKey = generateEncryptionKey(props.user.id)
-      const encryptedMessage = encryptMessage(newMessage.value, encryptionKey)
       const payload = {
         sender_id: props.user.id,
         receiver_email: selectedFriend.value.email,
-        content: encryptedMessage.encryptedData,
-        key: encryptedMessage.iv,
+        content: newMessage.value,
       }
       messages.value.push({
         id: new Date().getTime(),
@@ -369,16 +366,6 @@
   const generateEncryptionKey = (userID) => {
     const serverSideSecret = useRuntimeConfig().public.encryptionKey
     return CryptoJS.SHA256(userID + serverSideSecret)
-  }
-
-  const encryptMessage = (message, key) => {
-    const iv = CryptoJS.lib.WordArray.random(16)
-    const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv })
-    
-    return {
-      encryptedData: encrypted.ciphertext.toString(CryptoJS.enc.Hex),
-      iv: iv.toString(CryptoJS.enc.Hex)
-    }
   }
 
   const decryptMessage = (encryptedMessage, key, iv) => {
@@ -409,16 +396,11 @@
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
       messages.value = data.map(message => {
-        const decryptedMessage = decryptMessage(
-          message.encrypted_content, 
-          generateEncryptionKey(message.sender_id), 
-          message.key
-        )
 
         return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
-          text: decryptedMessage,
+          text: message.encrypted_content,
         }
       })
       chatLoading.value = false
