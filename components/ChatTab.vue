@@ -363,24 +363,6 @@
     }
   }
 
-  const generateEncryptionKey = (userID) => {
-    const serverSideSecret = useRuntimeConfig().public.encryptionKey
-    return CryptoJS.SHA256(userID + serverSideSecret)
-  }
-
-  const decryptMessage = (encryptedMessage, key, iv) => {
-    const ivWordArray = CryptoJS.enc.Hex.parse(iv)
-    const encryptedWordArray = CryptoJS.enc.Hex.parse(encryptedMessage)
-
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: encryptedWordArray },
-      key,
-      { iv: ivWordArray }
-    )
-
-    return decrypted.toString(CryptoJS.enc.Utf8)
-  }
-
   const getMessages = async () => {
     try {
       if(!token.value) {
@@ -422,13 +404,11 @@
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
-      const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key)
-      
       if (data.sender_id != props.user.id) {
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
-          text: decryptedMessage,
+          text: data.encrypted_content,
         })
       }
     })

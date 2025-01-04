@@ -9,7 +9,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public:{
       pusherAppKey: process.env.PUSHER_APP_KEY,
-      encryptionKey: process.env.ENCRYPTION_KEY,
     }
   },
 

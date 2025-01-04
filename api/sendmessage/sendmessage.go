@@ -115,6 +115,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error encrypting message: %s", err)
 		return
 	}
+	BroadcastMessage(MessagePusher{
+		SenderID:         msg.SenderID,
+		RecipientID:      receiverID,
+		EncryptedContent: msg.Content,
+		CreatedAt:        time.Now().Format(time.RFC3339Nano),
+	})
 	msg.Content = encryptedContent
 	msg.Key = iv
 	if err := InsertMessage(msg.SenderID, receiverID, msg.Content, msg.Key); err != nil {
@@ -193,13 +199,6 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 	}
 
 	log.Printf("Sent message in Hasura")
-	BroadcastMessage(MessagePusher{
-		SenderID:         senderID,
-		RecipientID:      retrieverID,
-		EncryptedContent: content,
-		Key:              key,
-		CreatedAt:        createdAt,
-	})
 	return nil
 }
 
@@ -226,7 +225,6 @@ func BroadcastMessage(message MessagePusher) {
 		"sender_id":         message.SenderID,
 		"recipient_id":      message.RecipientID,
 		"encrypted_content": message.EncryptedContent,
-		"key":               message.Key,
 		"created_at":        message.CreatedAt,
 	}
 
