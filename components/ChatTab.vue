@@ -395,7 +395,7 @@
   const subscribeToChatChannel = () => {
     if (!selectedFriend.value) return
     unsubscribeFromChatChannel()
-    const friendID = selectFriend.value.id
+    const friendID = selectedFriend.value.id
     const firstID = props.user.id < friendID ? props.user.id : friendID
     const secondID = props.user.id > friendID ? props.user.id : friendID
     const newChannel = `chat-${firstID}-${secondID}`
