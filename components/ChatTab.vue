@@ -233,7 +233,7 @@
       emit('toast-update', 'Error fetching friends')
     }
   }
-
+console.log(notifications.value);
   const fetchNotifications = async () => {
     try{
       const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${props.user.id}&kind=notifications`, {
