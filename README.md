@@ -133,7 +133,7 @@ Here are the steps to run the project locally if you want to develop your own pr
    pnpm install
    ```
 
-3. Create a Hasura account at [https://hasura.io/](https://hasura.io/) and start a project on the legacy Hasura dashboard. Get the API keys `HASURA_GRAPHQL_URL, HASURA_GRAPHQL_ADMIN_SECRET` and put them in the environment variables. Additionally, create tables "users", "friends", and "messages" with the same columns found in the [Go serverless endpoints](https://github.com/josephHelfenbein/pairgrid/tree/main/api). Create an empty table called 'similarity_result' with the columns:
+3. Create a Hasura account at [https://hasura.io/](https://hasura.io/) and start a project on the legacy Hasura dashboard. Get the API keys `HASURA_GRAPHQL_URL, HASURA_GRAPHQL_ADMIN_SECRET` and put them in the environment variables. Additionally, create tables "users", "friends", "notifications", and "messages" with the same columns found in the [Go serverless endpoints](https://github.com/josephHelfenbein/pairgrid/tree/main/api). Create an empty table called 'similarity_result' with the columns:
     ```
     id- text, primary key, unique
     name- text
