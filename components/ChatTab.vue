@@ -245,7 +245,10 @@
         notifications.value = JSON.parse(JSON.stringify(data));
         notifications.value.push("0");
       }
-      else notifications.value = ["0"];
+      else {
+        notifications.value = [];
+        notifications.value.push("0");
+      }
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error fetching notifications')
