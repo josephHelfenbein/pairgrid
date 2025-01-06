@@ -242,7 +242,6 @@
       if (!response.ok) throw new Error('Failed to fetch notifications')
       const data = await response.json();
       notifications.value = data ? [...data] : [];
-      console.log(notifications.value);
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error fetching notifications')
@@ -406,7 +405,6 @@
       if(notifications.value.includes(selectedFriend.value.id)) {
         notifications.value = notifications.value.filter((id) => id !== selectedFriend.value.id)
       }
-      console.log(notifications.value)
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error loading chat')
@@ -419,8 +417,7 @@
     })
     const notificationChannel = notificationPusher.value.subscribe(`notifications-${props.user.id}`)
     notificationChannel.bind('new-notification', (data) => {
-      console.log(notifications.value);
-      if(notifications.value == []) {
+      if(notifications.value.length == 0) {
         notifications.value = [data.sender_id];
       }
       else if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
