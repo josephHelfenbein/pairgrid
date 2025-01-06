@@ -233,7 +233,7 @@
       emit('toast-update', 'Error fetching friends')
     }
   }
-console.log(notifications.value);
+
   const fetchNotifications = async () => {
     try{
       const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${props.user.id}&kind=notifications`, {
@@ -402,7 +402,6 @@ console.log(notifications.value);
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
       messages.value = data.map(message => {
-
         return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
@@ -427,6 +426,11 @@ console.log(notifications.value);
     notificationChannel.bind('new-notification', (data) => {
       if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
         notifications.value.push(data.sender_id)
+      else if(!notifications.value) {
+        notifications.value = [];
+        notifications.push("0");
+        notifications.value.push(data.sender_id);
+      }
     })
   }
 
