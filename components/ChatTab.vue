@@ -417,9 +417,8 @@
     })
     const notificationChannel = notificationPusher.value.subscribe(`notifications-${props.user.id}`)
     notificationChannel.bind('new-notification', (data) => {
-      if(notifications.value.length == 0) {
+      if(notifications.value.length == 0 && data.sender_id != selectedFriend.value.id) 
         notifications.value = [data.sender_id];
-      }
       else if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
         notifications.value.push(data.sender_id)
     })
@@ -445,7 +444,7 @@
         })
         setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
           method: 'GET',
-        }), 1000)
+        }), 2000)
       }
     })
   }
