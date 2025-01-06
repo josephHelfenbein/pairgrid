@@ -443,9 +443,9 @@
           sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
           text: data.encrypted_content,
         })
-        fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
+        setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
           method: 'GET',
-        })
+        }), 1000)
       }
     })
   }
