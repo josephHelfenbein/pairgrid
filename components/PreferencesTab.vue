@@ -87,7 +87,7 @@
   </template>
   
   <script setup>
-  import { defineProps, reactive, defineEmits, watch } from 'vue'
+  import { defineProps, reactive, defineEmits, ref, watch } from 'vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { Label } from '@/components/ui/label'
@@ -96,6 +96,7 @@
   import {useForm} from 'vee-validate'
   import * as z from 'zod'
   import { Checkbox } from '@/components/ui/checkbox'
+  import { useSession } from '@clerk/vue'
   
   const props = defineProps({
     preferences: {
@@ -110,6 +111,19 @@
   const emit = defineEmits(['update-preferences']);
   const preferences = reactive({ ...props.preferences });
   const user = props.user;
+  const token = ref(null);
+  const { session } = useSession();
+  const reactiveSession = ref(session);
+
+  watch(reactiveSession, async (newSession, oldSession) => {
+    if (newSession) {
+      try {
+        token.value = await newSession.getToken();
+      } catch (error) {
+        console.error("Error getting token:", error);
+      }
+    }
+  }, { immediate: true });
 
   const occupations = [
     'Middle School Student',
@@ -218,11 +232,16 @@
       interests: [...preferences.interests],
       occupation: preferences.occupation
     };
-
+    if (!token.value) {
+      console.error('Token not available');
+      return;
+    }
+    
     fetch('https://www.pairgrid.com/api/updateuser/updateuser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token.value}`,
       },
       body: JSON.stringify(data),
     }).then((response)=>{ 
@@ -238,6 +257,8 @@
     }).catch(error=>{
       console.error('Error updating preferences:', error);
     });
+
     emit('update-preferences', preferences);
   });
+
   </script>

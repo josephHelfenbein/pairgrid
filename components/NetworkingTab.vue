@@ -42,6 +42,7 @@
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
   import { defineProps, defineEmits, onMounted, ref } from 'vue';
   import Loader from '@/components/Loader.vue';
+  import { useSession } from '@clerk/vue'
 
 
   const props = defineProps({
@@ -52,6 +53,19 @@
   })
   const user = props.user;
   const emit = defineEmits(['toast-update']);
+  const token = ref(null);
+  const { session } = useSession();
+  const reactiveSession = ref(session);
+
+  watch(reactiveSession, async (newSession, oldSession) => {
+    if (newSession) {
+      try {
+        token.value = await newSession.getToken();
+      } catch (error) {
+        console.error("Error getting token:", error);
+      }
+    }
+  }, { immediate: true });
 
   const recommendedPeople = ref([]);
   const sentTo = ref([]);
@@ -86,6 +100,9 @@
     try{
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${user.id}&friend_email=${person.email}&operation=add`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if(!response.ok) throw new Error('Failed to connect with the user');
       const data = await response.json();

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	svix "github.com/svix/svix-webhooks/go"
 )
 
 type ClerkUser struct {
@@ -46,6 +48,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to read request body: %s", err), http.StatusInternalServerError)
+		return
+	}
+	if !validateSignature(r, body) {
+		http.Error(w, "Invalid signature", http.StatusUnauthorized)
+		log.Println("Signature validation failed")
 		return
 	}
 	log.Printf("Raw webhook payload: %s", string(body))
@@ -93,6 +100,34 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("User with ID %s successfully created in Hasura", user.ID)
+}
+
+func validateSignature(r *http.Request, body []byte) bool {
+	signingSecret := os.Getenv("UPDATE_SIGNING_SECRET")
+	if signingSecret == "" {
+		log.Println("SVIX_API_KEY is not set")
+		return false
+	}
+
+	wh, err := svix.NewWebhook(signingSecret)
+	if err != nil {
+		log.Printf("Error creating svix webhook: %v", err)
+		return false
+	}
+
+	headers := r.Header
+	headers.Set("svix-id", r.Header.Get("Svix-ID"))
+	headers.Set("svix-timestamp", r.Header.Get("Svix-Timestamp"))
+	headers.Set("svix-signature", r.Header.Get("Svix-Signature"))
+
+	err = wh.Verify(body, headers)
+	if err != nil {
+		log.Printf("Signature verification failed: %v", err)
+		return false
+	}
+
+	log.Println("Signature successfully verified.")
+	return true
 }
 
 func CreateUserInHasura(user ClerkUser) error {

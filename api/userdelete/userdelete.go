@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	svix "github.com/svix/svix-webhooks/go"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -19,6 +21,25 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	clerkSignature := r.Header.Get("Svix-Signature")
+	if clerkSignature == "" {
+		http.Error(w, "Missing Svix-Signature header", http.StatusUnauthorized)
+		return
+	}
+
+	svixTimestamp := r.Header.Get("Svix-Timestamp")
+	if svixTimestamp == "" {
+		http.Error(w, "Missing Svix-Timestamp header", http.StatusUnauthorized)
+		return
+	}
+
+	clerkSigningSecret := os.Getenv("DELETE_SIGNING_SECRET")
+	if !validateClerkSignature(body, clerkSignature, clerkSigningSecret, r) {
+		http.Error(w, "Invalid Svix-Signature", http.StatusUnauthorized)
+		return
+	}
+
 	log.Printf("Raw webhook payload: %s", string(body))
 
 	var payload struct {
@@ -105,4 +126,26 @@ func DeleteUserFromHasura(userID string) error {
 	}
 	log.Printf("User with ID %s successfully deleted from Hasura", userID)
 	return nil
+}
+
+func validateClerkSignature(body []byte, signature, secret string, r *http.Request) bool {
+	wh, err := svix.NewWebhook(secret)
+	if err != nil {
+		log.Printf("Error creating svix webhook: %v", err)
+		return false
+	}
+
+	headers := r.Header
+	headers.Set("svix-id", r.Header.Get("Svix-ID"))
+	headers.Set("svix-timestamp", r.Header.Get("Svix-Timestamp"))
+	headers.Set("svix-signature", signature)
+
+	err = wh.Verify(body, headers)
+	if err != nil {
+		log.Printf("Signature verification failed: %v", err)
+		return false
+	}
+
+	log.Println("Signature successfully verified.")
+	return true
 }

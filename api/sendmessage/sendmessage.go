@@ -4,13 +4,24 @@ import (
 	"api/addfriend"
 	"api/updateseen"
 	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 
 	"github.com/pusher/pusher-http-go/v5"
 )
@@ -29,21 +40,64 @@ type MessagePusher struct {
 	CreatedAt        string `json:"created_at"`
 }
 
+func GenerateEncryptionKey(userID, serverSecret string) []byte {
+	hash := sha256.Sum256([]byte(userID + serverSecret))
+	return hash[:]
+}
+func EncryptMessage(plainText string, key []byte) (string, string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create cipher: %w", err)
+	}
+	iv := make([]byte, aes.BlockSize)
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return "", "", fmt.Errorf("failed to generate IV: %w", err)
+	}
+	cipherText := make([]byte, len(plainText))
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(cipherText, []byte(plainText))
+	return hex.EncodeToString(cipherText), hex.EncodeToString(iv), nil
+}
+
 func Handler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
+	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	log.Printf("Found session token %s", sessionToken)
+	claims, err := jwt.Verify(r.Context(), &jwt.VerifyParams{
+		Token: sessionToken,
+	})
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		log.Printf("Session not found")
+		return
+	}
+	usr, err := user.Get(r.Context(), claims.Subject)
+	if err != nil {
+		http.Error(w, "User could not be retrieved from session", http.StatusUnauthorized)
+		log.Printf("User could not be retrieved from session")
+		return
+	}
+	log.Printf("Found user %s", usr.ID)
+
 	var msg Message
-	err := json.NewDecoder(r.Body).Decode(&msg)
+	err = json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
 		log.Printf("Error decoding JSON payload: %s", err)
 		return
 	}
-	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" || msg.Key == "" {
+	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		log.Printf("Missing fields: %+v", msg)
+		return
+	}
+	if msg.SenderID != usr.ID {
+		http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+		log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, msg.SenderID)
 		return
 	}
 	updateseen.UpdateUserInHasura(msg.SenderID)
@@ -53,6 +107,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting receiver ID: %s", err)
 		return
 	}
+	serverSecret := os.Getenv("ENCRYPTION_KEY")
+	encryptionKey := GenerateEncryptionKey(msg.SenderID, serverSecret)
+	encryptedContent, iv, err := EncryptMessage(msg.Content, encryptionKey)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to encrypt message: %s", err), http.StatusInternalServerError)
+		log.Printf("Error encrypting message: %s", err)
+		return
+	}
+	BroadcastMessage(MessagePusher{
+		SenderID:         msg.SenderID,
+		RecipientID:      receiverID,
+		EncryptedContent: msg.Content,
+		CreatedAt:        time.Now().Format(time.RFC3339Nano),
+	})
+	msg.Content = encryptedContent
+	msg.Key = iv
 	if err := InsertMessage(msg.SenderID, receiverID, msg.Content, msg.Key); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to insert message: %s", err), http.StatusInternalServerError)
 		log.Printf("Error inserting message: %s", err)
@@ -133,13 +203,6 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 	if err != nil {
 		return fmt.Errorf("failed to update notifications: %w", err)
 	}
-	BroadcastMessage(MessagePusher{
-		SenderID:         senderID,
-		RecipientID:      retrieverID,
-		EncryptedContent: content,
-		Key:              key,
-		CreatedAt:        createdAt,
-	})
 	BroadcastNotification(retrieverID, senderID)
 	return nil
 }
@@ -221,7 +284,6 @@ func BroadcastMessage(message MessagePusher) {
 		"sender_id":         message.SenderID,
 		"recipient_id":      message.RecipientID,
 		"encrypted_content": message.EncryptedContent,
-		"key":               message.Key,
 		"created_at":        message.CreatedAt,
 	}
 

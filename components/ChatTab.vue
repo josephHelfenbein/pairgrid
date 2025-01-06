@@ -175,6 +175,7 @@
   import { useRuntimeConfig } from '#app'
   import CryptoJS from 'crypto-js'
   import Pusher from 'pusher-js'
+  import { useSession } from '@clerk/vue'
 
   import FriendsList from './FriendsList.vue'
   import FriendOptions from './FriendOptions.vue'
@@ -188,6 +189,19 @@
   })
 
   const emit = defineEmits(['toast-update'])
+  const token = ref(null);
+  const { session } = useSession();
+  const reactiveSession = ref(session);
+
+  watch(reactiveSession, async (newSession, oldSession) => {
+    if (newSession) {
+      try {
+        token.value = await newSession.getToken();
+      } catch (error) {
+        console.error("Error getting token:", error);
+      }
+    }
+  }, { immediate: true });
 
   const friends = ref([])
   const requests = ref([])
@@ -268,8 +282,15 @@
 
   const acceptRequest = async (request) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${request.email}&operation=add`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to accept friend request')
       friends.value.push(request)
@@ -283,8 +304,15 @@
 
   const denyRequest = async (request) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${request.email}&operation=remove`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to deny friend request')
       requests.value = requests.value.filter((r) => r.email !== request.email)
@@ -297,8 +325,15 @@
 
   const removeFriend = async (friend) => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/addfriend/addfriend?user_id=${props.user.id}&friend_email=${friend.email}&operation=remove`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to remove friend')
       friends.value = friends.value.filter((f) => f.email !== friend.email)
@@ -315,13 +350,14 @@
   const sendMessage = async () => {
     if (!newMessage.value || !selectedFriend.value) return
     try {
-      const encryptionKey = generateEncryptionKey(props.user.id)
-      const encryptedMessage = encryptMessage(newMessage.value, encryptionKey)
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const payload = {
         sender_id: props.user.id,
         receiver_email: selectedFriend.value.email,
-        content: encryptedMessage.encryptedData,
-        key: encryptedMessage.iv,
+        content: newMessage.value,
       }
       messages.value.push({
         id: new Date().getTime(),
@@ -333,6 +369,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.value}`,
         },
         body: JSON.stringify(payload),
       })
@@ -343,52 +380,26 @@
     }
   }
 
-  const generateEncryptionKey = (userID) => {
-    const serverSideSecret = useRuntimeConfig().public.encryptionKey
-    return CryptoJS.SHA256(userID + serverSideSecret)
-  }
-
-  const encryptMessage = (message, key) => {
-    const iv = CryptoJS.lib.WordArray.random(16)
-    const encrypted = CryptoJS.AES.encrypt(message, key, { iv: iv })
-    
-    return {
-      encryptedData: encrypted.ciphertext.toString(CryptoJS.enc.Hex),
-      iv: iv.toString(CryptoJS.enc.Hex)
-    }
-  }
-
-  const decryptMessage = (encryptedMessage, key, iv) => {
-    const ivWordArray = CryptoJS.enc.Hex.parse(iv)
-    const encryptedWordArray = CryptoJS.enc.Hex.parse(encryptedMessage)
-
-    const decrypted = CryptoJS.AES.decrypt(
-      { ciphertext: encryptedWordArray },
-      key,
-      { iv: ivWordArray }
-    )
-
-    return decrypted.toString(CryptoJS.enc.Utf8)
-  }
-
   const getMessages = async () => {
     try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
       const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
       })
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
       messages.value = data.map(message => {
-        const decryptedMessage = decryptMessage(
-          message.encrypted_content, 
-          generateEncryptionKey(message.sender_id), 
-          message.key
-        )
 
         return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
-          text: decryptedMessage,
+          text: message.encrypted_content,
         }
       })
       chatLoading.value = false
@@ -415,7 +426,7 @@
   const subscribeToChatChannel = () => {
     if (!selectedFriend.value) return
     unsubscribeFromChatChannel()
-    const friendID = selectFriend.value.id
+    const friendID = selectedFriend.value.id
     const firstID = props.user.id < friendID ? props.user.id : friendID
     const secondID = props.user.id > friendID ? props.user.id : friendID
     const newChannel = `chat-${firstID}-${secondID}`
@@ -424,13 +435,11 @@
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
-      const decryptedMessage = decryptMessage(data.encrypted_content, generateEncryptionKey(data.sender_id), data.key)
-      
       if (data.sender_id != props.user.id) {
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
-          text: decryptedMessage,
+          text: data.encrypted_content,
         })
       }
     })

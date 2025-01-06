@@ -8,10 +8,33 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/clerk/clerk-sdk-go/v2"
+	"github.com/clerk/clerk-sdk-go/v2/jwt"
+	"github.com/clerk/clerk-sdk-go/v2/user"
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to add friend to Hasura")
+	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
+	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	log.Printf("Found session token %s", sessionToken)
+	claims, err := jwt.Verify(r.Context(), &jwt.VerifyParams{
+		Token: sessionToken,
+	})
+	if err != nil {
+		http.Error(w, "Session not found", http.StatusUnauthorized)
+		log.Printf("Session not found")
+		return
+	}
+	usr, err := user.Get(r.Context(), claims.Subject)
+	if err != nil {
+		http.Error(w, "User could not be retrieved from session", http.StatusUnauthorized)
+		log.Printf("User could not be retrieved from session")
+		return
+	}
+	log.Printf("Found user %s", usr.ID)
 
 	query := r.URL.Query()
 	userID := query.Get("user_id")
@@ -20,6 +43,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	if userID == "" || friendEmail == "" || operation == "" {
 		http.Error(w, "Missing user_id or friend_email query parameter", http.StatusBadRequest)
+		return
+	}
+	if userID != usr.ID {
+		http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+		log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, userID)
 		return
 	}
 	updateseen.UpdateUserInHasura(userID)
