@@ -121,67 +121,123 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CheckAndUpdateNotifications(senderID, recipientID string) error {
-	mutation := `
-		mutation RemoveSenderFromUsers($recipientID: String!, $senderID: String!) {
+	fetchQuery := `
+		query GetNotifications($recipientID: String!) {
+			notifications(where: { user: { _eq: $recipientID } }) {
+				from_users
+			}
+		}
+	`
+
+	fetchRequestBody := map[string]interface{}{
+		"query": fetchQuery,
+		"variables": map[string]interface{}{
+			"recipientID": recipientID,
+		},
+	}
+
+	fetchJSONBody, err := json.Marshal(fetchRequestBody)
+	if err != nil {
+		return fmt.Errorf("failed to create request body for fetching notifications: %w", err)
+	}
+
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+
+	fetchReq, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(fetchJSONBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	fetchReq.Header.Set("Content-Type", "application/json")
+	fetchReq.Header.Set("x-hasura-admin-secret", hasuraSecret)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	fetchResp, err := client.Do(fetchReq)
+	if err != nil {
+		return fmt.Errorf("failed to send request to Hasura: %w", err)
+	}
+	defer fetchResp.Body.Close()
+
+	if fetchResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", fetchResp.StatusCode)
+	}
+
+	var fetchResponseBody struct {
+		Data struct {
+			Notifications []struct {
+				FromUsers []string `json:"from_users"`
+			} `json:"notifications"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(fetchResp.Body).Decode(&fetchResponseBody); err != nil {
+		return fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	if len(fetchResponseBody.Data.Notifications) == 0 {
+		return fmt.Errorf("no notifications found for recipientID: %s", recipientID)
+	}
+
+	notification := fetchResponseBody.Data.Notifications[0]
+	fromUsers := notification.FromUsers
+	updatedFromUsers := []string{}
+	for _, user := range fromUsers {
+		if user != senderID {
+			updatedFromUsers = append(updatedFromUsers, user)
+		}
+	}
+
+	updateMutation := `
+		mutation UpdateNotifications($recipientID: String!, $fromUsers: [String!]) {
 			update_notifications(
-				where: {
-					user: { _eq: $recipientID },
-					from_users: { _contains: [$senderID] }
-				},
-				_set: {
-					from_users: sql:array_remove(from_users, $senderID)
-				}
+				where: { user: { _eq: $recipientID } },
+				_set: { from_users: $fromUsers }
 			) {
 				affected_rows
 			}
 		}
 	`
 
-	requestBody := map[string]interface{}{
-		"query": mutation,
+	updateRequestBody := map[string]interface{}{
+		"query": updateMutation,
 		"variables": map[string]interface{}{
 			"recipientID": recipientID,
-			"senderID":    senderID,
+			"fromUsers":   updatedFromUsers,
 		},
 	}
-	jsonBody, err := json.Marshal(requestBody)
+	updateJSONBody, err := json.Marshal(updateRequestBody)
 	if err != nil {
 		return fmt.Errorf("failed to create request body for notification update: %w", err)
 	}
 
-	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
-	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
-
-	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
+	updateReq, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(updateJSONBody))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-hasura-admin-secret", hasuraSecret)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateReq.Header.Set("x-hasura-admin-secret", hasuraSecret)
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	updateResp, err := client.Do(updateReq)
 	if err != nil {
-		return fmt.Errorf("failed to send request to Hasura: %w", err)
+		return fmt.Errorf("failed to send update request to Hasura: %w", err)
 	}
-	defer resp.Body.Close()
+	defer updateResp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	if updateResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", updateResp.StatusCode)
 	}
 
-	var responseBody struct {
+	var updateResponseBody struct {
 		Data struct {
 			UpdateNotifications struct {
 				AffectedRows int `json:"affected_rows"`
 			} `json:"update_notifications"`
 		} `json:"data"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+	if err := json.NewDecoder(updateResp.Body).Decode(&updateResponseBody); err != nil {
 		return fmt.Errorf("failed to decode response body: %w", err)
 	}
 
-	log.Printf("Updated notifications: %d rows affected", responseBody.Data.UpdateNotifications.AffectedRows)
+	log.Printf("Updated notifications: %d rows affected", updateResponseBody.Data.UpdateNotifications.AffectedRows)
 	return nil
 }
 
