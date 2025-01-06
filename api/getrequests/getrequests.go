@@ -40,6 +40,8 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		friendLists, err = GetFriendLists(userID)
 	} else if kind == "request" {
 		friendLists, err = GetRequestLists(userID)
+	} else if kind == "notifications" {
+		friendLists, err = GetNotifications(userID)
 	} else {
 		http.Error(w, "Invalid kind query parameter", http.StatusBadRequest)
 		return
@@ -47,6 +49,17 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to get friends from Hasura: %s", err), http.StatusInternalServerError)
 		log.Printf("Error getting friends from Hasura: %s", err)
+		return
+	}
+	if kind == "notifications" {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(friendLists); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create response JSON: %s", err), http.StatusInternalServerError)
+			log.Printf("Error creating response JSON: %s", err)
+			return
+		}
+		log.Printf("Notifications successfully retrieved from Hasura")
 		return
 	}
 	updateseen.UpdateUserInHasura(userID)
@@ -201,6 +214,64 @@ func GetRequestLists(userID string) ([]string, error) {
 		}
 	}
 	return friendList, nil
+}
+func GetNotifications(userID string) ([]string, error) {
+	query := `
+		query GetNotifications($userID: String!) {
+			notifications(where: {user: {_eq: $userID}}) {
+				from_user
+			}
+		}
+	`
+	requestBody := map[string]interface{}{
+		"query": query,
+		"variables": map[string]interface{}{
+			"userID": userID,
+		},
+	}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request body: %w", err)
+	}
+
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+
+	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hasura-admin-secret", hasuraSecret)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request to Hasura: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var responseBody struct {
+		Data struct {
+			Notifications []struct {
+				FromUser string `json:"from_user"`
+			} `json:"notifications"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return nil, fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	fromUsers := []string{}
+	for _, notification := range responseBody.Data.Notifications {
+		fromUsers = append(fromUsers, notification.FromUser)
+	}
+
+	return fromUsers, nil
 }
 func GetUsersInfo(userIDs []string) ([]User, error) {
 	if len(userIDs) == 0 {

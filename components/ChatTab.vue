@@ -10,6 +10,7 @@
             <FriendsList 
               :friends="friends" 
               :requests="requests" 
+              :notifications="notifications"
               :friendsLoading="friendsLoading"
               :selectedFriend="selectedFriend"
               @selectFriend="selectFriend"
@@ -94,6 +95,7 @@
               <FriendsList 
                 :friends="friends" 
                 :requests="requests" 
+                :notifications="notifications"
                 :friendsLoading="friendsLoading"
                 :selectedFriend="selectedFriend"
                 @selectFriend="selectFriend"
@@ -197,6 +199,8 @@
   const channel = ref(null)
   const chatLoading = ref(false)
   const friendsLoading = ref(true)
+  const notificationPusher = ref(null)
+  const notifications = ref([])
 
   const pusherConfig = {
     appKey: useRuntimeConfig().public.pusherAppKey,
@@ -214,6 +218,19 @@
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error fetching friends')
+    }
+  }
+
+  const fetchNotifications = async () => {
+    try{
+      const response = await fetch(`https://www.pairgrid.com/api/getrequests/getrequests?user_id=${props.user.id}&kind=notifications`, {
+        method: 'GET',
+      })
+      if (!response.ok) throw new Error('Failed to fetch notifications')
+      notifications.value = await response.json()
+    } catch (err) {
+      console.error(err)
+      emit('toast-update', 'Error fetching notifications')
     }
   }
 
@@ -375,10 +392,24 @@
         }
       })
       chatLoading.value = false
+      if(notifications.value.includes(selectedFriend.value.id)) {
+        notifications.value = notifications.value.filter((id) => id !== selectedFriend.value.id)
+      }
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error loading chat')
     }
+  }
+
+  const subscribeToNotifications = () => {
+    notificationPusher.value = new Pusher(pusherConfig.appKey, {
+      cluster: pusherConfig.cluster,
+    })
+    const notificationChannel = notificationPusher.value.subscribe(`notifications-${props.user.id}`)
+    notificationChannel.bind('new-notification', (data) => {
+      if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
+        notifications.value.push(data.sender_id)
+    })
   }
 
   const subscribeToChatChannel = () => {
@@ -410,17 +441,22 @@
       channel.value.unbind_all()
       channel.value.unsubscribe()
     }
-    if (pusher.value) {
-      pusher.value.disconnect()
-    }
+    if (pusher.value) pusher.value.disconnect()
+  }
+
+  const unsubscribeFromNotifications = () => {
+    if (notificationPusher.value) notificationPusher.value.disconnect();
   }
 
   onMounted(() => {
+    subscribeToNotifications()
     fetchFriends()
     fetchRequests()
+    fetchNotifications()
   })
 
   onBeforeUnmount(() => {
     unsubscribeFromChatChannel()
+    unsubscribeFromNotifications()
   })
 </script>

@@ -37,6 +37,11 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting messages from Hasura: %s", err)
 		return
 	}
+	err = CheckAndUpdateNotifications(senderID, recipientID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to update notifications: %s", err), http.StatusInternalServerError)
+		log.Printf("Error updating notifications: %s", err)
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -46,6 +51,71 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Messages successfully retrieved from Hasura")
+}
+
+func CheckAndUpdateNotifications(senderID, recipientID string) error {
+	mutation := `
+		mutation RemoveSenderFromUsers($recipientID: String!, $senderID: String!) {
+			update_notifications(
+				where: {
+					recipient_id: { _eq: $recipientID },
+					from_users: { _contains: [$senderID] }
+				},
+				_set: {
+					from_users: sql:array_remove(from_users, $senderID)
+				}
+			) {
+				affected_rows
+			}
+		}
+	`
+
+	requestBody := map[string]interface{}{
+		"query": mutation,
+		"variables": map[string]interface{}{
+			"recipientID": recipientID,
+			"senderID":    senderID,
+		},
+	}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to create request body for notification update: %w", err)
+	}
+
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+
+	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hasura-admin-secret", hasuraSecret)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request to Hasura: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var responseBody struct {
+		Data struct {
+			UpdateNotifications struct {
+				AffectedRows int `json:"affected_rows"`
+			} `json:"update_notifications"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return fmt.Errorf("failed to decode response body: %w", err)
+	}
+
+	log.Printf("Updated notifications: %d rows affected", responseBody.Data.UpdateNotifications.AffectedRows)
+	return nil
 }
 
 func GetMessages(senderID, recipientID string) ([]Message, error) {

@@ -129,6 +129,10 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 	}
 
 	log.Printf("Sent message in Hasura")
+	err = UpdateNotifications(retrieverID, senderID)
+	if err != nil {
+		return fmt.Errorf("failed to update notifications: %w", err)
+	}
 	BroadcastMessage(MessagePusher{
 		SenderID:         senderID,
 		RecipientID:      retrieverID,
@@ -136,6 +140,61 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 		Key:              key,
 		CreatedAt:        createdAt,
 	})
+	BroadcastNotification(retrieverID, senderID)
+	return nil
+}
+func UpdateNotifications(userID, senderID string) error {
+	query := `
+		mutation UpdateNotifications($userID: String!, $senderID: String!) {
+			insert_notifications(objects: {user: $userID, from_users: [$senderID]},
+			on_conflict: {constraint: notifications_pkey, update_columns: [from_users]}) {
+				affected_rows
+			}
+		)
+	`
+	variables := map[string]interface{}{
+		"userID":   userID,
+		"senderID": senderID,
+	}
+	requestBody := map[string]interface{}{
+		"query":     query,
+		"variables": variables,
+	}
+	jsonBody, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Hasura query: %w", err)
+	}
+	hasuraURL := os.Getenv("HASURA_GRAPHQL_URL")
+	hasuraSecret := os.Getenv("HASURA_GRAPHQL_ADMIN_SECRET")
+	req, err := http.NewRequest("POST", hasuraURL, bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-hasura-admin-secret", hasuraSecret)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request to Hasura: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("hasura responded with status: %s, body: %s", resp.Status, string(body))
+	}
+	var responseBody struct {
+		Data   interface{} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return fmt.Errorf("failed to decode response body: %w", err)
+	}
+	if len(responseBody.Errors) > 0 {
+		return fmt.Errorf("hasura errors: %v", responseBody.Errors)
+	}
+	log.Printf("Updated notifications in Hasura")
 	return nil
 }
 
@@ -169,5 +228,30 @@ func BroadcastMessage(message MessagePusher) {
 	err := pusherClient.Trigger(channelName, "new-message", data)
 	if err != nil {
 		log.Println("Error sending message to Pusher:", err)
+	}
+}
+
+func BroadcastNotification(userID, senderID string) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+
+	channelName := fmt.Sprintf("notifications-%s", userID)
+
+	data := map[string]interface{}{
+		"sender_id": senderID,
+	}
+
+	err := pusherClient.Trigger(channelName, "new-notification", data)
+	if err != nil {
+		log.Println("Error sending notification to Pusher:", err)
 	}
 }

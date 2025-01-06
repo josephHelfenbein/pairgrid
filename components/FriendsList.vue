@@ -38,7 +38,13 @@
         class="w-full justify-start flex items-center"
         @click="$emit('selectFriend', friend)"
       >
-        <img :src="friend.profile_picture" class="w-8 h-8 rounded-full object-cover" />
+        <div class="relative">
+          <img :src="friend.profile_picture" class="w-8 h-8 rounded-full object-cover" />
+          <div
+            v-if="notifications.includes(friend.id)"
+            class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"
+          ></div>
+        </div>
         <div>
           <p class="text-left">
             {{ friend.name }}
@@ -57,6 +63,7 @@
   defineProps({
     friends: Array,
     requests: Array,
+    notifications: Array,
     friendsLoading: Boolean,
     selectedFriend: Object,
   })
