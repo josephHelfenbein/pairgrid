@@ -258,7 +258,7 @@ func GetNotifications(userID string) ([]string, error) {
 	var responseBody struct {
 		Data struct {
 			Notifications []struct {
-				FromUser string `json:"from_users"`
+				FromUsers []string `json:"from_users"`
 			} `json:"notifications"`
 		} `json:"data"`
 	}
@@ -266,9 +266,9 @@ func GetNotifications(userID string) ([]string, error) {
 		return nil, fmt.Errorf("failed to decode response body: %w", err)
 	}
 
-	fromUsers := []string{}
+	var fromUsers []string
 	for _, notification := range responseBody.Data.Notifications {
-		fromUsers = append(fromUsers, notification.FromUser)
+		fromUsers = append(fromUsers, notification.FromUsers...)
 	}
 
 	return fromUsers, nil
