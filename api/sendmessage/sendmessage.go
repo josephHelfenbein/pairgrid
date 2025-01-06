@@ -209,11 +209,13 @@ func InsertMessage(senderID, retrieverID, content, key string) error {
 func UpdateNotifications(userID, senderID string) error {
 	query := `
 		mutation UpdateNotifications($userID: String!, $senderID: String!) {
-			insert_notifications(objects: {user: $userID, from_users: [$senderID]},
-			on_conflict: {constraint: notifications_pkey, update_columns: [from_users]}) {
+			insert_notifications(
+				objects: {user: $userID, from_users: [$senderID]},
+				on_conflict: {constraint: notifications_pkey, update_columns: [from_users]}
+			) {
 				affected_rows
 			}
-		)
+		}
 	`
 	variables := map[string]interface{}{
 		"userID":   userID,
