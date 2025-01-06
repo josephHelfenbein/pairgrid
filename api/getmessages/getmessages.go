@@ -55,6 +55,31 @@ func GenerateEncryptionKey(userID, serverSecret string) []byte {
 }
 func MessageHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received request to get messages from Hasura")
+	query := r.URL.Query()
+	senderID := query.Get("user_id")
+	recipientID := query.Get("friend_id")
+	notificationStopper := query.Get("notification_stopper")
+
+	if notificationStopper != "" {
+		err := CheckAndUpdateNotifications(recipientID, senderID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to update notifications: %s", err), http.StatusInternalServerError)
+			log.Printf("Error updating notifications: %s", err)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		resp := map[string]string{"status": "success"}
+		if jsonResp, err := json.Marshal(resp); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to create response JSON: %s", err), http.StatusInternalServerError)
+			log.Printf("Error creating response JSON: %s", err)
+			return
+		} else {
+			w.Write(jsonResp)
+		}
+		log.Printf("Notifications successfully retrieved from Hasura")
+		return
+	}
+
 	clerk.SetKey(os.Getenv("NUXT_CLERK_SECRET_KEY"))
 	sessionToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 	log.Printf("Found session token %s", sessionToken)
@@ -73,10 +98,6 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Found user %s", usr.ID)
-
-	query := r.URL.Query()
-	senderID := query.Get("user_id")
-	recipientID := query.Get("friend_id")
 
 	if senderID == "" || recipientID == "" {
 		http.Error(w, "Missing user_id or friend_id query parameter", http.StatusBadRequest)
