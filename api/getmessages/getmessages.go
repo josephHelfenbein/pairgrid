@@ -93,7 +93,7 @@ func MessageHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error getting messages from Hasura: %s", err)
 		return
 	}
-	err = CheckAndUpdateNotifications(senderID, recipientID)
+	err = CheckAndUpdateNotifications(recipientID, senderID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update notifications: %s", err), http.StatusInternalServerError)
 		log.Printf("Error updating notifications: %s", err)
