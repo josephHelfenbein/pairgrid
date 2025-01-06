@@ -219,7 +219,7 @@ func GetNotifications(userID string) ([]string, error) {
 	query := `
 		query GetNotifications($userID: String!) {
 			notifications(where: {user: {_eq: $userID}}) {
-				from_user
+				from_users
 			}
 		}
 	`
@@ -258,7 +258,7 @@ func GetNotifications(userID string) ([]string, error) {
 	var responseBody struct {
 		Data struct {
 			Notifications []struct {
-				FromUser string `json:"from_user"`
+				FromUser string `json:"from_users"`
 			} `json:"notifications"`
 		} `json:"data"`
 	}
