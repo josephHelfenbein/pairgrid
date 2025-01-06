@@ -241,8 +241,7 @@
         method: 'GET',
       })
       if (!response.ok) throw new Error('Failed to fetch notifications')
-      const data = await response.json();
-      notifications.value = data.notifications ? JSON.parse(JSON.stringify(data.notifications)) : [];
+      notifications.value = await response.json();
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error fetching notifications')
