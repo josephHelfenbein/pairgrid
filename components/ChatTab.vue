@@ -241,6 +241,7 @@
       })
       if (!response.ok) throw new Error('Failed to fetch notifications')
       const data = await response.json();
+      console.log(data);
       if(data.length > 0) notifications.value = JSON.parse(JSON.stringify(data));
     } catch (err) {
       console.error(err)
