@@ -424,13 +424,13 @@
     })
     const notificationChannel = notificationPusher.value.subscribe(`notifications-${props.user.id}`)
     notificationChannel.bind('new-notification', (data) => {
-      if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
-        notifications.value.push(data.sender_id)
-      else if(!notifications.value) {
+      if(!notifications.value) {
         notifications.value = [];
         notifications.push("0");
         notifications.value.push(data.sender_id);
       }
+      else if(!notifications.value.includes(data.sender_id) && data.sender_id != selectedFriend.value.id)
+        notifications.value.push(data.sender_id)
     })
   }
 
