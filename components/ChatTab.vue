@@ -242,6 +242,7 @@
       })
       if (!response.ok) throw new Error('Failed to fetch notifications')
       notifications.value = await response.json()
+      console.log('Notifications:', notifications.value);
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error fetching notifications')
