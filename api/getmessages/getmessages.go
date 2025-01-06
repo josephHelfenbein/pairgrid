@@ -125,7 +125,7 @@ func CheckAndUpdateNotifications(senderID, recipientID string) error {
 		mutation RemoveSenderFromUsers($recipientID: String!, $senderID: String!) {
 			update_notifications(
 				where: {
-					recipient_id: { _eq: $recipientID },
+					user: { _eq: $recipientID },
 					from_users: { _contains: [$senderID] }
 				},
 				_set: {
