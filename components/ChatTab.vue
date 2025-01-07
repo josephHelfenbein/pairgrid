@@ -428,7 +428,7 @@
     const friendID = selectedFriend.value.id
     const firstID = props.user.id < friendID ? props.user.id : friendID
     const secondID = props.user.id > friendID ? props.user.id : friendID
-    const newChannel = `chat-${firstID}-${secondID}`
+    const newChannel = `private-chat-${firstID}-${secondID}`
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
       authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',

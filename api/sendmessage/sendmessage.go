@@ -280,7 +280,7 @@ func BroadcastMessage(message MessagePusher) {
 	if message.SenderID > message.RecipientID {
 		firstID, secondID = message.RecipientID, message.SenderID
 	}
-	channelName := fmt.Sprintf("chat-%s-%s", firstID, secondID)
+	channelName := fmt.Sprintf("private-chat-%s-%s", firstID, secondID)
 
 	data := map[string]interface{}{
 		"sender_id":         message.SenderID,

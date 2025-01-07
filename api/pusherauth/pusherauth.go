@@ -25,7 +25,7 @@ var pusherClient = pusher.Client{
 
 func parseChannelName(channelName string) (string, string, error) {
 	var firstID, secondID string
-	_, err := fmt.Sscanf(channelName, "chat-%s-%s", &firstID, &secondID)
+	_, err := fmt.Sscanf(channelName, "private-chat-%s-%s", &firstID, &secondID)
 	if err != nil {
 		return "", "", err
 	}
