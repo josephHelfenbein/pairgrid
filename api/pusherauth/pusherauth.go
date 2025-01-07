@@ -3,7 +3,6 @@ package pusherauth
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -52,23 +51,22 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Found user %s", usr.ID)
 
-	params, err := ioutil.ReadAll(r.Body)
+	err = r.ParseForm()
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
-		log.Printf("Error reading request body: %v", err)
+		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		log.Printf("Error parsing form data: %v", err)
 		return
 	}
-	var requestData struct {
-		ChannelName string `json:"channel_name"`
-		SocketID    string `json:"socket_id"`
-	}
-	if err := json.Unmarshal(params, &requestData); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		log.Printf("Error parsing request body: %v", err)
+	channelName := r.FormValue("channel_name")
+	socketID := r.FormValue("socket_id")
+
+	if channelName == "" || socketID == "" {
+		http.Error(w, "Missing required form fields", http.StatusBadRequest)
+		log.Printf("Missing channel_name or socket_id")
 		return
 	}
 
-	firstID, secondID, err := parseChannelName(requestData.ChannelName)
+	firstID, secondID, err := parseChannelName(channelName)
 	if err != nil {
 		http.Error(w, "Invalid channel name", http.StatusBadRequest)
 		log.Printf("Channel name parsing failed: %v", err)
@@ -76,7 +74,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	if usr.ID != firstID && usr.ID != secondID {
 		http.Error(w, "Forbidden", http.StatusForbidden)
-		log.Printf("User %s is not authorized to access channel %s", usr.ID, requestData.ChannelName)
+		log.Printf("User %s is not authorized to access channel %s", usr.ID, channelName)
 		return
 	}
 	presenceData := pusher.MemberData{
@@ -85,7 +83,20 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			"id": usr.ID,
 		},
 	}
-	authResponse, err := pusherClient.AuthorizePresenceChannel(params, presenceData)
+	requestData := struct {
+		ChannelName string `json:"channel_name"`
+		SocketID    string `json:"socket_id"`
+	}{
+		ChannelName: channelName,
+		SocketID:    socketID,
+	}
+	paramsJSON, err := json.Marshal(requestData)
+	if err != nil {
+		http.Error(w, "Error marshalling request data", http.StatusInternalServerError)
+		log.Printf("Error marshalling request data: %v", err)
+		return
+	}
+	authResponse, err := pusherClient.AuthorizePresenceChannel(paramsJSON, presenceData)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		log.Printf("Pusher presence channel authorization failed: %v", err)
