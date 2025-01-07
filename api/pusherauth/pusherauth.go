@@ -90,6 +90,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Pusher private channel authorization failed: %v", err)
 		return
 	}
+	log.Printf("Authorization response: %s", authResponse)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(authResponse)
