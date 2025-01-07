@@ -23,12 +23,16 @@ var pusherClient = pusher.Client{
 }
 
 func parseChannelName(channelName string) (string, string, error) {
-	var firstID, secondID string
-	_, err := fmt.Sscanf(channelName, "private-chat-%s-%s", &firstID, &secondID)
-	if err != nil {
-		return "", "", err
+	log.Printf("Parsing channel name: %s", channelName)
+	if !strings.HasPrefix(channelName, "private-chat-") {
+		return "", "", fmt.Errorf("invalid channel name prefix")
 	}
-	return firstID, secondID, nil
+	trimmedChannelName := channelName[len("private-chat-"):]
+	parts := strings.SplitN(trimmedChannelName, "-", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("unexpected channel name format, expected two IDs")
+	}
+	return parts[0], parts[1], nil
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
