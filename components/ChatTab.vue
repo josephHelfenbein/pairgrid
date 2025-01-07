@@ -438,8 +438,6 @@
           'Authorization': `Bearer ${token.value}`,
         },
       },
-      encrypted: true,
-      debug: true, 
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
