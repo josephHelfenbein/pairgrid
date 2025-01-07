@@ -85,14 +85,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		"channel_name": channelName,
 		"socket_id":    socketID,
 	}
-
 	paramsJSON, err := json.Marshal(params)
 	if err != nil {
 		http.Error(w, "Error marshalling request data", http.StatusInternalServerError)
 		log.Printf("Error marshalling request data: %v", err)
 		return
 	}
-	log.Printf("Params to be sent to Pusher: %v", paramsJSON)
+	log.Printf("ParamsJSON: %s", paramsJSON)
+	log.Printf("Params: %v", params)
 	authResponse, err := pusherClient.AuthorizePrivateChannel(paramsJSON)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
