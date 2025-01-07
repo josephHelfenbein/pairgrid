@@ -431,8 +431,8 @@
     const newChannel = `private-chat-${firstID}-${secondID}`
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
-      channelAuthorization: {
-        endpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
+      authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
+      auth: {
         headers: {
           'Authorization': `Bearer ${token.value}`,
         },
