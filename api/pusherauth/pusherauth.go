@@ -81,9 +81,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("User %s is not authorized to access channel %s", usr.ID, channelName)
 		return
 	}
-	q := r.URL.Query()
-	log.Printf("Query params: %v", q)
-	params := []byte(q.Encode())
+	params := []byte(r.Form.Encode())
+	log.Printf("Query params: %s", r.Form.Encode())
+
 	authResponse, err := pusherClient.AuthorizePrivateChannel(params)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)

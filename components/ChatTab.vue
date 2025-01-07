@@ -437,7 +437,6 @@
           'Authorization': `Bearer ${token.value}`,
         },
       },
-      logToConsole: true,
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
