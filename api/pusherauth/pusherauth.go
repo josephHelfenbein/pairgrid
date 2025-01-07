@@ -3,7 +3,6 @@ package pusherauth
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -82,8 +81,17 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("User %s is not authorized to access channel %s", usr.ID, channelName)
 		return
 	}
-	params, _ := ioutil.ReadAll(r.Body)
-	authResponse, err := pusherClient.AuthorizePrivateChannel(params)
+	params := map[string]string{
+		"channel_name": channelName,
+		"socket_id":    socketID,
+	}
+	paramsJSON, err := json.Marshal(params)
+	if err != nil {
+		http.Error(w, "Error marshalling request data", http.StatusInternalServerError)
+		log.Printf("Error marshalling request data: %v", err)
+		return
+	}
+	authResponse, err := pusherClient.AuthorizePrivateChannel(paramsJSON)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		log.Printf("Pusher private channel authorization failed: %v", err)
