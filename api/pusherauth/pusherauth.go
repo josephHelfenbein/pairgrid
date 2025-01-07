@@ -83,6 +83,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	params, _ := ioutil.ReadAll(r.Body)
+	log.Printf("Params to be sent to Pusher: %v", params)
 	authResponse, err := pusherClient.AuthorizePrivateChannel(params)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
