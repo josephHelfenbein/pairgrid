@@ -438,34 +438,26 @@
           'Authorization': `Bearer ${token.value}`,
         },
       },
+      encrypted: true,
+      debug: true, 
     })
-    try{
-      await new Promise((resolve, reject) => {
-        pusher.value.bind('connected', () => {
-          resolve()
+    channel.value = pusher.value.subscribe(newChannel)
+    channel.value.bind('new-message', (data) => {
+      if (data.sender_id != props.user.id) {
+        messages.value.push({
+          id: data.created_at,
+          sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
+          text: data.encrypted_content,
         })
-        pusher.value.bind('error', (err) => {
-          console.error('Pusher connection error:', err);
-          reject()
-        })
-      })
-      channel.value = pusher.value.subscribe(newChannel)
-      channel.value.bind('new-message', (data) => {
-        if (data.sender_id != props.user.id) {
-          messages.value.push({
-            id: data.created_at,
-            sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
-            text: data.encrypted_content,
-          })
-          setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
-            method: 'GET',
-          }), 2000)
-        }
-      })
-    } catch (err) {
-      console.error(err)
-      emit('toast-update', 'Error connecting to chat')
-    }
+        setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
+          method: 'GET',
+        }), 2000)
+      }
+    })
+    pusher.value.connection.bind('error', (err) => {
+      console.error('Pusher connection error:', err);
+      emit('toast-update', 'Error connecting to chat');
+    });
   }
 
   const unsubscribeFromChatChannel = () => {
