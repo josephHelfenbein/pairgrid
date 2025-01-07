@@ -434,6 +434,7 @@
       authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
       auth: {
         headers: {
+          'Accept':'application/json',
           'Authorization': `Bearer ${token.value}`,
         },
       },

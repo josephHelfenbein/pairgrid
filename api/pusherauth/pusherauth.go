@@ -92,6 +92,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Authorization response: %s", authResponse)
 
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(authResponse)
+	if err := json.NewEncoder(w).Encode(authResponse); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to create response JSON: %s", err), http.StatusInternalServerError)
+		log.Printf("Error creating response JSON: %s", err)
+		return
+	}
+	log.Printf("Users successfully authenticated")
 }
