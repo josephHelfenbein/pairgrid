@@ -3,7 +3,6 @@ package pusherauth
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -82,39 +81,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("User %s is not authorized to access channel %s", usr.ID, channelName)
 		return
 	}
-	params, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Printf("Error reading request body: %v", err)
-		return
-	}
-	var requestParams map[string]interface{}
-	if err := json.Unmarshal(params, &requestParams); err != nil {
-		log.Printf("Error unmarshalling JSON: %v", err)
-		return
-	}
-	channelName, ok := requestParams["channel_name"].(string)
-	if !ok {
-		log.Printf("channel_name missing or not a string")
-		return
-	}
-
-	socketID, ok = requestParams["socket_id"].(string)
-	if !ok {
-		log.Printf("socket_id missing or not a string")
-		return
-	}
-	authParams := map[string]interface{}{
-		"channel_name": channelName,
-		"socket_id":    socketID,
-	}
-	authParamsJSON, err := json.Marshal(authParams)
-	if err != nil {
-		log.Printf("Error marshaling params: %v", err)
-		return
-	}
-	log.Printf("ParamsJSON: %s", authParamsJSON)
-	log.Printf("Params: %v", params)
-	authResponse, err := pusherClient.AuthorizePrivateChannel(authParamsJSON)
+	q := r.URL.Query()
+	log.Printf("Query params: %v", q)
+	params := []byte(q.Encode())
+	authResponse, err := pusherClient.AuthorizePrivateChannel(params)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
 		log.Printf("Pusher private channel authorization failed: %v", err)
