@@ -81,12 +81,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("User %s is not authorized to access channel %s", usr.ID, channelName)
 		return
 	}
-	requestData := struct {
-		ChannelName string `json:"channel_name"`
-		SocketID    string `json:"socket_id"`
-	}{
-		ChannelName: channelName,
-		SocketID:    socketID,
+	requestData := map[string]string{
+		"channel_name": channelName,
+		"socket_id":    socketID,
 	}
 	paramsJSON, err := json.Marshal(requestData)
 	if err != nil {
@@ -97,7 +94,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	authResponse, err := pusherClient.AuthorizePrivateChannel(paramsJSON)
 	if err != nil {
 		http.Error(w, "Authentication failed", http.StatusInternalServerError)
-		log.Printf("Pusher presence channel authorization failed: %v", err)
+		log.Printf("Pusher private channel authorization failed: %v", err)
 		return
 	}
 
