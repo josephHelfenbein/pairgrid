@@ -431,6 +431,12 @@
     const newChannel = `chat-${firstID}-${secondID}`
     pusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
+      authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
+      auth: {
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+        },
+      },
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
@@ -445,6 +451,10 @@
         }), 2000)
       }
     })
+    pusher.value.connection.bind('error', (err) => {
+      console.error('Pusher connection error:', err);
+      emit('toast-update', 'Error connecting to chat');
+    });
   }
 
   const unsubscribeFromChatChannel = () => {
