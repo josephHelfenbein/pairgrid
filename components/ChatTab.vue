@@ -407,7 +407,7 @@
       }
     } catch (err) {
       console.error(err)
-      emit('toast-update', 'Error loading chat')
+      emit('toast-update', 'Session not found, try again.')
     }
   }
 
@@ -454,7 +454,7 @@
     })
     pusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
-      emit('toast-update', 'Error connecting to chat');
+      emit('toast-update', 'Session not found, try again.');
     });
   }
 
