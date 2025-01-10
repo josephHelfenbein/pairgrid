@@ -34,10 +34,10 @@
               {{ selectedFriend.name }}
             </CardTitle>
             <div class="flex flex-row">
-              <button @click="callFriend">
+              <button @click="callFriend" class="p-2">
                 <Phone class="h-5 w-5" />
               </button>
-              <button @click="shareScreen">
+              <button @click="shareScreen" class="p-2">
                 <ScreenShare class="h-5 w-5" />
               </button>
               <FriendOptions 
@@ -129,10 +129,10 @@
           Select a friend
         </CardTitle>
         <div v-if="selectedFriend" class="flex flex-row">
-          <button @click="callFriend">
+          <button @click="callFriend" class="p-2">
             <Phone class="h-5 w-5" />
           </button>
-          <button @click="shareScreen">
+          <button @click="shareScreen" class="p-2">
             <ScreenShare class="h-5 w-5" />
           </button>
           <FriendOptions 
