@@ -73,6 +73,10 @@
   }
 
   const subscribeToCalls = () => {
+    if (!token.value || !user?.value?.id) {
+      console.error("Cannot subscribe to calls: Missing token or user ID.");
+      return;
+    }
     callPusher.value = new Pusher(pusherConfig.appKey, {
       cluster: pusherConfig.cluster,
       authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
@@ -136,10 +140,16 @@
     }
   }
 
+  watch(() => token.value, (newToken) => {
+    if (newToken && callPusher.value == null) {
+      subscribeToCalls();
+    }
+  });
   watch(() => user.value, (newUser) => {
     if (newUser) {
       loadPreferences();
       loading.value = false;
+      if(callPusher.value == null) subscribeToCalls();
     }
   });
 
@@ -147,7 +157,7 @@
     if (user.value) {
       loadPreferences();
       loading.value = false;
+      subscribeToCalls();
     }
-    subscribeToCalls();
   });
 </script>
