@@ -28,15 +28,23 @@
         <Card class="h-full">
           <CardHeader class="flex flex-row justify-between items-center">
             <button @click="deselectFriend" class="p-2">
-              <ChevronLeft class="h-6 w-6" />
+              <ChevronLeft class="h-5 w-5" />
             </button>
-            <CardTitle class="flex-shrink-0 flex items-center">
+            <CardTitle class="flex-shrink-0 text-lg flex items-center">
               {{ selectedFriend.name }}
             </CardTitle>
-            <FriendOptions 
-              :selectedFriend="selectedFriend"
-              @removeFriend="removeFriend"
-            />
+            <div class="flex flex-row">
+              <button @click="callFriend">
+                <Phone class="h-5 w-5" />
+              </button>
+              <button @click="shareScreen">
+                <ScreenShare class="h-5 w-5" />
+              </button>
+              <FriendOptions 
+                :selectedFriend="selectedFriend"
+                @removeFriend="removeFriend"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <ChatArea 
@@ -120,11 +128,18 @@
         <CardTitle v-else class="flex-shrink-0 flex items-center">
           Select a friend
         </CardTitle>
-        <FriendOptions 
-          v-if="selectedFriend"
-          :selectedFriend="selectedFriend"
-          @removeFriend="removeFriend"
-        />
+        <div v-if="selectedFriend" class="flex flex-row">
+          <button @click="callFriend">
+            <Phone class="h-5 w-5" />
+          </button>
+          <button @click="shareScreen">
+            <ScreenShare class="h-5 w-5" />
+          </button>
+          <FriendOptions 
+            :selectedFriend="selectedFriend"
+            @removeFriend="removeFriend"
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <ChatArea 
@@ -169,7 +184,7 @@
   
 <script setup>
   import { ref, onMounted, onBeforeUnmount } from 'vue'
-  import { ChevronLeft } from 'lucide-vue-next'
+  import { ChevronLeft, Phone, ScreenShare } from 'lucide-vue-next'
   import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
   import { ScrollArea } from '@/components/ui/scroll-area'
   import { useRuntimeConfig } from '#app'
@@ -468,6 +483,12 @@
 
   const unsubscribeFromNotifications = () => {
     if (notificationPusher.value) notificationPusher.value.disconnect();
+  }
+  const callFriend = () => {
+    emit('toast-update', 'Feature coming soon')
+  }
+  const shareScreen = () => {
+    emit('toast-update', 'Feature coming soon')
   }
 
   onMounted(() => {
