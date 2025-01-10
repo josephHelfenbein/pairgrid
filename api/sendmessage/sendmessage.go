@@ -91,6 +91,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var msg Message
 	err = json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
+		log.Printf("Error decoding JSON payload: %s", err)
+		return
+	}
+	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		var voicecall VoiceCall
 		err = json.NewDecoder(r.Body).Decode(&voicecall)
 		if err != nil {
@@ -100,7 +105,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		}
 		if voicecall.CallerID == "" || voicecall.CalleeID == "" {
 			http.Error(w, "Missing required fields", http.StatusBadRequest)
-			log.Printf("Missing fields: %+v", voicecall)
+			log.Printf("Missing fields: %+v", msg)
 			return
 		}
 		if voicecall.CallerID != usr.ID {
@@ -112,11 +117,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "call request sent"})
-		return
-	}
-	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
-		http.Error(w, "Missing required fields", http.StatusBadRequest)
-		log.Printf("Missing fields: %+v", msg)
 		return
 	}
 	if msg.SenderID != usr.ID {
