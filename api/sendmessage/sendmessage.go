@@ -39,6 +39,11 @@ type MessagePusher struct {
 	Key              string `json:"key"`
 	CreatedAt        string `json:"created_at"`
 }
+type VoiceCall struct {
+	CallerID string `json:"caller_id"`
+	CalleeID string `json:"callee_id"`
+	Type     string `json:"type"`
+}
 
 func GenerateEncryptionKey(userID, serverSecret string) []byte {
 	hash := sha256.Sum256([]byte(userID + serverSecret))
@@ -86,9 +91,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	var msg Message
 	err = json.NewDecoder(r.Body).Decode(&msg)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
-		log.Printf("Error decoding JSON payload: %s", err)
-		return
+		var voicecall VoiceCall
+		err = json.NewDecoder(r.Body).Decode(&voicecall)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
+			log.Printf("Error decoding JSON payload: %s", err)
+			return
+		}
+		if voicecall.CallerID == "" || voicecall.CalleeID == "" {
+			http.Error(w, "Missing required fields", http.StatusBadRequest)
+			log.Printf("Missing fields: %+v", voicecall)
+			return
+		}
+		if voicecall.CallerID != usr.ID {
+			http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CallerID)
+			return
+		}
+		BroadcastVoiceCall(voicecall)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"status": "call request sent"})
 	}
 	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
@@ -317,5 +340,31 @@ func BroadcastNotification(userID, senderID string) {
 	err := pusherClient.Trigger(channelName, "new-notification", data)
 	if err != nil {
 		log.Println("Error sending notification to Pusher:", err)
+	}
+}
+func BroadcastVoiceCall(voicecall VoiceCall) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+	err := pusherClient.Trigger(
+		fmt.Sprintf("private-call-%s", voicecall.CalleeID),
+		"incoming-call",
+		map[string]interface{}{
+			"caller_id": voicecall.CallerID,
+			"type":      voicecall.Type,
+		},
+	)
+	if err != nil {
+		log.Printf("Error broadcasting call request: %s", err)
+	} else {
+		log.Printf("Voice call request sent from %s to %s", voicecall.CallerID, voicecall.CalleeID)
 	}
 }

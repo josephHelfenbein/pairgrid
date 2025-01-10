@@ -47,9 +47,52 @@
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
   import Loader from '@/components/Loader'
+  import { useRuntimeConfig } from '#app'
+  import Pusher from 'pusher-js'
+  import { useSession } from '@clerk/vue'
   const loading = ref(true)
 
   const { user } = useUser();
+  const token = ref(null);
+  const { session } = useSession();
+  const reactiveSession = ref(session);
+  const callPusher = ref(null);
+
+  watch(reactiveSession, async (newSession, oldSession) => {
+    if (newSession) {
+      try {
+        token.value = await newSession.getToken();
+      } catch (error) {
+        console.error("Error getting token:", error);
+      }
+    }
+  }, { immediate: true });
+  const pusherConfig = {
+    appKey: useRuntimeConfig().public.pusherAppKey,
+    cluster: "us2",
+  }
+
+  const subscribeToCalls = () => {
+    callPusher.value = new Pusher(pusherConfig.appKey, {
+      cluster: pusherConfig.cluster,
+      authEndpoint: 'https://www.pairgrid.com/api/pusherauth/pusherauth',
+      auth: {
+        headers: {
+          'Accept':'application/json',
+          'Authorization': `Bearer ${token.value}`,
+        },
+      },
+    })
+    const callChannel = notificationPusher.value.subscribe(`private-call-${user.value.id}`)
+    callChannel.bind('incoming-call', (data) => {
+      console.log('Incoming call:', data);
+    })
+    callPusher.value.connection.bind('error', (err) => {
+      console.error('Pusher connection error:', err);
+      toastUpdate('Session not found, try again.');
+    });
+  }
+
   const { toast } = useToast();
   const preferences = reactive({
     bio: '',
@@ -105,5 +148,6 @@
       loadPreferences();
       loading.value = false;
     }
+    subscribeToCalls();
   });
 </script>
