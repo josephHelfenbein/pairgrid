@@ -83,7 +83,7 @@
         },
       },
     })
-    const callChannel = notificationPusher.value.subscribe(`private-call-${user.value.id}`)
+    const callChannel = callPusher.value.subscribe(`private-call-${user.value.id}`)
     callChannel.bind('incoming-call', (data) => {
       console.log('Incoming call:', data);
     })
