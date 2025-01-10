@@ -112,6 +112,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "call request sent"})
+		return
 	}
 	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
