@@ -120,7 +120,7 @@
     })
     const callChannel = callPusher.value.subscribe(`private-call-${user.value.id}`)
     callChannel.bind('incoming-call', (data) => {
-      triggerIncomingCall(data.caller_name || 'Unknown Caller');
+      triggerIncomingCall(data.callerName || 'Unknown Caller');
     })
     callPusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
