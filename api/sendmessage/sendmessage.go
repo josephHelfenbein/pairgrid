@@ -88,19 +88,65 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Found user %s", usr.ID)
 
-	var msg Message
-	err = json.NewDecoder(r.Body).Decode(&msg)
-	if err != nil || msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
-		var voicecall VoiceCall
-		err = json.NewDecoder(r.Body).Decode(&voicecall)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
-			log.Printf("Error decoding JSON payload: %s", err)
+	var payload map[string]interface{}
+	err = json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
+		log.Printf("Error decoding JSON payload: %s", err)
+		return
+	}
+	if _, isMessage := payload["content"]; isMessage {
+		var msg Message
+		err = json.Unmarshal([]byte(payloadToJSON(payload)), &msg)
+		if err != nil || msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
+			http.Error(w, "Invalid Message payload", http.StatusBadRequest)
+			log.Printf("Invalid Message payload: %v", payload)
 			return
 		}
-		if voicecall.CallerID == "" || voicecall.CalleeID == "" {
-			http.Error(w, "Missing required fields", http.StatusBadRequest)
-			log.Printf("Missing fields: %+v", msg)
+		if msg.SenderID != usr.ID {
+			http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, msg.SenderID)
+			return
+		}
+		updateseen.UpdateUserInHasura(msg.SenderID)
+		receiverID, err := addfriend.GetFriendIDByEmail(msg.ReceiverEmail)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to get receiver ID: %s", err), http.StatusInternalServerError)
+			log.Printf("Error getting receiver ID: %s", err)
+			return
+		}
+		serverSecret := os.Getenv("ENCRYPTION_KEY")
+		encryptionKey := GenerateEncryptionKey(msg.SenderID, serverSecret)
+		encryptedContent, iv, err := EncryptMessage(msg.Content, encryptionKey)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to encrypt message: %s", err), http.StatusInternalServerError)
+			log.Printf("Error encrypting message: %s", err)
+			return
+		}
+		BroadcastMessage(MessagePusher{
+			SenderID:         msg.SenderID,
+			RecipientID:      receiverID,
+			EncryptedContent: msg.Content,
+			CreatedAt:        time.Now().Format(time.RFC3339Nano),
+		})
+		msg.Content = encryptedContent
+		msg.Key = iv
+		if err := InsertMessage(msg.SenderID, receiverID, msg.Content, msg.Key); err != nil {
+			http.Error(w, fmt.Sprintf("Failed to insert message: %s", err), http.StatusInternalServerError)
+			log.Printf("Error inserting message: %s", err)
+			return
+		}
+		response := map[string]string{"status": "success"}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+		log.Printf("Message sent from %s to %s", msg.SenderID, msg.ReceiverEmail)
+	} else if _, isVoiceCall := payload["caller_id"]; isVoiceCall {
+		var voicecall VoiceCall
+		err = json.Unmarshal([]byte(payloadToJSON(payload)), &voicecall)
+		if err != nil || voicecall.CallerID == "" || voicecall.CalleeID == "" {
+			http.Error(w, "Invalid VoiceCall payload", http.StatusBadRequest)
+			log.Printf("Invalid VoiceCall payload: %v", payload)
 			return
 		}
 		if voicecall.CallerID != usr.ID {
@@ -108,50 +154,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CallerID)
 			return
 		}
+
 		BroadcastVoiceCall(voicecall)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "call request sent"})
-		return
+	} else {
+		http.Error(w, "Unknown payload type", http.StatusBadRequest)
+		log.Printf("Unknown payload type: %v", payload)
 	}
-	if msg.SenderID != usr.ID {
-		http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
-		log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, msg.SenderID)
-		return
-	}
-	updateseen.UpdateUserInHasura(msg.SenderID)
-	receiverID, err := addfriend.GetFriendIDByEmail(msg.ReceiverEmail)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to get receiver ID: %s", err), http.StatusInternalServerError)
-		log.Printf("Error getting receiver ID: %s", err)
-		return
-	}
-	serverSecret := os.Getenv("ENCRYPTION_KEY")
-	encryptionKey := GenerateEncryptionKey(msg.SenderID, serverSecret)
-	encryptedContent, iv, err := EncryptMessage(msg.Content, encryptionKey)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to encrypt message: %s", err), http.StatusInternalServerError)
-		log.Printf("Error encrypting message: %s", err)
-		return
-	}
-	BroadcastMessage(MessagePusher{
-		SenderID:         msg.SenderID,
-		RecipientID:      receiverID,
-		EncryptedContent: msg.Content,
-		CreatedAt:        time.Now().Format(time.RFC3339Nano),
-	})
-	msg.Content = encryptedContent
-	msg.Key = iv
-	if err := InsertMessage(msg.SenderID, receiverID, msg.Content, msg.Key); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to insert message: %s", err), http.StatusInternalServerError)
-		log.Printf("Error inserting message: %s", err)
-		return
-	}
-	response := map[string]string{"status": "success"}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
-	log.Printf("Message sent from %s to %s", msg.SenderID, msg.ReceiverEmail)
+}
+func payloadToJSON(payload map[string]interface{}) string {
+	jsonData, _ := json.Marshal(payload)
+	return string(jsonData)
 }
 func InsertMessage(senderID, retrieverID, content, key string) error {
 	createdAt := time.Now().Format(time.RFC3339Nano)

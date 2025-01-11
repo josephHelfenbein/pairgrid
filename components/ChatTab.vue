@@ -499,7 +499,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token.value}`,
+          'Authorization': `Bearer ${token.value}`,
         },
         body: JSON.stringify(payload),
       })
