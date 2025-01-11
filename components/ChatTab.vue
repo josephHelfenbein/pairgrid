@@ -494,6 +494,7 @@
         caller_id: props.user.id,
         callee_id: selectedFriend.value.id,
         type: "voice",
+        caller_name: props.user.name,
       }
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
         method: 'POST',

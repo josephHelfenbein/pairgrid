@@ -31,6 +31,7 @@
           </TabsContent>
         </Tabs>
         <Toaster />
+        <CallPopup />
       </div>
       <div v-else class="flex justify-center items-center h-screen">
         <Loader size="150px" />  
@@ -43,6 +44,7 @@
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
+  import CallPopup, { triggerIncomingCall } from '@/components/CallPopup.vue'
   import { reactive, onMounted, watch } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
@@ -89,7 +91,7 @@
     })
     const callChannel = callPusher.value.subscribe(`private-call-${user.value.id}`)
     callChannel.bind('incoming-call', (data) => {
-      console.log('Incoming call:', data);
+      triggerIncomingCall(data.callerName || 'Unknown Caller');
     })
     callPusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
@@ -157,7 +159,6 @@
     if (user.value) {
       loadPreferences();
       loading.value = false;
-      subscribeToCalls();
     }
   });
 </script>

@@ -40,9 +40,10 @@ type MessagePusher struct {
 	CreatedAt        string `json:"created_at"`
 }
 type VoiceCall struct {
-	CallerID string `json:"caller_id"`
-	CalleeID string `json:"callee_id"`
-	Type     string `json:"type"`
+	CallerID   string `json:"caller_id"`
+	CalleeID   string `json:"callee_id"`
+	Type       string `json:"type"`
+	CallerName string `json:"caller_name"`
 }
 
 func GenerateEncryptionKey(userID, serverSecret string) []byte {
