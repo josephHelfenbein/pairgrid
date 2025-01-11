@@ -50,7 +50,7 @@
             <div v-if="callType=='outgoing'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
                 <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
                 <div class="flex justify-between items-center mt-4 space-x-4">
-                    <button v-if="callStatus=='calling'" @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
+                    <button v-if="callStatus=='calling'" @click="cancelCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
                         Cancel
                     </button>
                     <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
@@ -119,13 +119,40 @@
     }
     showCallPopup.value = false;
   };
+  const cancelCall = async () => {
+    try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
+      const payload = {
+        caller_id: user.value.id,
+        callee_id: callerID.value,
+        type: "cancel",
+      }
+      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) throw new Error('Failed to cancel call');
+    } catch (err) {
+      console.error(err)
+      emit('toast-update', 'Error cancel call')
+    }
+    showCallPopup.value = false;
+  };
   const triggerIncomingCall = (name) => {
       callerName.value = name;
       showCallPopup.value = true;
       callType.value = "incoming";
   }
-  const triggerOutgoingCall = (name) => {
+  const triggerOutgoingCall = (name, id) => {
       callerName.value = name;
+      callerID.value = id;
       showCallPopup.value = true;
       callType.value = "outgoing";
       callStatus.value = "calling";
@@ -173,7 +200,13 @@
       if(data.caller_id == user.value.id){
         console.log('Call declined by user');
         callStatus.value = "declined";
-        setTimeout(()=>{showCallPopup.value = false;}, 3000);
+        setTimeout(()=>{showCallPopup.value = false;}, 2500);
+      }
+    })
+    callChannel.bind('cancel-call', (data) => {
+      if(data.caller_id == callerID.value && callType.value == "incoming"){
+        console.log('Call canceled by user');
+        showCallPopup.value = false;
       }
     })
     callPusher.value.connection.bind('error', (err) => {

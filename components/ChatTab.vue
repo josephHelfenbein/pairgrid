@@ -490,7 +490,7 @@
         console.error("Token not available");
         return;
       }
-      emit('call-user', selectedFriend.value.name)
+      emit('call-user', selectedFriend.value.name, selectedFriend.value.id)
       const payload = {
         caller_id: props.user.id,
         callee_id: selectedFriend.value.id,
