@@ -142,12 +142,24 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
 		log.Printf("Message sent from %s to %s", msg.SenderID, msg.ReceiverEmail)
-	} else if _, isVoiceCall := payload["caller_id"]; isVoiceCall {
+	} else if _, isVoiceCall := payload["type"]; isVoiceCall {
 		var voicecall VoiceCall
 		err = json.Unmarshal([]byte(payloadToJSON(payload)), &voicecall)
 		if err != nil || voicecall.CallerID == "" || voicecall.CalleeID == "" {
 			http.Error(w, "Invalid VoiceCall payload", http.StatusBadRequest)
 			log.Printf("Invalid VoiceCall payload: %v", payload)
+			return
+		}
+		if voicecall.Type == "decline" {
+			if voicecall.CalleeID != usr.ID {
+				http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+				log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CalleeID)
+				return
+			}
+			BroadcastDecline(voicecall)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "call declined"})
 			return
 		}
 		if voicecall.CallerID != usr.ID {
@@ -379,5 +391,31 @@ func BroadcastVoiceCall(voicecall VoiceCall) {
 		log.Printf("Error broadcasting call request: %s", err)
 	} else {
 		log.Printf("Voice call request sent from %s to %s", voicecall.CallerID, voicecall.CalleeID)
+	}
+}
+func BroadcastDecline(voicecall VoiceCall) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+	err := pusherClient.Trigger(
+		fmt.Sprintf("private-call-%s", voicecall.CallerID),
+		"decline-call",
+		map[string]interface{}{
+			"caller_id": voicecall.CallerID,
+			"type":      voicecall.Type,
+		},
+	)
+	if err != nil {
+		log.Printf("Error broadcasting decline request: %s", err)
+	} else {
+		log.Printf("Decline call request sent from %s to %s", voicecall.CalleeID, voicecall.CallerID)
 	}
 }

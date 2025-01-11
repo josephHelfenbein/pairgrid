@@ -202,7 +202,7 @@
     }
   })
 
-  const emit = defineEmits(['toast-update'])
+  const emit = defineEmits(['toast-update', 'call-user'])
   const token = ref(null);
   const { session } = useSession();
   const reactiveSession = ref(session);
@@ -490,6 +490,7 @@
         console.error("Token not available");
         return;
       }
+      emit('call-user', selectedFriend.value.name)
       const payload = {
         caller_id: props.user.id,
         callee_id: selectedFriend.value.id,

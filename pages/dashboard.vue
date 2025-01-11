@@ -15,6 +15,7 @@
           <TabsContent value="chat">
             <ChatTab 
             @toast-update="toastUpdate"
+            @call-user="triggerOutgoingCall"
             :user="user"
             />
           </TabsContent>
@@ -34,7 +35,7 @@
         <div
         v-if="showCallPopup"
         class="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
-            <div class="relative p-6 rounded-lg bg-black shadow-lg w-80">
+            <div v-if="callType=='incoming'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
                 <h3 class="text-lg font-semibold">Incoming Call</h3>
                 <p class="mt-2 text-sm">{{ callerName }} is calling...</p>
                 <div class="flex justify-between items-center mt-4 space-x-4">
@@ -43,6 +44,14 @@
                     </button>
                     <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
                         Decline
+                    </button>
+                </div>
+            </div>
+            <div v-if="callType=='outgoing'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
+                <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
+                <div class="flex justify-between items-center mt-4 space-x-4">
+                    <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
+                        Cancel
                     </button>
                 </div>
             </div>
@@ -74,19 +83,49 @@
   const reactiveSession = ref(session);
   const callPusher = ref(null);
   const showCallPopup = ref(false);
+  const callType = ref(null);
 
   const callerName = ref('Unknown Caller');
+  const callerID = ref(null);
   const acceptCall = () => {
       console.log('Call accepted');
       showCallPopup.value = false;
   };
-  const declineCall = () => {
-      console.log('Call declined');
-      showCallPopup.value = false;
+  const declineCall = async () => {
+    try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
+      const payload = {
+        caller_id: callerID.value,
+        callee_id: user.value.id,
+        type: "decline",
+      }
+      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) throw new Error('Failed to decline call');
+    } catch (err) {
+      console.error(err)
+      emit('toast-update', 'Error declining call')
+    }
+    showCallPopup.value = false;
   };
   const triggerIncomingCall = (name) => {
       callerName.value = name;
       showCallPopup.value = true;
+      callType.value = "incoming";
+  }
+  const triggerOutgoingCall = (name) => {
+      callerName.value = name;
+      showCallPopup.value = true;
+      callType.value = "outgoing";
   }
 
   watch(reactiveSession, async (newSession, oldSession) => {
@@ -120,7 +159,18 @@
     })
     const callChannel = callPusher.value.subscribe(`private-call-${user.value.id}`)
     callChannel.bind('incoming-call', (data) => {
+      if(showCallPopup.value == true){
+        console.log('Call already in progress');
+        return;
+      }
+      callerID.value = data.caller_id;
       triggerIncomingCall(data.caller_name || 'Unknown Caller');
+    })
+    callChannel.bind('decline-call', (data) => {
+      if(data.caller_id == user.value.id){
+        console.log('Call declined by user');
+        showCallPopup.value = false;
+      }
     })
     callPusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
