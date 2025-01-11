@@ -370,8 +370,9 @@ func BroadcastVoiceCall(voicecall VoiceCall) {
 		fmt.Sprintf("private-call-%s", voicecall.CalleeID),
 		"incoming-call",
 		map[string]interface{}{
-			"caller_id": voicecall.CallerID,
-			"type":      voicecall.Type,
+			"caller_id":   voicecall.CallerID,
+			"caller_name": voicecall.CallerName,
+			"type":        voicecall.Type,
 		},
 	)
 	if err != nil {
