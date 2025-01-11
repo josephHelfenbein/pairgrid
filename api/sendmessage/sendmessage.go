@@ -90,12 +90,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	var msg Message
 	err = json.NewDecoder(r.Body).Decode(&msg)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid JSON payload: %s", err), http.StatusBadRequest)
-		log.Printf("Error decoding JSON payload: %s", err)
-		return
-	}
-	if msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
+	if err != nil || msg.SenderID == "" || msg.ReceiverEmail == "" || msg.Content == "" {
 		var voicecall VoiceCall
 		err = json.NewDecoder(r.Body).Decode(&voicecall)
 		if err != nil {
