@@ -50,9 +50,10 @@
             <div v-if="callType=='outgoing'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
                 <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
                 <div class="flex justify-between items-center mt-4 space-x-4">
-                    <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
+                    <button v-if="callStatus=='calling'" @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
                         Cancel
                     </button>
+                    <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
                 </div>
             </div>
         </div>
@@ -87,6 +88,7 @@
 
   const callerName = ref('Unknown Caller');
   const callerID = ref(null);
+  const callStatus = ref(null);
   const acceptCall = () => {
       console.log('Call accepted');
       showCallPopup.value = false;
@@ -126,6 +128,7 @@
       callerName.value = name;
       showCallPopup.value = true;
       callType.value = "outgoing";
+      callStatus.value = "calling";
   }
 
   watch(reactiveSession, async (newSession, oldSession) => {
@@ -169,7 +172,8 @@
     callChannel.bind('decline-call', (data) => {
       if(data.caller_id == user.value.id){
         console.log('Call declined by user');
-        showCallPopup.value = false;
+        callStatus.value = "declined";
+        setTimeout(()=>{showCallPopup.value = false;}, 3000);
       }
     })
     callPusher.value.connection.bind('error', (err) => {
