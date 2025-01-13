@@ -117,7 +117,7 @@
       sendSignalingMessage('sdp-offer', { sdp: offer });
     } catch (err) {
       console.error('Error accepting call:', err);
-      emit('toast-update', 'Error accepting call');
+      toastUpdate('Error accepting call');
     }
   };
 
@@ -169,7 +169,7 @@
       if (!response.ok) throw new Error('Failed to decline call');
     } catch (err) {
       console.error(err)
-      emit('toast-update', 'Error declining call')
+      toastUpdate('Error declining call')
     }
     showCallPopup.value = false;
   };
@@ -193,13 +193,19 @@
         body: JSON.stringify(payload),
       })
       if (!response.ok) throw new Error('Failed to cancel call');
-      peerConnection.value.getSenders().forEach(sender => sender.track.stop());
-      remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+      peerConnection.value.getSenders().forEach(sender => {
+        if (sender.track) sender.track.stop();
+      });
+      if (remoteAudio.value && remoteAudio.value.srcObject) {
+        remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+      } else {
+        console.error('No media stream found for remoteAudio.');
+      }
       callStatus.value = "canceled";
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
-      emit('toast-update', 'Error cancel call')
+      toastUpdate('Error cancelling call')
     }
   };
   const triggerIncomingCall = (name) => {
@@ -263,8 +269,14 @@
     callChannel.bind('cancel-call', (data) => {
       if((data.caller_id == callerID.value && callType.value == "incoming") || ((data.caller_id == callerID.value || data.callee_id == callerID.value) && callType.value == "outgoing")){
         console.log('Call canceled by user');
-        peerConnection.value.getSenders().forEach(sender => sender.track.stop());
-        remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+        peerConnection.value.getSenders().forEach(sender => {
+          if (sender.track) sender.track.stop();
+        });
+        if (remoteAudio.value && remoteAudio.value.srcObject) {
+          remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+        } else {
+          console.error('No media stream found for remoteAudio.');
+        }
         callStatus.value = "canceled";
         setTimeout(()=>{showCallPopup.value = false;}, 2500);
       }
