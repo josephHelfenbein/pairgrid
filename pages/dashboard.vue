@@ -134,6 +134,27 @@
   const popupTop = ref(0);
   const popupLeft = ref(0);
   const isDragging = ref(false);
+  const callDuration = ref('00:00');
+  let callStartTime = null;
+  let callInterval = null;
+
+  const startCallTimer = () => {
+    callStartTime = new Date();
+    callInterval = setInterval(() => {
+      const elapsedTime = Math.floor((new Date() - callStartTime) / 1000);
+      const minutes = Math.floor(elapsedTime / 60)
+        .toString()
+        .padStart(2, '0');
+      const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+      callDuration.value = `${minutes}:${seconds}`;
+    }, 1000);
+  };
+
+  const stopCallTimer = () => {
+    clearInterval(callInterval);
+    callInterval = null;
+    callDuration.value = '00:00';
+  };
 
   const startDrag = (event) => {
     isDragging.value = true;
@@ -171,7 +192,8 @@
     try {
       console.log('Call accepted');
       callType.value = "outgoing";
-      callStatus.value = "calling";
+      callStatus.value = "active";
+      startCallTimer();
 
       peerConnection.value.onicecandidate = (event) => {
         if (event.candidate) {
@@ -243,11 +265,14 @@
         body: JSON.stringify(payload),
       })
       if (!response.ok) throw new Error('Failed to decline call');
+      showCallPopup.value = false;
+      callStatus.value = "declined";
+      stopCallTimer();
+      setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
       toastUpdate('Error declining call')
     }
-    showCallPopup.value = false;
   };
   const cancelCall = async () => {
     try {
@@ -278,6 +303,7 @@
         console.error('No media stream found for remoteAudio.');
       }
       callStatus.value = "canceled";
+      stopCallTimer();
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
