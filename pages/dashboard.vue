@@ -112,7 +112,7 @@
   import ChatTab from '@/components/ChatTab.vue'
   import NetworkingTab from '@/components/NetworkingTab.vue'
   import PreferencesTab from '@/components/PreferencesTab.vue'
-  import { reactive, onMounted, watch } from 'vue'
+  import { reactive, onMounted, watch, nextTick } from 'vue'
   import { useUser } from '@clerk/vue'
   import { useToast } from '@/components/ui/toast/use-toast'
   import Loader from '@/components/Loader'
@@ -570,11 +570,12 @@
     }
   });
 
-  onMounted(() => {
+  onMounted(async () => {
     if (user.value) {
       loadPreferences();
       loading.value = false;
     }
+    await nextTick();
     peerConnection.value = new RTCPeerConnection({
       iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
