@@ -159,12 +159,16 @@
   const startDrag = (event) => {
     isDragging.value = true;
     const popup = event.target.closest('.bg-gray-800'); 
+    const disableScroll = (e) => e.preventDefault();
     const rect = popup.getBoundingClientRect();
     const { clientX, clientY } = event.touches ? event.touches[0] : event;
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
-    const moveHandler = (moveEvent) => {
-      const { clientX, clientY } = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+    const moveHandler = (e) => {
+      if (!isDragging.value) return;
+      const clientX = e.touches?.[0]?.clientX || e.clientX;
+      const clientY = e.touches?.[0]?.clientY || e.clientY;
+
       const newTop = clientY - offsetY;
       const newLeft = clientX - offsetX;
 
@@ -180,7 +184,12 @@
       window.removeEventListener('mouseup', stopDrag);
       window.removeEventListener('touchmove', moveHandler);
       window.removeEventListener('touchend', stopDrag);
+      document.body.style.overflow = '';
+      window.removeEventListener('touchmove', disableScroll, { passive: false });
     };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('touchmove', disableScroll, { passive: false });
+
     window.addEventListener('mousemove', moveHandler);
     window.addEventListener('mouseup', stopDrag);
     window.addEventListener('touchmove', moveHandler);
@@ -201,9 +210,17 @@
         }
       };
 
-      peerConnection.value.ontrack = (event) => {
+      peerConnection.value.ontrack = async (event) => {
         remoteAudio.value.srcObject = event.streams[0];
-        remoteAudio.value.play();
+        await remoteAudio.value.play();
+        if (remoteAudio.value.setSinkId) {
+        try {
+            await remoteAudio.value.setSinkId('default');
+            console.log('Audio output routed to default (speakers)');
+          } catch (error) {
+            console.error('Error setting audio output:', error);
+          }
+        }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -405,9 +422,17 @@
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-          peerConnection.value.ontrack = (event) => {
+          peerConnection.value.ontrack = async (event) => {
             remoteAudio.value.srcObject = event.streams[0];
-            remoteAudio.value.play();
+            await remoteAudio.value.play();
+            if (remoteAudio.value.setSinkId) {
+              try {
+                await remoteAudio.value.setSinkId('default');
+                console.log('Audio output routed to default (speakers)');
+              } catch (error) {
+                console.error('Error setting audio output:', error);
+              }
+            }
           };
         }
       } catch (error) {
