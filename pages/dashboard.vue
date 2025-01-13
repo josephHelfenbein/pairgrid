@@ -144,6 +144,7 @@
       if (!response.ok) throw new Error('Failed to send signaling message');
     } catch (err) {
       console.error('Error sending signaling message:', err);
+      toastUpdate('Error sending signaling message, please try again.');
     }
   };
 
@@ -284,18 +285,18 @@
     callChannel.bind('webrtc-message', async (data) => {
       try {
         if (data.type === 'sdp-offer') {
-          await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
           stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+
+          await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
           const answer = await peerConnection.value.createAnswer();
           await peerConnection.value.setLocalDescription(answer);
-          sendSignalingMessage('sdp-answer', { sdp: answer });
 
+          sendSignalingMessage('sdp-answer', { sdp: answer });
         } else if (data.type === 'ice-candidate') {
           await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
-
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
