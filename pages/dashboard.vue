@@ -569,6 +569,11 @@
       if(callPusher.value == null) subscribeToCalls();
     }
   });
+  watch(showCallPopup, (newValue) => {
+    if (newValue) {
+      centerPopup();
+    }
+  });
 
   onMounted(async () => {
     if (user.value) {
@@ -584,7 +589,6 @@
       ],
     });
     remoteAudio.value = new Audio();
-    centerPopup();
     window.addEventListener('resize', centerPopup);
   });
 </script>
