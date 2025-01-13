@@ -89,32 +89,30 @@
   const callerName = ref('Unknown Caller');
   const callerID = ref(null);
   const callStatus = ref(null);
-  const peerConnection = new RTCPeerConnection({
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-  });
+  const peerConnection = ref(null);
   const acceptCall = async () => {
     try {
       console.log('Call accepted');
       callType.value = "outgoing";
       callStatus.value = "calling";
 
-      peerConnection.onicecandidate = (event) => {
+      peerConnection.value.onicecandidate = (event) => {
         if (event.candidate) {
           sendSignalingMessage('ice-candidate', { candidate: event.candidate });
         }
       };
 
-      peerConnection.ontrack = (event) => {
+      peerConnection.value.ontrack = (event) => {
         const remoteAudio = new Audio();
         remoteAudio.srcObject = event.streams[0];
         remoteAudio.play();
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+      stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
       
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
+      const offer = await peerConnection.value.createOffer();
+      await peerConnection.value.setLocalDescription(offer);
       sendSignalingMessage('sdp-offer', { sdp: offer });
     } catch (err) {
       console.error('Error accepting call:', err);
@@ -267,22 +265,22 @@
     callChannel.bind('webrtc-message', async (data) => {
       try {
         if (data.type === 'sdp-offer') {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
 
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
+          const answer = await peerConnection.value.createAnswer();
+          await peerConnection.value.setLocalDescription(answer);
           sendSignalingMessage('sdp-answer', { sdp: answer });
 
         } else if (data.type === 'ice-candidate') {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+          await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
 
         } else if (data.type === 'sdp-answer') {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-          peerConnection.ontrack = (event) => {
+          peerConnection.value.ontrack = (event) => {
             const remoteAudio = new Audio();
             remoteAudio.srcObject = event.streams[0];
             remoteAudio.play();
@@ -359,5 +357,8 @@
       loadPreferences();
       loading.value = false;
     }
+    peerConnection.value = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
   });
 </script>
