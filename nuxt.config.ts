@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-12-20',
   app: {
     head: {
-      titleTemplate: 'PairGrid | %s',
+      titleTemplate: 'PairGrid - %s',
       meta: [
         {
           name: 'description',

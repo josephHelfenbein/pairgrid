@@ -84,7 +84,9 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
   import { UserPlus, Play, Users, MessageSquare, Video } from 'lucide-vue-next'
-  definePageMeta({
-    title: 'Home'
+  useSeoMeta({
+    title: 'Home',
+    ogTitle: 'PairGrid - Home',
+    twitterTitle: 'PairGrid - Home',
   });
   </script>

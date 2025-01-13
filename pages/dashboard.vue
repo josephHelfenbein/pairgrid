@@ -141,13 +141,11 @@
   let callStartTime = null;
   let callInterval = null;
 
-  definePageMeta({
+  useSeoMeta({
     title: 'Dashboard',
-    meta: [
-      { name: 'description', content: 'Manage your coding partnerships with PairGrid. Collaborate, chat, and connect with developers in real time.' },
-      { property: 'og:title', content: 'PairGrid - Dashboard' },
-      { property: 'twitter:title', content: 'PairGrid - Dashboard' },
-    ]
+    description: 'Manage your coding partnerships with PairGrid. Collaborate, chat, and connect with developers in real time.',
+    ogTitle: 'PairGrid - Dashboard',
+    twitterTitle: 'PairGrid - Dashboard',
   });
 
   const centerPopup = () => {
