@@ -46,11 +46,11 @@ type VoiceCall struct {
 	CallerName string `json:"caller_name"`
 }
 type WebRTCMessage struct {
-	Type        string `json:"type"`
-	SDP         string `json:"sdp,omitempty"`
-	Candidate   string `json:"candidate,omitempty"`
-	UserID      string `json:"user_id"`
-	RecipientID string `json:"recipient_id"`
+	Type        string                 `json:"type"`
+	SDP         map[string]interface{} `json:"sdp,omitempty"`
+	Candidate   map[string]interface{} `json:"candidate,omitempty"`
+	UserID      string                 `json:"user_id"`
+	RecipientID string                 `json:"recipient_id"`
 }
 
 func GenerateEncryptionKey(userID, serverSecret string) []byte {
