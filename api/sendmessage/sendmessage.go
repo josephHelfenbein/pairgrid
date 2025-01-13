@@ -45,6 +45,11 @@ type VoiceCall struct {
 	Type       string `json:"type"`
 	CallerName string `json:"caller_name"`
 }
+type WebRTCMessage struct {
+	Type      string `json:"type"`
+	SDP       string `json:"sdp,omitempty"`
+	Candidate string `json:"candidate,omitempty"`
+}
 
 func GenerateEncryptionKey(userID, serverSecret string) []byte {
 	hash := sha256.Sum256([]byte(userID + serverSecret))
@@ -142,7 +147,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(response)
 		log.Printf("Message sent from %s to %s", msg.SenderID, msg.ReceiverEmail)
-	} else if _, isVoiceCall := payload["type"]; isVoiceCall {
+	} else if _, isVoiceCall := payload["caller_id"]; isVoiceCall {
 		var voicecall VoiceCall
 		err = json.Unmarshal([]byte(payloadToJSON(payload)), &voicecall)
 		if err != nil || voicecall.CallerID == "" || voicecall.CalleeID == "" {
@@ -183,6 +188,21 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "call request sent"})
+	} else if _, isWebRTCMessage := payload["type"]; isWebRTCMessage {
+		var message WebRTCMessage
+		err = json.Unmarshal([]byte(payloadToJSON(payload)), &message)
+		if err != nil {
+			http.Error(w, "Invalid WebRTC message payload", http.StatusBadRequest)
+			return
+		}
+		if payload["user_id"] != usr.ID {
+			http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, payload["user_id"])
+			return
+		}
+		BroadcastWebRTCMessage(fmt.Sprintf("private-call-%s", payload["recipient_id"]), message)
+		w.WriteHeader(http.StatusOK)
+		return
 	} else {
 		http.Error(w, "Unknown payload type", http.StatusBadRequest)
 		log.Printf("Unknown payload type: %v", payload)
@@ -454,5 +474,29 @@ func BroadcastCancel(voicecall VoiceCall) {
 		log.Printf("Error broadcasting cancel request: %s", err)
 	} else {
 		log.Printf("Cancel call request sent from %s to %s", voicecall.CallerID, voicecall.CalleeID)
+	}
+}
+func BroadcastWebRTCMessage(channel string, message WebRTCMessage) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+
+	err := pusherClient.Trigger(channel, "webrtc-message",
+		map[string]interface{}{
+			"type":      message.Type,
+			"sdp":       message.SDP,
+			"candidate": message.Candidate,
+		},
+	)
+	if err != nil {
+		log.Printf("Error broadcasting WebRTC message: %s", err)
 	}
 }

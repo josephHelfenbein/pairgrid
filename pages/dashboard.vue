@@ -89,10 +89,81 @@
   const callerName = ref('Unknown Caller');
   const callerID = ref(null);
   const callStatus = ref(null);
-  const acceptCall = () => {
+  const acceptCall = async () => {
+    try {
       console.log('Call accepted');
-      showCallPopup.value = false;
+      callType.value = "outgoing";
+      callStatus.value = "calling";
+
+      const peerConnection = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      });
+
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendSignalingMessage('ice-candidate', { candidate: event.candidate });
+        }
+      };
+
+      peerConnection.ontrack = (event) => {
+        const remoteAudio = new Audio();
+        remoteAudio.srcObject = event.streams[0];
+        remoteAudio.play();
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+      const callChannel = callPusher.value.channel(`private-call-${user.value.id}`);
+      if (!callChannel) {
+        console.error('Call channel not found!');
+        return;
+      }
+
+      callChannel.bind('webrtc-event', async (data) => {
+        if (data.type === 'sdp-offer') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          sendSignalingMessage('sdp-answer', { sdp: answer });
+        } else if (data.type === 'ice-candidate') {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      sendSignalingMessage('sdp-offer', { sdp: offer });
+    } catch (err) {
+      console.error('Error accepting call:', err);
+      emit('toast-update', 'Error accepting call');
+    }
   };
+
+  const sendSignalingMessage = async (type, data) => {
+    try {
+      if (!token.value) {
+        console.error("Token not available");
+        return;
+      }
+      const payload = {
+        type,
+        user_id: user.value.id,
+        recipient_id: callerID.value,
+        ...data,
+      };
+      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Failed to send signaling message');
+    } catch (err) {
+      console.error('Error sending signaling message:', err);
+    }
+  };
+
   const declineCall = async () => {
     try {
       if(!token.value) {
@@ -209,6 +280,22 @@
         showCallPopup.value = false;
       }
     })
+    callChannel.bind('webrtc-event', async (data) => {
+      try {
+        if (data.type === 'sdp-offer') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          sendSignalingMessage('sdp-answer', { sdp: answer });
+        } else if (data.type === 'ice-candidate') {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } else if (data.type === 'sdp-answer') {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        }
+      } catch (error) {
+        console.error('Error handling WebRTC signaling:', error);
+      }
+    });
     callPusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
       toastUpdate('Session not found, try again.');
