@@ -54,6 +54,7 @@
                         Cancel
                     </button>
                     <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
+                    <p v-else-if="callStatus=='canceled'" class="text-sm">Call ended.</p>
                 </div>
             </div>
         </div>
@@ -90,6 +91,7 @@
   const callerID = ref(null);
   const callStatus = ref(null);
   const peerConnection = ref(null);
+  const remoteAudio = ref(null);
   const acceptCall = async () => {
     try {
       console.log('Call accepted');
@@ -103,9 +105,8 @@
       };
 
       peerConnection.value.ontrack = (event) => {
-        const remoteAudio = new Audio();
-        remoteAudio.srcObject = event.streams[0];
-        remoteAudio.play();
+        remoteAudio.value.srcObject = event.streams[0];
+        remoteAudio.value.play();
       };
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -192,11 +193,14 @@
         body: JSON.stringify(payload),
       })
       if (!response.ok) throw new Error('Failed to cancel call');
+      peerConnection.value.getSenders().forEach(sender => sender.track.stop());
+      remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+      callStatus.value = "canceled";
+      setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
       emit('toast-update', 'Error cancel call')
     }
-    showCallPopup.value = false;
   };
   const triggerIncomingCall = (name) => {
       callerName.value = name;
@@ -259,7 +263,10 @@
     callChannel.bind('cancel-call', (data) => {
       if((data.caller_id == callerID.value && callType.value == "incoming") || ((data.caller_id == callerID.value || data.callee_id == callerID.value) && callType.value == "outgoing")){
         console.log('Call canceled by user');
-        showCallPopup.value = false;
+        peerConnection.value.getSenders().forEach(sender => sender.track.stop());
+        remoteAudio.value.srcObject.getTracks().forEach(track => track.stop());
+        callStatus.value = "canceled";
+        setTimeout(()=>{showCallPopup.value = false;}, 2500);
       }
     })
     callChannel.bind('webrtc-message', async (data) => {
@@ -281,9 +288,8 @@
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
           peerConnection.value.ontrack = (event) => {
-            const remoteAudio = new Audio();
-            remoteAudio.srcObject = event.streams[0];
-            remoteAudio.play();
+            remoteAudio.value.srcObject = event.streams[0];
+            remoteAudio.value.play();
           };
         }
       } catch (error) {
@@ -360,5 +366,6 @@
     peerConnection.value = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
     });
+    remoteAudio.value = new Audio();
   });
 </script>
