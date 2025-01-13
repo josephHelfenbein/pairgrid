@@ -1,6 +1,5 @@
 <template>
     <div class="min-h-screen bg-background">
-
       <SignedOut>
         <RedirectToSignUp />
       </SignedOut>
@@ -34,32 +33,67 @@
         <Toaster />
         <div
           v-if="showCallPopup"
-          class="fixed z-50 bg-black w-80 shadow-lg rounded-lg"
+          class="fixed z-50 bg-gray-800 text-white w-72 shadow-lg rounded-lg overflow-hidden"
           :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
           ref="callPopup"
           @mousedown="startDrag"
+          @touchstart="startDrag"
         >
-          <div v-if="callType=='incoming'" class="relative p-6">
-            <h3 class="text-lg font-semibold">Incoming Call</h3>
-            <p class="mt-2 text-sm">{{ callerName }} is calling...</p>
-            <div class="flex justify-between items-center mt-4 space-x-4">
-              <button @click="acceptCall" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600">
-                Accept
-              </button>
-              <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
-                Decline
-              </button>
-            </div>
+          <div class="bg-gray-900 p-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold">
+              {{ callType === 'incoming' ? 'Incoming Call' : 'Call Progress' }}
+            </h3>
           </div>
-          
-          <div v-if="callType=='outgoing'" class="relative p-6">
-            <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
-            <div class="flex justify-between items-center mt-4 space-x-4">
-              <button v-if="callStatus=='calling'" @click="cancelCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
-                Cancel
-              </button>
-              <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
-              <p v-else-if="callStatus=='canceled'" class="text-sm">Call ended.</p>
+
+          <div class="p-6">
+            <div v-if="callType === 'incoming'">
+              <p class="text-center text-sm">{{ callerName }} is calling...</p>
+              <div class="flex justify-center space-x-4 mt-4">
+                <button
+                  @click="acceptCall"
+                  class="px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600"
+                >
+                  Accept
+                </button>
+                <button
+                  @click="declineCall"
+                  class="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  Decline
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="callStatus === 'calling'">
+              <p class="text-center text-sm">Calling {{ callerName }}...</p>
+              <div class="flex justify-center mt-4">
+                <button
+                  @click="cancelCall"
+                  class="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="callStatus === 'active'">
+              <p class="text-center text-sm">Talking to {{ callerName }}</p>
+              <p class="text-center mt-2 text-sm">Duration: {{ callDuration }}</p>
+              <div class="flex justify-center mt-4">
+                <button
+                  @click="endCall"
+                  class="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                >
+                  End Call
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="callStatus === 'declined'">
+              <p class="text-center text-sm">Call was declined by {{ callerName }}.</p>
+            </div>
+            <div v-else-if="callStatus === 'canceled'">
+              <p class="text-center text-sm">Call was canceled.</p>
             </div>
           </div>
         </div>
@@ -105,20 +139,33 @@
     isDragging.value = true;
     const popup = event.target.closest('.bg-black');
     const rect = popup.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const offsetY = event.clientY - rect.top;
-    const moveHandler = (event) => {
-      popupTop.value = event.clientY - offsetY;
-      popupLeft.value = event.clientX - offsetX;
+    const { clientX, clientY } = event.touches ? event.touches[0] : event;
+    const offsetX = clientX - rect.left;
+    const offsetY = clientY - rect.top;
+    const moveHandler = (moveEvent) => {
+      const { clientX, clientY } = moveEvent.touches ? moveEvent.touches[0] : moveEvent;
+      const newTop = clientY - offsetY;
+      const newLeft = clientX - offsetX;
+
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      popupTop.value = Math.min(Math.max(newTop, 0), viewportHeight - popup.offsetHeight);
+      popupLeft.value = Math.min(Math.max(newLeft, 0), viewportWidth - popup.offsetWidth);
     };
     const stopDrag = () => {
       isDragging.value = false;
       window.removeEventListener('mousemove', moveHandler);
       window.removeEventListener('mouseup', stopDrag);
+      window.removeEventListener('touchmove', moveHandler);
+      window.removeEventListener('touchend', stopDrag);
     };
     window.addEventListener('mousemove', moveHandler);
     window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchmove', moveHandler);
+    window.addEventListener('touchend', stopDrag);
   };
+  
 
   const acceptCall = async () => {
     try {
