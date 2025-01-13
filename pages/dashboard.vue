@@ -89,15 +89,14 @@
   const callerName = ref('Unknown Caller');
   const callerID = ref(null);
   const callStatus = ref(null);
+  const peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  });
   const acceptCall = async () => {
     try {
       console.log('Call accepted');
       callType.value = "outgoing";
       callStatus.value = "calling";
-
-      const peerConnection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      });
 
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
@@ -269,13 +268,25 @@
       try {
         if (data.type === 'sdp-offer') {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
+
           const answer = await peerConnection.createAnswer();
           await peerConnection.setLocalDescription(answer);
           sendSignalingMessage('sdp-answer', { sdp: answer });
+
         } else if (data.type === 'ice-candidate') {
           await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+
         } else if (data.type === 'sdp-answer') {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+          peerConnection.ontrack = (event) => {
+            const remoteAudio = new Audio();
+            remoteAudio.srcObject = event.streams[0];
+            remoteAudio.play();
+          };
         }
       } catch (error) {
         console.error('Error handling WebRTC signaling:', error);
