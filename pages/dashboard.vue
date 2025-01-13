@@ -113,22 +113,7 @@
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((track) => peerConnection.addTrack(track, stream));
-      const callChannel = callPusher.value.channel(`private-call-${user.value.id}`);
-      if (!callChannel) {
-        console.error('Call channel not found!');
-        return;
-      }
-
-      callChannel.bind('webrtc-event', async (data) => {
-        if (data.type === 'sdp-offer') {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          const answer = await peerConnection.createAnswer();
-          await peerConnection.setLocalDescription(answer);
-          sendSignalingMessage('sdp-answer', { sdp: answer });
-        } else if (data.type === 'ice-candidate') {
-          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        }
-      });
+      
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
       sendSignalingMessage('sdp-offer', { sdp: offer });
@@ -275,12 +260,12 @@
       }
     })
     callChannel.bind('cancel-call', (data) => {
-      if((data.caller_id == callerID.value && callType.value == "incoming") || ((data.caller_id == user.value.id || data.callee_id == user.value.id) && callType.value == "outgoing")){
+      if((data.caller_id == callerID.value && callType.value == "incoming") || ((data.caller_id == callerID.value || data.callee_id == callerID.value) && callType.value == "outgoing")){
         console.log('Call canceled by user');
         showCallPopup.value = false;
       }
     })
-    callChannel.bind('webrtc-event', async (data) => {
+    callChannel.bind('webrtc-message', async (data) => {
       try {
         if (data.type === 'sdp-offer') {
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
