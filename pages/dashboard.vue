@@ -34,12 +34,12 @@
         <Toaster />
         <div
           v-if="showCallPopup"
-          class="fixed z-50 bg-black bg-opacity-50 w-80 shadow-lg rounded-lg"
+          class="fixed z-50 bg-black w-80 shadow-lg rounded-lg"
           :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
           ref="callPopup"
           @mousedown="startDrag"
         >
-          <div v-if="callType='incoming'" class="relative p-6">
+          <div v-if="callType=='incoming'" class="relative p-6">
             <h3 class="text-lg font-semibold">Incoming Call</h3>
             <p class="mt-2 text-sm">{{ callerName }} is calling...</p>
             <div class="flex justify-between items-center mt-4 space-x-4">
