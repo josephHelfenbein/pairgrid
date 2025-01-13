@@ -201,8 +201,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		BroadcastWebRTCMessage(fmt.Sprintf("private-call-%s", payload["recipient_id"]), message)
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		return
+		json.NewEncoder(w).Encode(map[string]string{"status": "webrtc message sent"})
 	} else {
 		http.Error(w, "Unknown payload type", http.StatusBadRequest)
 		log.Printf("Unknown payload type: %v", payload)
@@ -498,5 +499,7 @@ func BroadcastWebRTCMessage(channel string, message WebRTCMessage) {
 	)
 	if err != nil {
 		log.Printf("Error broadcasting WebRTC message: %s", err)
+	} else {
+		log.Printf("WebRTC message sent")
 	}
 }

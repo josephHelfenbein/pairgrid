@@ -145,7 +145,7 @@
         return;
       }
       const payload = {
-        type,
+        type: type,
         user_id: user.value.id,
         recipient_id: callerID.value,
         ...data,
