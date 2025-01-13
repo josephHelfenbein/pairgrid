@@ -33,30 +33,35 @@
         </Tabs>
         <Toaster />
         <div
-        v-if="showCallPopup"
-        class="fixed top-0 left-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
-            <div v-if="callType=='incoming'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
-                <h3 class="text-lg font-semibold">Incoming Call</h3>
-                <p class="mt-2 text-sm">{{ callerName }} is calling...</p>
-                <div class="flex justify-between items-center mt-4 space-x-4">
-                    <button @click="acceptCall" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600">
-                        Accept
-                    </button>
-                    <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
-                        Decline
-                    </button>
-                </div>
+          v-if="showCallPopup"
+          class="fixed z-50 bg-black bg-opacity-50 w-80 shadow-lg rounded-lg"
+          :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
+          ref="callPopup"
+          @mousedown="startDrag"
+        >
+          <div v-if="callType='incoming'" class="relative p-6">
+            <h3 class="text-lg font-semibold">Incoming Call</h3>
+            <p class="mt-2 text-sm">{{ callerName }} is calling...</p>
+            <div class="flex justify-between items-center mt-4 space-x-4">
+              <button @click="acceptCall" class="px-4 py-2 text-white bg-green-500 rounded hover:bg-green-600">
+                Accept
+              </button>
+              <button @click="declineCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
+                Decline
+              </button>
             </div>
-            <div v-if="callType=='outgoing'" class="relative p-6 rounded-lg bg-black shadow-lg w-80">
-                <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
-                <div class="flex justify-between items-center mt-4 space-x-4">
-                    <button v-if="callStatus=='calling'" @click="cancelCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
-                        Cancel
-                    </button>
-                    <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
-                    <p v-else-if="callStatus=='canceled'" class="text-sm">Call ended.</p>
-                </div>
+          </div>
+          
+          <div v-if="callType=='outgoing'" class="relative p-6">
+            <p class="mt-2 text-sm">Calling {{ callerName }}...</p>
+            <div class="flex justify-between items-center mt-4 space-x-4">
+              <button v-if="callStatus=='calling'" @click="cancelCall" class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600">
+                Cancel
+              </button>
+              <p v-else-if="callStatus=='declined'" class="text-sm">Call was declined.</p>
+              <p v-else-if="callStatus=='canceled'" class="text-sm">Call ended.</p>
             </div>
+          </div>
         </div>
       </div>
       <div v-else class="flex justify-center items-center h-screen">
@@ -92,6 +97,29 @@
   const callStatus = ref(null);
   const peerConnection = ref(null);
   const remoteAudio = ref(null);
+  const popupTop = ref(0);
+  const popupLeft = ref(0);
+  const isDragging = ref(false);
+
+  const startDrag = (event) => {
+    isDragging.value = true;
+    const popup = event.target.closest('.bg-black');
+    const rect = popup.getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    const offsetY = event.clientY - rect.top;
+    const moveHandler = (event) => {
+      popupTop.value = event.clientY - offsetY;
+      popupLeft.value = event.clientX - offsetX;
+    };
+    const stopDrag = () => {
+      isDragging.value = false;
+      window.removeEventListener('mousemove', moveHandler);
+      window.removeEventListener('mouseup', stopDrag);
+    };
+    window.addEventListener('mousemove', moveHandler);
+    window.addEventListener('mouseup', stopDrag);
+  };
+
   const acceptCall = async () => {
     try {
       console.log('Call accepted');
