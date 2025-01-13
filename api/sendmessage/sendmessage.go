@@ -200,6 +200,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, payload["user_id"])
 			return
 		}
+		log.Printf("Sending WebRTC message: %v", message)
 		BroadcastWebRTCMessage(fmt.Sprintf("private-call-%s", payload["recipient_id"]), message)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
