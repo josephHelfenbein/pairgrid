@@ -92,6 +92,9 @@
             <div v-else-if="callStatus === 'declined'">
               <p class="text-center text-sm">Call was declined by {{ callerName }}.</p>
             </div>
+            <div v-else-if="callStatus === 'taken'">
+              <p class="text-center text-sm">{{ callerName }} is already on a call.</p>
+            </div>
             <div v-else-if="callStatus === 'canceled'">
               <p class="text-center text-sm">Call was canceled.</p>
             </div>
@@ -164,6 +167,7 @@
     const { clientX, clientY } = event.touches ? event.touches[0] : event;
     const offsetX = clientX - rect.left;
     const offsetY = clientY - rect.top;
+    const isMobile = window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
     const moveHandler = (e) => {
       if (!isDragging.value) return;
       const clientX = e.touches?.[0]?.clientX || e.clientX;
@@ -184,11 +188,15 @@
       window.removeEventListener('mouseup', stopDrag);
       window.removeEventListener('touchmove', moveHandler);
       window.removeEventListener('touchend', stopDrag);
-      document.body.style.overflow = '';
-      window.removeEventListener('touchmove', disableScroll, { passive: false });
+      if (isMobile) {
+        document.body.style.overflow = '';
+        window.removeEventListener('touchmove', disableScroll, { passive: false });
+      }
     };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('touchmove', disableScroll, { passive: false });
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('touchmove', disableScroll, { passive: false });
+    }
 
     window.addEventListener('mousemove', moveHandler);
     window.addEventListener('mouseup', stopDrag);
@@ -332,12 +340,40 @@
       showCallPopup.value = true;
       callType.value = "incoming";
   }
-  const triggerOutgoingCall = (name, id) => {
+  const triggerOutgoingCall = async (name, id) => {
+    try {
+      if(!token.value) {
+        console.error("Token not available");
+        return;
+      }
+      if(showCallPopup.value) {
+        toastUpdate('You are already on a call');
+        return;
+      }
       callerName.value = name;
       callerID.value = id;
       showCallPopup.value = true;
       callType.value = "outgoing";
       callStatus.value = "calling";
+      const payload = {
+        caller_id: user.value.id,
+        callee_id: id,
+        type: "voice",
+        caller_name: user.value.fullName,
+      }
+      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.value}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      if (!response.ok) throw new Error('Failed to call user')
+    } catch (err) {
+      console.error(err)
+      toastUpdate('Error calling user')
+    }
   }
 
   watch(reactiveSession, async (newSession, oldSession) => {
@@ -370,9 +406,29 @@
       },
     })
     const callChannel = callPusher.value.subscribe(`private-call-${user.value.id}`)
+    callChannel.bind('taken-call', (data) => {
+      if(data.caller_id == user.value.id){
+        console.log('Call taken by user');
+        callStatus.value = "taken";
+        setTimeout(()=>{showCallPopup.value = false;}, 2500);
+      }
+    })
     callChannel.bind('incoming-call', (data) => {
       if(showCallPopup.value == true){
-        console.log('Call already in progress');
+        const payload = {
+          caller_id: data.caller_id,
+          callee_id: user.value.id,
+          type: "taken",
+        }
+        fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token.value}`,
+          },
+          body: JSON.stringify(payload),
+        })
+        toastUpdate(`Call missed from ${data.caller_name || 'Unknown Caller'}.`);
         return;
       }
       callerID.value = data.caller_id;

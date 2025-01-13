@@ -171,13 +171,24 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		} else if voicecall.Type == "cancel" {
 			if voicecall.CallerID != usr.ID {
 				http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
-				log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CalleeID)
+				log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CallerID)
 				return
 			}
 			BroadcastCancel(voicecall)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(map[string]string{"status": "call declined"})
+			return
+		} else if voicecall.Type == "taken" {
+			if voicecall.CalleeID != usr.ID {
+				http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
+				log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, voicecall.CalleeID)
+				return
+			}
+			BroadcastTaken(voicecall)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "call already taken, declined"})
 			return
 		}
 		if voicecall.CallerID != usr.ID {
@@ -453,6 +464,32 @@ func BroadcastDecline(voicecall VoiceCall) {
 		log.Printf("Error broadcasting decline request: %s", err)
 	} else {
 		log.Printf("Decline call request sent from %s to %s", voicecall.CalleeID, voicecall.CallerID)
+	}
+}
+func BroadcastTaken(voicecall VoiceCall) {
+	pusherID := os.Getenv("PUSHER_APP_ID")
+	pusherKey := os.Getenv("PUSHER_APP_KEY")
+	pusherSecret := os.Getenv("PUSHER_APP_SECRET")
+
+	pusherClient := pusher.Client{
+		AppID:   pusherID,
+		Key:     pusherKey,
+		Secret:  pusherSecret,
+		Cluster: "us2",
+		Secure:  true,
+	}
+	err := pusherClient.Trigger(
+		fmt.Sprintf("private-call-%s", voicecall.CallerID),
+		"taken-call",
+		map[string]interface{}{
+			"caller_id": voicecall.CallerID,
+			"type":      voicecall.Type,
+		},
+	)
+	if err != nil {
+		log.Printf("Error broadcasting taken request: %s", err)
+	} else {
+		log.Printf("Taken call request sent from %s to %s", voicecall.CalleeID, voicecall.CallerID)
 	}
 }
 func BroadcastCancel(voicecall VoiceCall) {

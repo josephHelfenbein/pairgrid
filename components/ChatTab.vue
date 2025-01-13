@@ -485,31 +485,7 @@
     if (notificationPusher.value) notificationPusher.value.disconnect();
   }
   const callFriend = async () => {
-    try {
-      if(!token.value) {
-        console.error("Token not available");
-        return;
-      }
-      emit('call-user', selectedFriend.value.name, selectedFriend.value.id)
-      const payload = {
-        caller_id: props.user.id,
-        callee_id: selectedFriend.value.id,
-        type: "voice",
-        caller_name: props.user.fullName,
-      }
-      const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`,
-        },
-        body: JSON.stringify(payload),
-      })
-      if (!response.ok) throw new Error('Failed to call user')
-    } catch (err) {
-      console.error(err)
-      emit('toast-update', 'Error calling user')
-    }
+    emit('call-user', selectedFriend.value.name, selectedFriend.value.id)
   }
   const shareScreen = () => {
     emit('toast-update', 'Feature coming soon')
