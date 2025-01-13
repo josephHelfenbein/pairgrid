@@ -33,7 +33,7 @@
         <Toaster />
         <div
           v-if="showCallPopup"
-          class="fixed z-50 bg-gray-800 text-white w-72 shadow-lg rounded-lg overflow-hidden"
+          class="popup-window fixed z-50 bg-gray-800 text-white w-72 shadow-lg rounded-lg overflow-hidden"
           :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
           ref="callPopup"
           @mousedown="startDrag"
@@ -141,6 +141,19 @@
   let callStartTime = null;
   let callInterval = null;
 
+  const centerPopup = () => {
+    const popup = document.querySelector('.popup-window');
+    if (popup) {
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      const popupHeight = popup.offsetHeight;
+      const popupWidth = popup.offsetWidth;
+
+      popupTop.value = (viewportHeight - popupHeight) / 2;
+      popupLeft.value = (viewportWidth - popupWidth) / 2;
+    }
+  };
   const startCallTimer = () => {
     callStartTime = new Date();
     callInterval = setInterval(() => {
@@ -161,7 +174,7 @@
 
   const startDrag = (event) => {
     isDragging.value = true;
-    const popup = event.target.closest('.bg-gray-800'); 
+    const popup = event.target.closest('.popup-window'); 
     const disableScroll = (e) => e.preventDefault();
     const rect = popup.getBoundingClientRect();
     const { clientX, clientY } = event.touches ? event.touches[0] : event;
@@ -570,5 +583,7 @@
       ],
     });
     remoteAudio.value = new Audio();
+    centerPopup();
+    window.addEventListener('resize', centerPopup);
   });
 </script>
