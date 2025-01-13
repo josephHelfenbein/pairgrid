@@ -285,13 +285,13 @@
     callChannel.bind('webrtc-message', async (data) => {
       try {
         if (data.type === 'sdp-offer') {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
-
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+
           const answer = await peerConnection.value.createAnswer();
+
           await peerConnection.value.setLocalDescription(answer);
 
           sendSignalingMessage('sdp-answer', { sdp: answer });
@@ -377,7 +377,11 @@
       loading.value = false;
     }
     peerConnection.value = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      ],
     });
     remoteAudio.value = new Audio();
   });
