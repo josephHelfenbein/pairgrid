@@ -158,7 +158,7 @@
 
   const startDrag = (event) => {
     isDragging.value = true;
-    const popup = event.target.closest('.bg-black');
+    const popup = event.target.closest('.bg-gray-800'); 
     const rect = popup.getBoundingClientRect();
     const { clientX, clientY } = event.touches ? event.touches[0] : event;
     const offsetX = clientX - rect.left;
