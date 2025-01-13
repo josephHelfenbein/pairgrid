@@ -140,6 +140,40 @@
   const callDuration = ref('00:00');
   let callStartTime = null;
   let callInterval = null;
+  
+  definePageMeta({
+    title: 'PairGrid - Dashboard',
+    meta: [
+      {
+        name: 'description',
+        content: 'PairGrid dashboard allows you to manage your real-time chat, networking, and preferences with your coding partner.'
+      },
+      {
+        name: 'keywords',
+        content: 'pair programming, real-time chat, networking, preferences, coding dashboard'
+      },
+      {
+        property: 'og:title',
+        content: 'PairGrid - Dashboard'
+      },
+      {
+        property: 'og:description',
+        content: 'PairGrid dashboard to manage your real-time chat, networking, and preferences for a better coding experience.'
+      },
+      {
+        property: 'og:url',
+        content: 'https://www.pairgrid.com/dashboard'
+      },
+      {
+        name: 'twitter:title',
+        content: 'PairGrid - Dashboard'
+      },
+      {
+        name: 'twitter:description',
+        content: 'PairGrid dashboard for managing your chat, networking, and preferences in real-time.'
+      },
+    ]
+  });
 
   const centerPopup = () => {
     const popup = document.querySelector('.popup-window');
@@ -569,7 +603,7 @@
       if(callPusher.value == null) subscribeToCalls();
     }
   });
-  watch(showCallPopup, (newValue) => {
+  watch(showCallPopup.value, (newValue) => {
     if (newValue) {
       centerPopup();
     }
