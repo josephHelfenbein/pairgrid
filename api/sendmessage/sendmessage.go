@@ -46,9 +46,11 @@ type VoiceCall struct {
 	CallerName string `json:"caller_name"`
 }
 type WebRTCMessage struct {
-	Type      string `json:"type"`
-	SDP       string `json:"sdp,omitempty"`
-	Candidate string `json:"candidate,omitempty"`
+	Type        string `json:"type"`
+	SDP         string `json:"sdp,omitempty"`
+	Candidate   string `json:"candidate,omitempty"`
+	UserID      string `json:"user_id"`
+	RecipientID string `json:"recipient_id"`
 }
 
 func GenerateEncryptionKey(userID, serverSecret string) []byte {
@@ -193,15 +195,16 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		err = json.Unmarshal([]byte(payloadToJSON(payload)), &message)
 		if err != nil {
 			http.Error(w, "Invalid WebRTC message payload", http.StatusBadRequest)
+			log.Printf("Invalid WebRTC message payload: %v", payload)
 			return
 		}
-		if payload["user_id"] != usr.ID {
+		if message.UserID != usr.ID {
 			http.Error(w, "JWT subject does not match request ID", http.StatusForbidden)
-			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, payload["user_id"])
+			log.Printf("JWT subject (%s) does not match request ID (%s)", usr.ID, message.UserID)
 			return
 		}
 		log.Printf("Sending WebRTC message: %v", message)
-		BroadcastWebRTCMessage(fmt.Sprintf("private-call-%s", payload["recipient_id"]), message)
+		BroadcastWebRTCMessage(fmt.Sprintf("private-call-%s", message.RecipientID), message)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"status": "webrtc message sent"})

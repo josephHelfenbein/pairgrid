@@ -275,7 +275,7 @@
       }
     })
     callChannel.bind('cancel-call', (data) => {
-      if(data.caller_id == callerID.value && callType.value == "incoming"){
+      if((data.caller_id == callerID.value && callType.value == "incoming") || (data.caller_id == user.value.id && callType.value == "outgoing")){
         console.log('Call canceled by user');
         showCallPopup.value = false;
       }
