@@ -81,7 +81,7 @@
               <p class="text-center mt-2 text-sm">Duration: {{ callDuration }}</p>
               <div class="flex justify-center mt-4">
                 <button
-                  @click="endCall"
+                  @click="cancelCall"
                   class="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
                 >
                   End Call
@@ -384,6 +384,10 @@
       }
     })
     callChannel.bind('webrtc-message', async (data) => {
+      if(callStatus.value != "active"){
+        callStatus.value = "active";
+        startCallTimer();
+      }
       try {
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
