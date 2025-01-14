@@ -577,9 +577,7 @@
     }
   });
   watch(() => showCallPopup.value, (newValue) => {
-    if (newValue) {
-      centerPopup();
-    }
+    setTimeout(() => centerPopup(), 10); 
   });
 
   onMounted(async () => {
