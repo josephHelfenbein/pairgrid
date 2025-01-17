@@ -485,10 +485,10 @@
     if (notificationPusher.value) notificationPusher.value.disconnect();
   }
   const callFriend = async () => {
-    emit('call-user', selectedFriend.value.name, selectedFriend.value.id)
+    emit('call-user', selectedFriend.value.name, selectedFriend.value.id, 'voice')
   }
   const shareScreen = () => {
-    emit('toast-update', 'Feature coming soon')
+    emit('call-user', selectedFriend.value.name, selectedFriend.value.id, 'screen')
   }
 
   onMounted(() => {

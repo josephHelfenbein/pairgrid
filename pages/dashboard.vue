@@ -79,13 +79,37 @@
             <div v-else-if="callStatus === 'active'">
               <p class="text-center text-sm">Talking to {{ callerName }}</p>
               <p class="text-center mt-2 text-sm">Duration: {{ callDuration }}</p>
-              <div class="flex justify-center mt-4">
+              <div class="flex justify-center space-x-4 mt-4">
+                <button
+                  @click="toggleScreenshare"
+                  class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
+                >
+                  {{ screenshareEnabled ? 'Disable Screenshare' : 'Enable Screenshare' }}
+                </button>
                 <button
                   @click="cancelCall"
                   class="px-4 py-2 bg-red-500 text-white rounded-full hover:bg-red-600"
                 >
                   End Call
                 </button>
+              </div>
+
+              <div v-if="screenshareEnabled" class="mt-6">
+                <div class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref="remoteScreen"
+                    class="absolute w-full h-full object-cover"
+                    autoplay
+                    muted
+                  ></video>
+
+                  <video
+                    ref="localScreen"
+                    class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
+                    autoplay
+                    muted
+                  ></video>
+                </div>
               </div>
             </div>
 
@@ -138,6 +162,7 @@
   const popupLeft = ref(0);
   const isDragging = ref(false);
   const callDuration = ref('00:00');
+  const screenshareEnabled = ref(false);
   let callStartTime = null;
   let callInterval = null;
 
@@ -147,6 +172,32 @@
     ogTitle: 'PairGrid - Dashboard',
     twitterTitle: 'PairGrid - Dashboard',
   });
+  const toggleScreenshare = () => {
+    if (screenshareEnabled.value) {
+      disableScreenshare();
+    } else {
+      enableScreenshare();
+    }
+  };
+  const enableScreenshare = async() =>{
+    try{
+      const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const localScreen = document.querySelector('video[ref="localScreen"]');
+      localScreen.srcObject = mediaStream;
+      screenshareEnabled.value = true;
+      sendSignalingMessage('enableScreenshare', {});
+    } catch(error) {
+      console.error('Error enabling screenshare:', error);
+      toastUpdate('Error enabling screenshare');
+    }
+  }
+  const disableScreenshare = async()=>{
+    const stream = document.querySelector('video[ref="localScreen"]').srcObject;
+    if(stream) stream.getTracks().forEach(track => track.stop());
+    document.querySelector('video[ref="localScreen"]').srcObject = null;
+    screenshareEnabled.value = false;
+    sendSignalingMessage('disableScreenshare', {});
+  }
 
   const centerPopup = () => {
     const popup = document.querySelector('.popup-window');
@@ -231,7 +282,8 @@
       callType.value = "outgoing";
       callStatus.value = "active";
       startCallTimer();
-
+      if(screenshareEnabled.value) sendSignalingMessage('enableScreenshare', {});
+      else sendSignalingMessage('disableScreenshare', {});
       peerConnection.value.onicecandidate = (event) => {
         if (event.candidate) {
           sendSignalingMessage('ice-candidate', { candidate: event.candidate });
@@ -355,12 +407,14 @@
       toastUpdate('Error cancelling call')
     }
   };
-  const triggerIncomingCall = (name) => {
+  const triggerIncomingCall = (name, type) => {
       callerName.value = name;
       showCallPopup.value = true;
       callType.value = "incoming";
+      if(type == "screen") screenshareEnabled.value = true;
+      else screenshareEnabled.value = false;
   }
-  const triggerOutgoingCall = async (name, id) => {
+  const triggerOutgoingCall = async (name, id, callType) => {
     try {
       if(!token.value) {
         console.error("Token not available");
@@ -378,7 +432,7 @@
       const payload = {
         caller_id: user.value.id,
         callee_id: id,
-        type: "voice",
+        type: callType,
         caller_name: user.value.fullName,
       }
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
@@ -452,7 +506,7 @@
         return;
       }
       callerID.value = data.caller_id;
-      triggerIncomingCall(data.caller_name || 'Unknown Caller');
+      triggerIncomingCall(data.caller_name || 'Unknown Caller', data.type);
     })
     callChannel.bind('decline-call', (data) => {
       if(data.caller_id == user.value.id){
@@ -482,6 +536,12 @@
         startCallTimer();
       }
       try {
+        if(data.type === 'enableScreenshare') {
+          screenshareEnabled.value = true;
+        }
+        if(data.type === 'disableScreenshare') {
+          screenshareEnabled.value = false;
+        }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
