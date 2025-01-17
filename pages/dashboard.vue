@@ -282,8 +282,10 @@
       callType.value = "outgoing";
       callStatus.value = "active";
       startCallTimer();
+
       if(screenshareEnabled.value) sendSignalingMessage('enableScreenshare', {});
       else sendSignalingMessage('disableScreenshare', {});
+
       peerConnection.value.onicecandidate = (event) => {
         if (event.candidate) {
           sendSignalingMessage('ice-candidate', { candidate: event.candidate });
@@ -291,33 +293,44 @@
       };
 
       peerConnection.value.ontrack = async (event) => {
-        remoteAudio.value.srcObject = event.streams[0];
-        await remoteAudio.value.play();
-        if(screenshareEnabled.value){
-          const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
-          remoteScreen.srcObject = event.streams[0];
-          await remoteScreen.play();
-          const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-          const localScreen = document.querySelector('video[ref="localScreen"]');
-          localScreen.srcObject = mediaStream;
-        }
-        if (remoteAudio.value.setSinkId) {
-        try {
-            await remoteAudio.value.setSinkId('default');
-            console.log('Audio output routed to default (speakers)');
-          } catch (error) {
-            console.error('Error setting audio output:', error);
+        const [audioTrack] = event.streams[0].getAudioTracks();
+        const [videoTrack] = event.streams[0].getVideoTracks();
+
+        if (audioTrack) {
+          remoteAudio.value.srcObject = new MediaStream([audioTrack]);
+          await remoteAudio.value.play();
+          if (remoteAudio.value.setSinkId) {
+            try {
+              await remoteAudio.value.setSinkId('default');
+              console.log('Audio output routed to default (speakers)');
+            } catch (error) {
+              console.error('Error setting audio output:', error);
+            }
           }
+        }
+
+        if (videoTrack) {
+          const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
+          if (remoteScreen) {
+            remoteScreen.srcObject = new MediaStream([videoTrack]);
+            await remoteScreen.play();
+          } else console.error('Remote screen element not found');
         }
       };
 
-      if(screenshareEnabled.value){
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      let stream;
+      if (screenshareEnabled.value) {
+        console.log('Initializing screen sharing...');
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       } else {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+        console.log('Initializing audio and video for video call...');
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
       }
+      stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      const localScreen = document.querySelector('video[ref="localScreen"]');
+      if (localScreen) localScreen.srcObject = stream;
+      else console.error('Local screen element not found');
+      
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
