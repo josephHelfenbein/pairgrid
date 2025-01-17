@@ -293,6 +293,14 @@
       peerConnection.value.ontrack = async (event) => {
         remoteAudio.value.srcObject = event.streams[0];
         await remoteAudio.value.play();
+        if(screenshareEnabled.value){
+          const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
+          remoteScreen.srcObject = event.streams[0];
+          await remoteScreen.play();
+          const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const localScreen = document.querySelector('video[ref="localScreen"]');
+          localScreen.srcObject = mediaStream;
+        }
         if (remoteAudio.value.setSinkId) {
         try {
             await remoteAudio.value.setSinkId('default');
@@ -303,8 +311,13 @@
         }
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      if(screenshareEnabled.value){
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      }
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
@@ -538,6 +551,21 @@
       try {
         if(data.type === 'enableScreenshare') {
           screenshareEnabled.value = true;
+          try {
+            const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const videoTrack = mediaStream.getVideoTracks()[0];
+
+            const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
+            remoteScreen.srcObject = new MediaStream([videoTrack]);
+            await remoteScreen.play();
+
+            const localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const localScreen = document.querySelector('video[ref="localScreen"]');
+            localScreen.srcObject = localStream;
+            console.log('Screen sharing enabled');
+          } catch (error) {
+            console.error('Error enabling screen sharing:', error);
+          }
         }
         if(data.type === 'disableScreenshare') {
           screenshareEnabled.value = false;
@@ -559,15 +587,29 @@
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
           peerConnection.value.ontrack = async (event) => {
-            remoteAudio.value.srcObject = event.streams[0];
-            await remoteAudio.value.play();
-            if (remoteAudio.value.setSinkId) {
-              try {
-                await remoteAudio.value.setSinkId('default');
-                console.log('Audio output routed to default (speakers)');
-              } catch (error) {
-                console.error('Error setting audio output:', error);
+            const [audioTrack] = event.streams[0].getAudioTracks();
+            const [videoTrack] = event.streams[0].getVideoTracks();
+
+            if (audioTrack) {
+              remoteAudio.value.srcObject = new MediaStream([audioTrack]);
+              await remoteAudio.value.play();
+              if (remoteAudio.value.setSinkId) {
+                try {
+                  await remoteAudio.value.setSinkId('default');
+                  console.log('Audio output routed to default (speakers)');
+                } catch (error) {
+                  console.error('Error setting audio output:', error);
+                }
               }
+            }
+
+            if (videoTrack) {
+              const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
+              remoteScreen.srcObject = new MediaStream([videoTrack]);
+              await remoteScreen.play();
+              const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+              const localScreen = document.querySelector('video[ref="localScreen"]');
+              localScreen.srcObject = mediaStream;
             }
           };
         }
