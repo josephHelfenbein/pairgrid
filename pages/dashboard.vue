@@ -427,7 +427,7 @@
       if(type == "screen") screenshareEnabled.value = true;
       else screenshareEnabled.value = false;
   }
-  const triggerOutgoingCall = async (name, id, callType) => {
+  const triggerOutgoingCall = async (name, id, type) => {
     try {
       if(!token.value) {
         console.error("Token not available");
@@ -445,7 +445,7 @@
       const payload = {
         caller_id: user.value.id,
         callee_id: id,
-        type: callType,
+        type: type,
         caller_name: user.value.fullName,
       }
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
