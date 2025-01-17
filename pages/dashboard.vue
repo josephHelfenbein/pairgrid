@@ -163,6 +163,8 @@
   const isDragging = ref(false);
   const callDuration = ref('00:00');
   const screenshareEnabled = ref(false);
+  const localScreen = ref(null);
+  const remoteScreen = ref(null);
   let callStartTime = null;
   let callInterval = null;
 
@@ -182,9 +184,7 @@
   const enableScreenshare = async() =>{
     try{
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      const localScreen = document.querySelector('video[ref="localScreen"]');
-      localScreen.srcObject = mediaStream;
-      screenshareEnabled.value = true;
+      localScreen.value.srcObject = mediaStream;
       sendSignalingMessage('enableScreenshare', {});
     } catch(error) {
       console.error('Error enabling screenshare:', error);
@@ -192,9 +192,9 @@
     }
   }
   const disableScreenshare = async()=>{
-    const stream = document.querySelector('video[ref="localScreen"]').srcObject;
+    const stream = localScreen.value.srcObject;
     if(stream) stream.getTracks().forEach(track => track.stop());
-    document.querySelector('video[ref="localScreen"]').srcObject = null;
+    localScreen.value.srcObject = null;
     screenshareEnabled.value = false;
     sendSignalingMessage('disableScreenshare', {});
   }
@@ -310,10 +310,9 @@
         }
 
         if (videoTrack) {
-          const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
-          if (remoteScreen) {
-            remoteScreen.srcObject = new MediaStream([videoTrack]);
-            await remoteScreen.play();
+          if (remoteScreen.value) {
+            remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+            await remoteScreen.value.play();
           } else console.error('Remote screen element not found');
         }
       };
@@ -327,8 +326,7 @@
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
       }
       stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
-      const localScreen = document.querySelector('video[ref="localScreen"]');
-      if (localScreen) localScreen.srcObject = stream;
+      if (localScreen.value) localScreen.value.srcObject = stream;
       else console.error('Local screen element not found');
       
       
@@ -568,13 +566,11 @@
             const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const videoTrack = mediaStream.getVideoTracks()[0];
 
-            const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
-            remoteScreen.srcObject = new MediaStream([videoTrack]);
-            await remoteScreen.play();
+            remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+            await remoteScreen.value.play();
 
             const localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const localScreen = document.querySelector('video[ref="localScreen"]');
-            localScreen.srcObject = localStream;
+            localScreen.value.srcObject = localStream;
             console.log('Screen sharing enabled');
           } catch (error) {
             console.error('Error enabling screen sharing:', error);
@@ -617,12 +613,10 @@
             }
 
             if (videoTrack) {
-              const remoteScreen = document.querySelector('video[ref="remoteScreen"]');
-              remoteScreen.srcObject = new MediaStream([videoTrack]);
-              await remoteScreen.play();
+              remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+              await remoteScreen.value.play();
               const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-              const localScreen = document.querySelector('video[ref="localScreen"]');
-              localScreen.srcObject = mediaStream;
+              localScreen.value.srcObject = mediaStream;
             }
           };
         }
