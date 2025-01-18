@@ -313,45 +313,26 @@
       let stream;
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
         stream = new MediaStream([
-          ...displayStream.getVideoTracks(),
+          ...stream.getVideoTracks(),
           ...audioStream.getAudioTracks(),
         ]);
-
-        if (localScreen.value) {
-          localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
-          localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
-        }
       } else {
         console.log('Initializing camera and microphone...');
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-
-        if (localScreen.value) {
-          localScreen.value.srcObject = stream;
-          localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
-        }
+      }
+      if (localScreen.value) {
+        localScreen.value.srcObject = stream;
+        localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
       }
 
       stream.getTracks().forEach((track) => {
         console.log(`Adding track: ${track.kind}`);
         peerConnection.value.addTrack(track, stream);
       });
-
-      if (screenshareEnabled.value) {
-        peerConnection.value.getSenders().forEach((sender) => {
-          if (sender.track && sender.track.kind === 'video') {
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) {
-              sender.replaceTrack(videoTrack).catch((err) => console.error('Error replacing video track:', err));
-            } else {
-              console.error('No video track available for replacement.');
-            }
-          }
-        });
-      }
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
