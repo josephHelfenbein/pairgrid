@@ -577,28 +577,41 @@
             const [videoTrack] = event.streams[0].getVideoTracks();
 
             if (audioTrack) {
-              remoteAudio.value.srcObject = new MediaStream([audioTrack]);
-              await remoteAudio.value.play();
-              if (remoteAudio.value.setSinkId) {
-                try {
-                  await remoteAudio.value.setSinkId('default');
-                  console.log('Audio output routed to default (speakers)');
-                } catch (error) {
-                  console.error('Error setting audio output:', error);
+              try {
+                const audioStream = new MediaStream([audioTrack]);
+                remoteAudio.value.srcObject = audioStream;
+                await remoteAudio.value.play();
+                console.log('Audio stream playing.');
+
+                if (remoteAudio.value.setSinkId) {
+                  try {
+                    await remoteAudio.value.setSinkId('default');
+                    console.log('Audio output routed to default (speakers).');
+                  } catch (error) {
+                    console.error('Error setting audio output:', error);
+                  }
                 }
+              } catch (error) {
+                console.error('Error playing audio stream:', error);
               }
             }
 
             if (videoTrack) {
-              console.log('Remote video track received');
-              remoteScreen.value.srcObject = new MediaStream([videoTrack]);
-              await remoteScreen.value.play();
+              try {
+                const videoStream = new MediaStream([videoTrack]);
+                remoteScreen.value.srcObject = videoStream;
+                await remoteScreen.value.play();
+                console.log('Video stream playing.');
+              } catch (error) {
+                console.error('Error playing video stream:', error);
+              }
             }
+
           };
 
           let stream;
           if (screenshareEnabled.value) {
-            console.log('Sharing screen and microphone...');
+            console.log('Requesting screen sharing with audio...');
             const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -609,17 +622,16 @@
 
             if (localScreen.value) {
               localScreen.value.srcObject = stream;
+              await localScreen.value.play();
             }
           } else {
-            console.log('Audio-only call...');
+            console.log('Requesting audio-only media...');
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           }
           stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
 
           const answer = await peerConnection.value.createAnswer();
-
           await peerConnection.value.setLocalDescription(answer);
-
           sendSignalingMessage('sdp-answer', { sdp: answer });
         } else if (data.type === 'ice-candidate') {
           await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
