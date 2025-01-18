@@ -313,30 +313,45 @@
       let stream;
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
-        stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
-        if (!stream.getVideoTracks().length) console.error('No video tracks found in screen-sharing stream.');
-        if (!stream.getAudioTracks().length) console.error('No audio tracks found in screen-sharing stream.');
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        stream = new MediaStream([
+          ...displayStream.getVideoTracks(),
+          ...audioStream.getAudioTracks(),
+        ]);
+
+        if (localScreen.value) {
+          localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
+          localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
+        }
       } else {
         console.log('Initializing camera and microphone...');
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        if (!stream.getVideoTracks().length) console.error('No video tracks found in user media stream.');
-        if (!stream.getAudioTracks().length) console.error('No audio tracks found in user media stream.');
+
+        if (localScreen.value) {
+          localScreen.value.srcObject = stream;
+          localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
+        }
       }
-      if (localScreen.value) {
-        localScreen.value.srcObject = stream;
-        localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
-      } else {
-        console.error('Local screen element not found');
-      }
+
       stream.getTracks().forEach((track) => {
         console.log(`Adding track: ${track.kind}`);
         peerConnection.value.addTrack(track, stream);
       });
-      peerConnection.value.getSenders().forEach((sender) => {
-        if (sender.track && sender.track.kind === 'video' && screenshareEnabled.value) {
-          sender.replaceTrack(stream.getVideoTracks()[0]);
-        }
-      });
+
+      if (screenshareEnabled.value) {
+        peerConnection.value.getSenders().forEach((sender) => {
+          if (sender.track && sender.track.kind === 'video') {
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack) {
+              sender.replaceTrack(videoTrack).catch((err) => console.error('Error replacing video track:', err));
+            } else {
+              console.error('No video track available for replacement.');
+            }
+          }
+        });
+      }
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
@@ -571,11 +586,12 @@
         if(data.type === 'enableScreenshare') {
           screenshareEnabled.value = true;
           try {
-            const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const videoTrack = mediaStream.getVideoTracks()[0];
+            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            localScreen.value.srcObject = new MediaStream([videoTrack]);
-            console.log('Screen sharing enabled');
+            localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
+            console.log('Screen sharing enabled with microphone audio');
+
           } catch (error) {
             console.error('Error enabling screen sharing:', error);
           }
@@ -588,8 +604,18 @@
 
           let stream;
           if (screenshareEnabled.value) {
-            console.log('Sharing screen and audio...');
-            stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            console.log('Sharing screen and microphone...');
+            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            stream = new MediaStream([
+              ...displayStream.getVideoTracks(),
+              ...audioStream.getAudioTracks(),
+            ]);
+
+            if (localScreen.value) {
+              localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
+            }
           } else {
             console.log('Audio-only call...');
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
