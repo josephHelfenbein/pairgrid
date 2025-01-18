@@ -566,22 +566,35 @@
       try {
         if(data.type === 'enableScreenshare') {
           screenshareEnabled.value = true;
-          try {
-            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-            localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
-            console.log('Screen sharing enabled with microphone audio');
-
-          } catch (error) {
-            console.error('Error enabling screen sharing:', error);
-          }
         }
         if(data.type === 'disableScreenshare') {
           screenshareEnabled.value = false;
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          peerConnection.value.ontrack = async (event) => {
+            const [audioTrack] = event.streams[0].getAudioTracks();
+            const [videoTrack] = event.streams[0].getVideoTracks();
+
+            if (audioTrack) {
+              remoteAudio.value.srcObject = new MediaStream([audioTrack]);
+              await remoteAudio.value.play();
+              if (remoteAudio.value.setSinkId) {
+                try {
+                  await remoteAudio.value.setSinkId('default');
+                  console.log('Audio output routed to default (speakers)');
+                } catch (error) {
+                  console.error('Error setting audio output:', error);
+                }
+              }
+            }
+
+            if (videoTrack) {
+              console.log('Remote video track received');
+              remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+              await remoteScreen.value.play();
+            }
+          };
 
           let stream;
           if (screenshareEnabled.value) {
@@ -595,15 +608,13 @@
             ]);
 
             if (localScreen.value) {
-              localScreen.value.srcObject = new MediaStream([displayStream.getVideoTracks()[0]]);
+              localScreen.value.srcObject = stream;
             }
           } else {
             console.log('Audio-only call...');
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           }
           stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
-
-          if (screenshareEnabled.value && localScreen.value) localScreen.value.srcObject = stream;
 
           const answer = await peerConnection.value.createAnswer();
 
