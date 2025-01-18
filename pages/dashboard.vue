@@ -292,28 +292,21 @@
         }
       };
 
-      peerConnection.value.ontrack = async (event) => {
+      peerConnection.value.ontrack = (event) => {
+        console.log('Track received:', event.track.kind);
         const [audioTrack] = event.streams[0].getAudioTracks();
         const [videoTrack] = event.streams[0].getVideoTracks();
 
         if (audioTrack) {
+          console.log('Audio track received.');
           remoteAudio.value.srcObject = new MediaStream([audioTrack]);
-          await remoteAudio.value.play();
-          if (remoteAudio.value.setSinkId) {
-            try {
-              await remoteAudio.value.setSinkId('default');
-              console.log('Audio output routed to default (speakers)');
-            } catch (error) {
-              console.error('Error setting audio output:', error);
-            }
-          }
+          remoteAudio.value.play().catch((err) => console.error('Error playing audio:', err));
         }
 
         if (videoTrack) {
-          if (remoteScreen.value) {
-            remoteScreen.value.srcObject = new MediaStream([videoTrack]);
-            await remoteScreen.value.play();
-          } else console.error('Remote screen element not found');
+          console.log('Video track received.');
+          remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+          remoteScreen.value.play().catch((err) => console.error('Error playing video:', err));
         }
       };
 
@@ -321,17 +314,32 @@
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
         stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        if (!stream.getVideoTracks().length) {
+          console.error('No video tracks found in screen-sharing stream.');
+        }
       } else {
         console.log('Initializing audio and video for video call...');
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        if (!stream.getAudioTracks().length) {
+          console.error('No audio tracks found in user media stream.');
+        }
       }
-      stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+      stream.getTracks().forEach((track) => {
+        console.log(`Adding track: ${track.kind}`);
+        peerConnection.value.addTrack(track, stream);
+      });
+      peerConnection.value.getSenders().forEach((sender) => {
+        if (sender.track && sender.track.kind === 'video' && screenshareEnabled.value) {
+          sender.replaceTrack(stream.getVideoTracks()[0]);
+        }
+      });
       if (localScreen.value) localScreen.value.srcObject = stream;
       else console.error('Local screen element not found');
       
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
+      await peerConnection.value.setRemoteDescription(new RTCSessionDescription(offer));
       sendSignalingMessage('sdp-offer', { sdp: offer });
     } catch (err) {
       console.error('Error accepting call:', err);
@@ -566,11 +574,7 @@
             const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
             const videoTrack = mediaStream.getVideoTracks()[0];
 
-            remoteScreen.value.srcObject = new MediaStream([videoTrack]);
-            await remoteScreen.value.play();
-
-            const localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            localScreen.value.srcObject = localStream;
+            localScreen.value.srcObject = new MediaStream([videoTrack]);
             console.log('Screen sharing enabled');
           } catch (error) {
             console.error('Error enabling screen sharing:', error);
@@ -591,7 +595,9 @@
 
           sendSignalingMessage('sdp-answer', { sdp: answer });
         } else if (data.type === 'ice-candidate') {
-          await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
+          peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)).catch((err) =>
+            console.error('Error adding received ICE candidate:', err)
+          );
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
