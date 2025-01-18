@@ -313,16 +313,20 @@
       let stream;
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
-        stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        if (!stream.getVideoTracks().length) {
-          console.error('No video tracks found in screen-sharing stream.');
-        }
+        stream = await navigator.mediaDevices.getDisplayMedia({ audio: true, video: true });
+        if (!stream.getVideoTracks().length) console.error('No video tracks found in screen-sharing stream.');
+        if (!stream.getAudioTracks().length) console.error('No audio tracks found in screen-sharing stream.');
       } else {
-        console.log('Initializing audio and video for video call...');
+        console.log('Initializing camera and microphone...');
         stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-        if (!stream.getAudioTracks().length) {
-          console.error('No audio tracks found in user media stream.');
-        }
+        if (!stream.getVideoTracks().length) console.error('No video tracks found in user media stream.');
+        if (!stream.getAudioTracks().length) console.error('No audio tracks found in user media stream.');
+      }
+      if (localScreen.value) {
+        localScreen.value.srcObject = stream;
+        localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
+      } else {
+        console.error('Local screen element not found');
       }
       stream.getTracks().forEach((track) => {
         console.log(`Adding track: ${track.kind}`);
@@ -333,13 +337,9 @@
           sender.replaceTrack(stream.getVideoTracks()[0]);
         }
       });
-      if (localScreen.value) localScreen.value.srcObject = stream;
-      else console.error('Local screen element not found');
-      
       
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
-      await peerConnection.value.setRemoteDescription(new RTCSessionDescription(offer));
       sendSignalingMessage('sdp-offer', { sdp: offer });
     } catch (err) {
       console.error('Error accepting call:', err);
@@ -586,8 +586,17 @@
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          let stream;
+          if (screenshareEnabled.value) {
+            console.log('Sharing screen and audio...');
+            stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          } else {
+            console.log('Audio-only call...');
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
           stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+
+          if (screenshareEnabled.value && localScreen.value) localScreen.value.srcObject = stream;
 
           const answer = await peerConnection.value.createAnswer();
 
@@ -595,9 +604,7 @@
 
           sendSignalingMessage('sdp-answer', { sdp: answer });
         } else if (data.type === 'ice-candidate') {
-          peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)).catch((err) =>
-            console.error('Error adding received ICE candidate:', err)
-          );
+          await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
@@ -619,10 +626,9 @@
             }
 
             if (videoTrack) {
+              console.log('Remote video track received');
               remoteScreen.value.srcObject = new MediaStream([videoTrack]);
               await remoteScreen.value.play();
-              const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-              localScreen.value.srcObject = mediaStream;
             }
           };
         }
