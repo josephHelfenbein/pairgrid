@@ -195,7 +195,7 @@ func CheckAndUpdateNotifications(senderID, recipientID string) error {
 	}
 
 	if len(fetchResponseBody.Data.Notifications) == 0 {
-		return fmt.Errorf("no notifications found for recipientID: %s", recipientID)
+		return nil
 	}
 
 	notification := fetchResponseBody.Data.Notifications[0]

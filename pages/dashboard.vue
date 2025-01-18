@@ -610,29 +610,42 @@
           };
 
           let stream;
-          if (screenshareEnabled.value) {
-            console.log('Requesting screen sharing with audio...');
-            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const startScreenShare = async () => {
+            if (screenshareEnabled.value) {
+              console.log('Requesting screen sharing with audio...');
+              try {
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            stream = new MediaStream([
-              ...displayStream.getVideoTracks(),
-              ...audioStream.getAudioTracks(),
-            ]);
+                stream = new MediaStream([
+                  ...displayStream.getVideoTracks(),
+                  ...audioStream.getAudioTracks(),
+                ]);
 
-            if (localScreen.value) {
-              localScreen.value.srcObject = stream;
-              await localScreen.value.play();
+                if (localScreen.value) {
+                  localScreen.value.srcObject = stream;
+                  await localScreen.value.play();
+                }
+              } catch (error) {
+                console.error('Error requesting screen sharing:', error);
+              }
+            } else {
+              console.log('Requesting audio-only media...');
+              try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              } catch (error) {
+                console.error('Error requesting audio-only media:', error);
+              }
             }
-          } else {
-            console.log('Requesting audio-only media...');
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          }
-          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
 
-          const answer = await peerConnection.value.createAnswer();
-          await peerConnection.value.setLocalDescription(answer);
-          sendSignalingMessage('sdp-answer', { sdp: answer });
+            if (stream) {
+              stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+              const answer = await peerConnection.value.createAnswer();
+              await peerConnection.value.setLocalDescription(answer);
+              sendSignalingMessage('sdp-answer', { sdp: answer });
+            }
+            document.getElementById('startScreenShareButton').addEventListener('click', startScreenShare);
+          }
         } else if (data.type === 'ice-candidate') {
           await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
         } else if (data.type === 'sdp-answer') {
