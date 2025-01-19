@@ -9,19 +9,19 @@
             v-for="message in messages"
             :key="message.id"
             :class="[
-              'flex items-start gap-2 md:p-2'
+              'flex items-center gap-2 md:p-2 pb-2'
             ]"
           >
             <img
               :src="message.senderIcon"
-              class="w-8 h-8 rounded-full object-cover"
+              class="w-6 h-6 md:w-8 md:h-8 rounded-full object-cover"
               />
             <div>
               <div class="flex items-center gap-1 md:gap-2">
                 <p class="font-bold text-xs md:text-sm">{{ message.sender || 'Unknown' }}</p>
                 <small class="text-xs text-gray-500">{{ formatTimestamp(message.id) }}</small>
               </div>
-              <p class="text-sm">{{ message.text }}</p>
+              <p class="text-xs md:text-sm">{{ message.text }}</p>
             </div>
           </div>
         </div>
