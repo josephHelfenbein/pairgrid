@@ -153,9 +153,16 @@
         />
         <div v-else-if="requestProfile" class="flex justify-center items-center h-full">
           <div class="space-y-2">
-            <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
-            <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
-            <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
+            <div class="flex items-center gap-2">
+              <img :src="requestProfile?.profile_picture" class="w-16 h-16 rounded-full object-cover" />
+              <strong>{{ requestProfile?.name }}</strong>
+            </div>
+            <div class="flex">
+              <p class="text-sm text-gray-500">
+                {{ requestProfile?.specialty }} | {{ requestProfile?.occupation }} | {{ requestProfile?.email }}
+              </p>
+            </div>
+            <p>{{ requestProfile?.bio }}</p>
             <div>
               <strong>Languages:</strong>
               <div class="flex flex-wrap space-x-2 text-sm">
@@ -173,6 +180,7 @@
               </div>
             </div>
           </div>
+          
         </div> 
         <div v-else class="flex justify-center items-center h-full">
           <p class="text-gray-500">Select a friend to start chatting</p>

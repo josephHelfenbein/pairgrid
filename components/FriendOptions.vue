@@ -15,14 +15,19 @@
       </DropdownMenu>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{{ selectedFriend?.name }}'s Profile</DialogTitle>
+          <DialogTitle>
+            <img :src="selectedFriend?.profile_picture" class="w-16 h-16 rounded-full object-cover" />
+            {{ selectedFriend?.name }}
+          </DialogTitle>
         </DialogHeader>
         
         <div class="space-y-2">
-          <p><strong>Email:</strong> {{ selectedFriend?.email }}</p>
-          <p><strong>Specialty:</strong> {{ selectedFriend?.specialty }}</p>
-          <p><strong>Occupation:</strong> {{ selectedFriend?.occupation }}</p>
-          <p><strong>Bio:</strong> {{ selectedFriend?.bio }}</p>
+          <div class="flex">
+            <p class="text-sm text-gray-500">
+              {{ selectedFriend?.specialty }} | {{ selectedFriend?.occupation }} | {{ selectedFriend?.email }}
+            </p>
+          </div>
+          <p>{{ selectedFriend?.bio }}</p>
           <div>
             <strong>Languages:</strong>
             <div class="flex flex-wrap space-x-2 text-sm">
