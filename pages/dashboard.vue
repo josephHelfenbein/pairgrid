@@ -165,8 +165,8 @@
   const isDragging = ref(false);
   const callDuration = ref('00:00');
   const screenshareEnabled = ref(false);
-  const localScreen = ref<HTMLVideoElement | null>(null);
-  const remoteScreen = ref<HTMLVideoElement | null>(null);
+  const localScreen = ref(null);
+  const remoteScreen = ref(null);
   let callStartTime = null;
   let callInterval = null;
 
