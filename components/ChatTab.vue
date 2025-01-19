@@ -47,7 +47,7 @@
             </div>
           </CardHeader>
           <CardContent>
-            <ChatArea 
+            <ChatArea
               :selectedFriend="selectedFriend"
               :messages="messages"
               :chatLoading="chatLoading"
@@ -205,6 +205,10 @@
 
   const props = defineProps({
     user: {
+      type: Object,
+      required: true,
+    },
+    preferences: {
       type: Object,
       required: true,
     }
@@ -385,6 +389,7 @@
       messages.value.push({
         id: new Date().getTime(),
         sender: props.user.fullName,
+        senderIcon: props.preferences.profile_picture,
         text: newMessage.value,
       })
       newMessage.value = ''
@@ -468,6 +473,7 @@
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
+          senderIcon: data.sender_id == props.user.id ? props.preferences.profile_picture : selectedFriend.value.profile_picture,
           text: data.encrypted_content,
         })
         setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {

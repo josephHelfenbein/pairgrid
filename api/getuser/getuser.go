@@ -15,13 +15,14 @@ type GetUserRequest struct {
 }
 
 type User struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	Bio        string   `json:"bio"`
-	Language   []string `json:"language"`
-	Specialty  string   `json:"specialty"`
-	Interests  []string `json:"interests"`
-	Occupation string   `json:"occupation"`
+	ID             string   `json:"id"`
+	Name           string   `json:"name"`
+	Bio            string   `json:"bio"`
+	Language       []string `json:"language"`
+	Specialty      string   `json:"specialty"`
+	Interests      []string `json:"interests"`
+	Occupation     string   `json:"occupation"`
+	ProfilePicture string   `json:"profile_picture"`
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,7 @@ func GetUserFromHasura(userID, userEmail string) (*User, error) {
 					specialty
 					interests
 					occupation
+					profile_picture
 				}
 			}
 		`
@@ -120,6 +122,7 @@ func GetUserFromHasura(userID, userEmail string) (*User, error) {
 					specialty
 					interests
 					occupation
+					profile_picture
 				}
 			}
 		`

@@ -16,8 +16,11 @@
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            <img :src="selectedFriend?.profile_picture" class="w-16 h-16 rounded-full object-cover" />
-            {{ selectedFriend?.name }}
+            <div class="flex items-center gap-2">
+              <img :src="selectedFriend?.profile_picture" class="w-16 h-16 rounded-full object-cover" />
+              {{ selectedFriend?.name }}
+            </div>
+            
           </DialogTitle>
         </DialogHeader>
         

@@ -16,6 +16,7 @@
             @toast-update="toastUpdate"
             @call-user="triggerOutgoingCall"
             :user="user"
+            :preferences="preferences"
             />
           </TabsContent>
           <TabsContent value="networking">
@@ -688,6 +689,7 @@
         specialty: data.specialty || '',
         interests: data.interests || [],
         occupation: data.occupation || '',
+        profilePicture: data.profile_picture || '',
       })
     } catch(error){
       console.error('Error loading preferences:', error);

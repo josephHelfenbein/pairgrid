@@ -12,6 +12,10 @@
               'flex items-start gap-2 p-2'
             ]"
           >
+            <img
+              :src="message.senderIcon"
+              class="w-10 h-10 rounded-full object-cover"
+              />
             <div>
               <div class="flex items-center gap-2">
                 <p class="font-bold text-sm">{{ message.sender || 'Unknown' }}</p>
