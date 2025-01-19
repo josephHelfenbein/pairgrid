@@ -14,11 +14,11 @@
           >
             <img
               :src="message.senderIcon"
-              class="w-8 h-8 rounded-full object-cover"
+              class="w-5 h-5 md:w-8 md:h-8 rounded-full object-cover"
               />
             <div>
               <div class="flex items-center gap-2">
-                <p class="font-bold text-sm">{{ message.sender || 'Unknown' }}</p>
+                <p class="font-bold text-xs md:text-sm">{{ message.sender || 'Unknown' }}</p>
                 <small class="text-xs text-gray-500">{{ formatTimestamp(message.id) }}</small>
               </div>
               <p class="text-sm">{{ message.text }}</p>

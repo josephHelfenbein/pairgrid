@@ -65,13 +65,21 @@
               <button @click="deselectFriend" class="p-2">
                 <ChevronLeft class="h-6 w-6" />
               </button>
-              <CardTitle class="flex-shrink-0 flex items-center">{{ requestProfile?.name }}</CardTitle>
+              <CardTitle class="flex-shrink-0 flex items-center">
+                <div class="flex items-center gap-2">
+                  <img :src="requestProfile?.profile_picture" class="w-16 h-16 rounded-full object-cover" />
+                  <strong>{{ requestProfile?.name }}</strong>
+                </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <ScrollArea class="h-[calc(100vh-300px)]">
-                <p><strong>Specialty:</strong> {{ requestProfile?.specialty }}</p>
-                <p><strong>Occupation:</strong> {{ requestProfile?.occupation }}</p>
-                <p><strong>Bio:</strong> {{ requestProfile?.bio }}</p>
+                <div class="flex">
+                  <p class="text-sm text-gray-500">
+                    {{ requestProfile?.specialty }} | {{ requestProfile?.occupation }} | {{ requestProfile?.email }}
+                  </p>
+                </div>
+                <p>{{ requestProfile?.bio }}</p>
                 <div>
                   <strong>Languages:</strong>
                   <div class="flex flex-wrap space-x-2 text-sm">
