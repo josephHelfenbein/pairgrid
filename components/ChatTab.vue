@@ -389,7 +389,7 @@
       messages.value.push({
         id: new Date().getTime(),
         sender: props.user.fullName,
-        senderIcon: props.preferences.profile_picture,
+        senderIcon: props.preferences.profilePicture,
         text: newMessage.value,
       })
       newMessage.value = ''
@@ -426,6 +426,7 @@
         return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
+          senderIcon: messages.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
           text: message.encrypted_content,
         }
       })
@@ -473,7 +474,7 @@
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
-          senderIcon: data.sender_id == props.user.id ? props.preferences.profile_picture : selectedFriend.value.profile_picture,
+          senderIcon: data.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
           text: data.encrypted_content,
         })
         setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {

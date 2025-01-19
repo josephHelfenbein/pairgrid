@@ -14,7 +14,7 @@
           >
             <img
               :src="message.senderIcon"
-              class="w-10 h-10 rounded-full object-cover"
+              class="w-8 h-8 rounded-full object-cover"
               />
             <div>
               <div class="flex items-center gap-2">

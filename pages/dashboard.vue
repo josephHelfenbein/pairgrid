@@ -659,6 +659,7 @@
     specialty: '',
     interests: [],
     occupation: '',
+    profilePicture: '',
   })
   const updatePreferences = (updatedPreferences) => {
     Object.assign(preferences, updatedPreferences);
