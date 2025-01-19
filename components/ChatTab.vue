@@ -73,7 +73,7 @@
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea class="h-[calc(100vh-300px)]">
+              <ScrollArea class="h-[calc(100vh-300px)] space-y-2">
                 <div class="flex">
                   <p class="text-sm text-gray-500">
                     {{ requestProfile?.specialty }} | {{ requestProfile?.occupation }} | {{ requestProfile?.email }}
