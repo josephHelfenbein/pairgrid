@@ -94,9 +94,10 @@
                 </button>
               </div>
 
-              <div v-if="screenshareEnabled" class="mt-6">
-                <div class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+              <div class="mt-6">
+                <div v-if="remoteScreen||localScreen" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                   <video
+                    v-if="remoteScreen"
                     ref="remoteScreen"
                     class="absolute w-full h-full object-cover"
                     autoplay
@@ -104,6 +105,7 @@
                   ></video>
 
                   <video
+                    v-if="localScreen"
                     ref="localScreen"
                     class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
                     autoplay
