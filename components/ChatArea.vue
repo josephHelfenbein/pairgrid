@@ -4,18 +4,21 @@
         <div class="flex justify-center items-center h-full" v-if="chatLoading">
           <Loader size="80px" />
         </div>
-        <div v-else class="space-y-2">
+        <div v-else>
           <div
             v-for="message in messages"
             :key="message.id"
             :class="[
-              'max-w-[80%] p-2 rounded-lg',
-              message.sender === 'me'
-                ? 'ml-auto bg-primary text-primary-foreground'
-                : 'bg-muted'
+              'flex items-start gap-2 p-2'
             ]"
           >
-            {{ message.text }}
+            <div>
+              <div class="flex items-center gap-2">
+                <p class="font-bold text-sm">{{ message.sender || 'Unknown' }}</p>
+                <small class="text-xs text-gray-500">{{ formatTimestamp(message.id) }}</small>
+              </div>
+              <p class="text-sm">{{ message.text }}</p>
+            </div>
           </div>
         </div>
       </ScrollArea>

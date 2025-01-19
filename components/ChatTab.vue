@@ -376,7 +376,7 @@
       }
       messages.value.push({
         id: new Date().getTime(),
-        sender: 'me',
+        sender: props.user.fullName,
         text: newMessage.value,
       })
       newMessage.value = ''
@@ -412,7 +412,7 @@
       messages.value = data.map(message => {
         return {
           id: message.created_at,
-          sender: message.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
+          sender: message.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
           text: message.encrypted_content,
         }
       })
@@ -459,7 +459,7 @@
       if (data.sender_id != props.user.id) {
         messages.value.push({
           id: data.created_at,
-          sender: data.sender_id == props.user.id ? 'me' : selectedFriend.value.name,
+          sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
           text: data.encrypted_content,
         })
         setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {

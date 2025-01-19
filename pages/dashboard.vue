@@ -106,7 +106,7 @@
               <p class="text-center text-sm">Call was canceled.</p>
             </div>
             <div class="mt-6">
-              <div v-if="showLocal||(showRemote&&callStatus=='active')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+              <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
                   v-if="showRemote"
                   ref="remoteScreen"
@@ -117,7 +117,7 @@
                 <video
                   v-if="showLocal"
                   ref="localScreen"
-                  class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
+                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded'"
                   autoplay
                   muted
                 ></video>
@@ -593,7 +593,7 @@
         startCallTimer();
       }
       try {
-        if(data.type === 'enableScreenshare') {
+        if(data.type === 'enableScreenshare' && callType.value !== 'incoming') {
           showRemote.value = true;
         }
         if(data.type === 'disableScreenshare') {
