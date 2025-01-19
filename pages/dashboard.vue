@@ -84,7 +84,7 @@
                   @click="toggleScreenshare"
                   class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                 >
-                  {{ screenshareEnabled ? 'Disable Screenshare' : 'Enable Screenshare' }}
+                  {{ (screenshareEnabled&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
                 </button>
                 <button
                   @click="cancelCall"
@@ -95,9 +95,9 @@
               </div>
 
               <div class="mt-6">
-                <div v-if="remoteScreen||localScreen" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+                <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                   <video
-                    v-if="remoteScreen"
+                    v-if="remoteScreen&&remoteScreen.srcObject"
                     ref="remoteScreen"
                     class="absolute w-full h-full object-cover"
                     autoplay
@@ -105,7 +105,7 @@
                   ></video>
 
                   <video
-                    v-if="localScreen"
+                    v-if="localScreen&&localScreen.srcObject"
                     ref="localScreen"
                     class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
                     autoplay
@@ -165,8 +165,8 @@
   const isDragging = ref(false);
   const callDuration = ref('00:00');
   const screenshareEnabled = ref(false);
-  const localScreen = ref(null);
-  const remoteScreen = ref(null);
+  const localScreen = ref<HTMLVideoElement | null>(null);
+  const remoteScreen = ref<HTMLVideoElement | null>(null);
   let callStartTime = null;
   let callInterval = null;
 
@@ -177,7 +177,7 @@
     twitterTitle: 'PairGrid - Dashboard',
   });
   const toggleScreenshare = () => {
-    if (screenshareEnabled.value) {
+    if (localScreen.value.srcObject) {
       disableScreenshare();
     } else {
       enableScreenshare();
@@ -186,7 +186,7 @@
   const enableScreenshare = async() =>{
     try{
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      localScreen.value.srcObject = mediaStream;
+      if (localScreen.value) localScreen.value.srcObject = mediaStream
       sendSignalingMessage('enableScreenshare', {});
     } catch(error) {
       console.error('Error enabling screenshare:', error);
