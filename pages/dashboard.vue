@@ -84,7 +84,7 @@
                   @click="toggleScreenshare"
                   class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                 >
-                  {{ (screenshareEnabled&&localScreen&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
+                  {{ (localScreen&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
                 </button>
                 <button
                   @click="cancelCall"
@@ -186,6 +186,7 @@
     try{
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       if (localScreen.value) localScreen.value.srcObject = mediaStream
+      screenshareEnabled.value = true;
       sendSignalingMessage('enableScreenshare', {});
     } catch(error) {
       console.error('Error enabling screenshare:', error);
@@ -197,7 +198,6 @@
     if(stream) stream.getTracks().forEach(track => track.stop());
     localScreen.value.srcObject = null;
     screenshareEnabled.value = false;
-    sendSignalingMessage('disableScreenshare', {});
   }
 
   const centerPopup = () => {
@@ -587,21 +587,16 @@
           peerConnection.value.ontrack = handleTracks;
 
           let stream;
-          if (screenshareEnabled.value) {
+          if (screenshareEnabled.value && localScreen.value && localScreen.value.srcObject) {
             console.log('Requesting screen sharing with audio...');
             
-            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const displayStream = localScreen.value.srcObject;
             const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
             stream = new MediaStream([
               ...displayStream.getVideoTracks(),
               ...audioStream.getAudioTracks(),
             ]);
-
-            if (localScreen.value) {
-              localScreen.value.srcObject = stream;
-              await localScreen.value.play();
-            }
 
           } else {
             console.log('Requesting audio-only media...');
