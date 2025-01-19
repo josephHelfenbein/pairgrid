@@ -73,17 +73,6 @@
                 >
                   Cancel
                 </button>
-                <div class="mt-6">
-                  <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
-                    <video
-                      v-if="localScreen&&localScreen.srcObject"
-                      ref="localScreen"
-                      class="absolute w-full h-full object-cover"
-                      autoplay
-                      muted
-                    ></video>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -104,27 +93,8 @@
                   End Call
                 </button>
               </div>
-
-              <div class="mt-6">
-                <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
-                  <video
-                    v-if="remoteScreen&&remoteScreen.srcObject"
-                    ref="remoteScreen"
-                    class="absolute w-full h-full object-cover"
-                    autoplay
-                    muted
-                  ></video>
-
-                  <video
-                    v-if="localScreen&&localScreen.srcObject"
-                    ref="localScreen"
-                    class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
-                    autoplay
-                    muted
-                  ></video>
-                </div>
-              </div>
             </div>
+            
 
             <div v-else-if="callStatus === 'declined'">
               <p class="text-center text-sm">Call was declined by {{ callerName }}.</p>
@@ -134,6 +104,24 @@
             </div>
             <div v-else-if="callStatus === 'canceled'">
               <p class="text-center text-sm">Call was canceled.</p>
+            </div>
+            <div class="mt-6">
+              <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+                <video
+                  v-if="remoteScreen&&remoteScreen.srcObject"
+                  ref="remoteScreen"
+                  class="absolute w-full h-full object-cover"
+                  autoplay
+                  muted
+                ></video>
+                <video
+                  v-if="localScreen&&localScreen.srcObject"
+                  ref="localScreen"
+                  class="absolute w-full h-full object-cover"
+                  autoplay
+                  muted
+                ></video>
+              </div>
             </div>
           </div>
         </div>
