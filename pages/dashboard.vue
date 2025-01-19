@@ -275,6 +275,22 @@
     window.addEventListener('touchend', stopDrag);
   };
   
+  const cleanupWebRTC = () => {
+    if (peerConnection.value) {
+      peerConnection.value.getSenders().forEach(sender => {
+        if (sender.track) {
+          sender.track.stop()
+        }
+      })
+      peerConnection.value.close()
+    }
+    if (remoteAudio.value) {
+      remoteAudio.value.srcObject = null
+    }
+    if (remoteScreen.value) {
+      remoteScreen.value.srcObject = null
+    }
+  }
 
   const acceptCall = async () => {
     try {
@@ -286,47 +302,23 @@
       if(screenshareEnabled.value) sendSignalingMessage('enableScreenshare', {});
       else sendSignalingMessage('disableScreenshare', {});
 
-      peerConnection.value.onicecandidate = (event) => {
-        if (event.candidate) {
-          sendSignalingMessage('ice-candidate', { candidate: event.candidate });
-        }
-      };
-
-      peerConnection.value.ontrack = (event) => {
-        console.log('Track received:', event.track.kind);
-        const [audioTrack] = event.streams[0].getAudioTracks();
-        const [videoTrack] = event.streams[0].getVideoTracks();
-
-        if (audioTrack) {
-          console.log('Audio track received.');
-          remoteAudio.value.srcObject = new MediaStream([audioTrack]);
-          remoteAudio.value.play().catch((err) => console.error('Error playing audio:', err));
-        }
-
-        if (videoTrack) {
-          console.log('Video track received.');
-          remoteScreen.value.srcObject = new MediaStream([videoTrack]);
-          remoteScreen.value.play().catch((err) => console.error('Error playing video:', err));
-        }
-      };
-
       let stream;
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
-        stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
         stream = new MediaStream([
-          ...stream.getVideoTracks(),
-          ...audioStream.getAudioTracks(),
-        ]);
+          ...displayStream.getVideoTracks(),
+          ...audioStream.getAudioTracks()
+        ])
+
+        if (localScreen.value) {
+          localScreen.value.srcObject = stream
+          await localScreen.value.play()
+        }
       } else {
-        console.log('Initializing camera and microphone...');
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-      }
-      if (localScreen.value) {
-        localScreen.value.srcObject = stream;
-        localScreen.value.play().catch((err) => console.error('Error playing local screen video:', err));
+        console.log('Initializing microphone...');
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
 
       stream.getTracks().forEach((track) => {
@@ -492,6 +484,24 @@
     cluster: "us2",
   }
 
+  const handleTracks = async (event) => {
+    const [audioTrack] = event.streams[0].getAudioTracks();
+    const [videoTrack] = event.streams[0].getVideoTracks();
+
+    if (audioTrack) {
+      remoteAudio.value.srcObject = new MediaStream([audioTrack]);
+      await remoteAudio.value.play();
+      if (remoteAudio.value.setSinkId) {
+        await remoteAudio.value.setSinkId('default');
+      }
+    }
+
+    if (videoTrack) {
+      remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+      await remoteScreen.value.play();
+    }
+  };
+
   const subscribeToCalls = () => {
     if (!token.value || !user?.value?.id) {
       console.error("Cannot subscribe to calls: Missing token or user ID.");
@@ -572,108 +582,41 @@
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          peerConnection.value.ontrack = async (event) => {
-            const [audioTrack] = event.streams[0].getAudioTracks();
-            const [videoTrack] = event.streams[0].getVideoTracks();
-
-            if (audioTrack) {
-              try {
-                const audioStream = new MediaStream([audioTrack]);
-                remoteAudio.value.srcObject = audioStream;
-                await remoteAudio.value.play();
-                console.log('Audio stream playing.');
-
-                if (remoteAudio.value.setSinkId) {
-                  try {
-                    await remoteAudio.value.setSinkId('default');
-                    console.log('Audio output routed to default (speakers).');
-                  } catch (error) {
-                    console.error('Error setting audio output:', error);
-                  }
-                }
-              } catch (error) {
-                console.error('Error playing audio stream:', error);
-              }
-            }
-
-            if (videoTrack) {
-              try {
-                const videoStream = new MediaStream([videoTrack]);
-                remoteScreen.value.srcObject = videoStream;
-                await remoteScreen.value.play();
-                console.log('Video stream playing.');
-              } catch (error) {
-                console.error('Error playing video stream:', error);
-              }
-            }
-
-          };
+          peerConnection.value.ontrack = handleTracks;
 
           let stream;
-          const startScreenShare = async () => {
-            if (screenshareEnabled.value) {
-              console.log('Requesting screen sharing with audio...');
-              try {
-                const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          if (screenshareEnabled.value) {
+            console.log('Requesting screen sharing with audio...');
+            
+            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                stream = new MediaStream([
-                  ...displayStream.getVideoTracks(),
-                  ...audioStream.getAudioTracks(),
-                ]);
+            stream = new MediaStream([
+              ...displayStream.getVideoTracks(),
+              ...audioStream.getAudioTracks(),
+            ]);
 
-                if (localScreen.value) {
-                  localScreen.value.srcObject = stream;
-                  await localScreen.value.play();
-                }
-              } catch (error) {
-                console.error('Error requesting screen sharing:', error);
-              }
-            } else {
-              console.log('Requesting audio-only media...');
-              try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-              } catch (error) {
-                console.error('Error requesting audio-only media:', error);
-              }
+            if (localScreen.value) {
+              localScreen.value.srcObject = stream;
+              await localScreen.value.play();
             }
 
-            if (stream) {
-              stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
-              const answer = await peerConnection.value.createAnswer();
-              await peerConnection.value.setLocalDescription(answer);
-              sendSignalingMessage('sdp-answer', { sdp: answer });
-            }
-            document.getElementById('startScreenShareButton').addEventListener('click', startScreenShare);
+          } else {
+            console.log('Requesting audio-only media...');
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           }
+            
+          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+          const answer = await peerConnection.value.createAnswer();
+          await peerConnection.value.setLocalDescription(answer);
+          sendSignalingMessage('sdp-answer', { sdp: answer });
+          
         } else if (data.type === 'ice-candidate') {
           await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-          peerConnection.value.ontrack = async (event) => {
-            const [audioTrack] = event.streams[0].getAudioTracks();
-            const [videoTrack] = event.streams[0].getVideoTracks();
-
-            if (audioTrack) {
-              remoteAudio.value.srcObject = new MediaStream([audioTrack]);
-              await remoteAudio.value.play();
-              if (remoteAudio.value.setSinkId) {
-                try {
-                  await remoteAudio.value.setSinkId('default');
-                  console.log('Audio output routed to default (speakers)');
-                } catch (error) {
-                  console.error('Error setting audio output:', error);
-                }
-              }
-            }
-
-            if (videoTrack) {
-              console.log('Remote video track received');
-              remoteScreen.value.srcObject = new MediaStream([videoTrack]);
-              await remoteScreen.value.play();
-            }
-          };
+          peerConnection.value.ontrack = handleTracks;
         }
       } catch (error) {
         console.error('Error handling WebRTC signaling:', error);
@@ -757,7 +700,17 @@
       { urls: 'stun:stun2.l.google.com:19302' },
       ],
     });
+    peerConnection.value.onicecandidate = (event) => {
+      if (event.candidate) {
+        sendSignalingMessage('ice-candidate', { candidate: event.candidate });
+      }
+    };
     remoteAudio.value = new Audio();
     window.addEventListener('resize', centerPopup);
   });
+  onBeforeUnmount(()=>{
+    if(callPusher.value) callPusher.value.disconnect();
+    cleanupWebRTC();
+    window.removeEventListener('resize', centerPopup);
+  })
 </script>
