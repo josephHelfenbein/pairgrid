@@ -11,7 +11,7 @@
       >
         <div class="flex items-center gap-2">
           <img :src="request.profile_picture" class="w-8 h-8 rounded-full object-cover" />
-          <button @click="$emit('selectRequest', request)" class="bg-none text-left text-white">
+          <button @click="$emit('selectRequest', request)" class="bg-none text-left">
             <p>{{ request.name }}</p>
           </button>
         </div>

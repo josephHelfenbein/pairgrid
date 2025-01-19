@@ -426,7 +426,7 @@
         return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
-          senderIcon: messages.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
+          senderIcon: message.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
           text: message.encrypted_content,
         }
       })
