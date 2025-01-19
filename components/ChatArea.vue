@@ -70,6 +70,12 @@
   watch(() => props.newMessage, (newVal) => {
     localNewMessage.value = newVal
   })
+
+  function formatTimestamp(timestamp) {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    return date.toLocaleString()
+  }
   
   watch(() => props.messages, () => {
     scrollToBottom()
