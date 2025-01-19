@@ -84,7 +84,7 @@
                   @click="toggleScreenshare"
                   class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                 >
-                  {{ (localScreen&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
+                  {{ showLocal ? 'Disable Screenshare' : 'Enable Screenshare' }}
                 </button>
                 <button
                   @click="cancelCall"
@@ -106,16 +106,16 @@
               <p class="text-center text-sm">Call was canceled.</p>
             </div>
             <div class="mt-6">
-              <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+              <div v-if="showLocal||(showRemote&&callStatus=='active')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
-                  v-if="remoteScreen&&remoteScreen.srcObject"
+                  v-if="showRemote"
                   ref="remoteScreen"
                   class="absolute w-full h-full object-cover"
                   autoplay
                   muted
                 ></video>
                 <video
-                  v-if="localScreen&&localScreen.srcObject"
+                  v-if="showLocal"
                   ref="localScreen"
                   class="absolute w-full h-full object-cover"
                   autoplay
@@ -166,6 +166,8 @@
   const screenshareEnabled = ref(false);
   const localScreen = ref(null);
   const remoteScreen = ref(null);
+  const showLocal = ref(false);
+  const showRemote = ref(false);
   let callStartTime = null;
   let callInterval = null;
 
@@ -176,7 +178,7 @@
     twitterTitle: 'PairGrid - Dashboard',
   });
   const toggleScreenshare = () => {
-    if (localScreen.value.srcObject) {
+    if (showLocal.value) {
       disableScreenshare();
     } else {
       enableScreenshare();
@@ -184,6 +186,7 @@
   };
   const enableScreenshare = async() =>{
     try{
+      showLocal.value=true;
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       if (localScreen.value) localScreen.value.srcObject = mediaStream
       screenshareEnabled.value = true;
@@ -194,6 +197,7 @@
     }
   }
   const disableScreenshare = async()=>{
+    showLocal.value=false;
     const stream = localScreen.value.srcObject;
     if(stream) stream.getTracks().forEach(track => track.stop());
     localScreen.value.srcObject = null;
@@ -306,6 +310,7 @@
       let stream;
       if (screenshareEnabled.value) {
         console.log('Initializing screen sharing...');
+        showLocal.value=true;
         const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
         stream = new MediaStream([
@@ -385,6 +390,8 @@
       if (!response.ok) throw new Error('Failed to decline call');
       showCallPopup.value = false;
       callStatus.value = "declined";
+      showLocal.value = false;
+      showRemote.value = false;
       stopCallTimer();
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
@@ -421,6 +428,8 @@
         console.error('No media stream found for remoteAudio.');
       }
       callStatus.value = "canceled";
+      showLocal.value = false;
+      showRemote.value = false;
       stopCallTimer();
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
@@ -499,6 +508,7 @@
     }
 
     if (videoTrack) {
+      showRemote.value = true;
       remoteScreen.value.srcObject = new MediaStream([videoTrack]);
       await remoteScreen.value.play();
     }
@@ -524,6 +534,8 @@
       if(data.caller_id == user.value.id){
         console.log('Call taken by user');
         callStatus.value = "taken";
+        showLocal.value = false;
+        showRemote.value = false;
         setTimeout(()=>{showCallPopup.value = false;}, 2500);
       }
     })
@@ -552,6 +564,8 @@
       if(data.caller_id == user.value.id){
         console.log('Call declined by user');
         callStatus.value = "declined";
+        showLocal.value = false;
+        showRemote.value = false;
         setTimeout(()=>{showCallPopup.value = false;}, 2500);
       }
     })
@@ -567,6 +581,8 @@
           console.error('No media stream found for remoteAudio.');
         }
         callStatus.value = "canceled";
+        showLocal.value = false;
+        showRemote.value = false;
         setTimeout(()=>{showCallPopup.value = false;}, 2500);
       }
     })
@@ -577,17 +593,17 @@
       }
       try {
         if(data.type === 'enableScreenshare') {
-          screenshareEnabled.value = true;
+          showRemote.value = true;
         }
         if(data.type === 'disableScreenshare') {
-          screenshareEnabled.value = false;
+          showRemote.value = false;
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
           peerConnection.value.ontrack = handleTracks;
 
           let stream;
-          if (screenshareEnabled.value && localScreen.value && localScreen.value.srcObject) {
+          if (showLocal.value) {
             console.log('Requesting screen sharing with audio...');
             
             const displayStream = localScreen.value.srcObject;
