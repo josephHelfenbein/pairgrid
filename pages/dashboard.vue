@@ -117,7 +117,7 @@
                 <video
                   v-if="showLocal"
                   ref="localScreen"
-                  class="absolute w-full h-full object-cover"
+                  class="absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded"
                   autoplay
                   muted
                 ></video>
@@ -513,6 +513,7 @@
       await remoteScreen.value.play();
     }
   };
+  let pendingCandidates = [];
 
   const subscribeToCalls = () => {
     if (!token.value || !user?.value?.id) {
@@ -600,6 +601,10 @@
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          for (const pending of pendingCandidates) {
+            await peerConnection.value.addIceCandidate(pending);
+          }
+          pendingCandidates = [];
           peerConnection.value.ontrack = handleTracks;
 
           let stream;
@@ -625,7 +630,12 @@
           sendSignalingMessage('sdp-answer', { sdp: answer });
           
         } else if (data.type === 'ice-candidate') {
-          await peerConnection.value.addIceCandidate(new RTCIceCandidate(data.candidate));
+          const candidate = new RTCIceCandidate(data.candidate)
+          if (peerConnection.value.remoteDescription) {
+            await peerConnection.value.addIceCandidate(candidate)
+          } else {
+            pendingCandidates.push(candidate)
+          }
         } else if (data.type === 'sdp-answer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
