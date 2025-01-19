@@ -73,6 +73,17 @@
                 >
                   Cancel
                 </button>
+                <div class="mt-6">
+                  <div v-if="screenshareEnabled" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+                    <video
+                      v-if="localScreen&&localScreen.srcObject"
+                      ref="localScreen"
+                      class="absolute w-full h-full object-cover"
+                      autoplay
+                      muted
+                    ></video>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -84,7 +95,7 @@
                   @click="toggleScreenshare"
                   class="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                 >
-                  {{ (screenshareEnabled&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
+                  {{ (screenshareEnabled&&localScreen&&localScreen.srcObject) ? 'Disable Screenshare' : 'Enable Screenshare' }}
                 </button>
                 <button
                   @click="cancelCall"
@@ -465,6 +476,7 @@
         },
         body: JSON.stringify(payload),
       })
+      if(type=="screen") enableScreenshare();
       if (!response.ok) throw new Error('Failed to call user')
     } catch (err) {
       console.error(err)
