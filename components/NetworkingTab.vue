@@ -16,8 +16,8 @@
               <CardDescription>{{ person.specialty + ', ' + person.occupation }}</CardDescription>
             </CardHeader>
           </div>
-          <CardContent class="flex flex-col justify-between h-full">
-            <div class="flex-grow">
+          <CardContent class="flex flex-col h-full">
+            <div class="mb-3">
               <p class="mb-2">{{ person.bio }}</p>
               <div class="flex flex-wrap space-x-2 text-sm mb-1">
                 <p class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2" v-for="language in person.language">{{ language }}</p>
@@ -26,8 +26,10 @@
                 <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2" v-for="interest in person.interests">{{ interest }}</p>
               </div>
             </div>
-            <Button v-if="!sentTo.includes(person)" class="outline outline-2 outline-violet-600 bg-violet-900" @click="connect(person)">Connect</Button>
-            <Button v-else disabled class="bg-gray-500 cursor-not-allowed">Request Sent</Button>
+            <div class="mt-auto">
+              <Button v-if="!sentTo.includes(person)" class="outline outline-2 outline-violet-600 bg-violet-900" @click="connect(person)">Connect</Button>
+              <Button v-else disabled class="bg-gray-500 cursor-not-allowed">Request Sent</Button>
+            </div>
           </CardContent>
         </Card>
       </div>
