@@ -8,7 +8,7 @@
         <div v-if="recommendedPeople.length === 0 && !loading" class="flex justify-center items-center h-64 w-full md:w-screen">
           <p class="text-xs text-center text-gray-500">No recommended connections found</p>
         </div>
-        <Card v-for="person in recommendedPeople">
+        <Card v-for="person in recommendedPeople" class="flex flex-col justify-between">
           <div class="ml-4 flex items-center">
             <img :src="person.profile_picture" class="w-16 h-16 rounded-full object-cover" />
             <CardHeader class="pl-4">
