@@ -155,8 +155,9 @@
   import { Button } from '@/components/ui/button';
   import { Play, Rocket, Users, UserPlus, MessageSquare, ScreenShare } from 'lucide-vue-next';
   useSeoMeta({
-    title: 'Home',
-    ogTitle: 'PairGrid - Home',
+    title: 'The Best Platform to Find Coding Partners',
+    description: 'Find your perfect coding partner with our real-time matchmaking platform. Collaborate, chat, and connect with developers in real time.',
+    ogTitle: 'Home',
     twitterTitle: 'PairGrid - Home',
   });
 </script>

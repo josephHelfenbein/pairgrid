@@ -245,7 +245,7 @@
   const requestProfile = ref(null)
   const pusher = ref(null)
   const channel = ref(null)
-  const chatLoading = ref(false)
+  const chatLoading = ref(true)
   const friendsLoading = ref(true)
   const notificationPusher = ref(null)
   const notifications = ref([])
@@ -422,6 +422,7 @@
         console.error("Token not available");
         return;
       }
+      chatLoading.value = true
       const response = await fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}`, {
         method: 'GET',
         headers: {

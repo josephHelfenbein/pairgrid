@@ -28,7 +28,7 @@ export default defineNuxtConfig({
         },
         {
           property: 'og:title',
-          content: 'PairGrid - Find Your Perfect Coding Partner',
+          content: 'PairGrid - The Best Platform to Find Coding Partners',
         },
         {
           property: 'og:description',
