@@ -3,7 +3,7 @@
       <CardHeader>
         <CardTitle>Preferences</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent class="flex justify-center">
         <form @submit="onSubmit" class="space-y-6 max-w-3xl ml-5 mr-5">
           <FormField v-slot="{componentField}" name="bio">
             <FormItem>
