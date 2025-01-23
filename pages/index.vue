@@ -57,7 +57,7 @@
         :animate="{ y: 0, opacity: 1 }"
         :transition="{ type: 'spring', stiffness: 260, damping: 20, delay: 1.1 }"
       >
-        <h2 class="text-3xl font-bold text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">
           Everything You Need to Collaborate
         </h2>
       </Motion>
@@ -70,9 +70,9 @@
           <Card class="p-6">
             <CardHeader>
               <Users class="h-12 w-12 mb-4" />
-              <CardTitle>Smart Matchmaking</CardTitle>
+              <CardTitle class="text-xl md:text-2xl md:leading-none">Smart Matchmaking</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent class="text-sm md:text-base">
               Connect with developers who share your interests, tech stack, and coding goals. Our matching system finds your perfect coding partners.
             </CardContent>
           </Card>
@@ -86,9 +86,9 @@
           <Card class="p-6">
             <CardHeader>
               <MessageSquare class="h-12 w-12 mb-4" />
-              <CardTitle>Real-time Chat</CardTitle>
+              <CardTitle class="text-xl md:text-2xl md:leading-none">Real-time Chat</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent class="text-sm md:text-base">
               Communicate seamlessly with built-in real-time chat. Share ideas, code snippets, and collaborate effectively with your coding partners.
             </CardContent>
           </Card>
@@ -101,11 +101,11 @@
         >
           <Card class="p-6">
             <CardHeader>
-              <Video class="h-12 w-12 mb-4" />
-              <CardTitle>Video & Screen Sharing</CardTitle>
+              <ScreenShare class="h-12 w-12 mb-4" />
+              <CardTitle class="text-xl md:text-2xl md:leading-none">Voice & Screen Sharing</CardTitle>
             </CardHeader>
-            <CardContent>
-              Jump into video calls and share your screen for interactive coding sessions. Perfect for pair programming and code reviews.
+            <CardContent class="text-sm md:text-base">
+              Jump into voice calls and share your screen for interactive coding sessions. Perfect for pair programming and code reviews.
             </CardContent>
           </Card>
         </Motion>
@@ -142,7 +142,7 @@
 
 
     <footer class="border-t py-12 mx-auto px-4 mt-12 pt-8 text-center text-sm text-muted-foreground">
-      © 2024 PairGrid. All rights reserved.
+      © 2025 PairGrid. All rights reserved.
     </footer>
   </div>
 </template>
@@ -153,7 +153,7 @@
   import { Motion } from '@oku-ui/motion';
   import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
   import { Button } from '@/components/ui/button';
-  import { Play, Rocket, Users, UserPlus, MessageSquare, Video } from 'lucide-vue-next';
+  import { Play, Rocket, Users, UserPlus, MessageSquare, ScreenShare } from 'lucide-vue-next';
   useSeoMeta({
     title: 'Home',
     ogTitle: 'PairGrid - Home',
