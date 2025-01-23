@@ -1,6 +1,6 @@
 <template>
   <div class="flex gap-3">
-    <div class="hidden md:block md:w-1/3">
+    <div class="hidden md:block md:w-1/3 lg:w-1/4">
       <Card class="h-full">
         <CardHeader>
           <CardTitle>Friends</CardTitle>
@@ -125,7 +125,7 @@
       </div>
     </div>
 
-    <Card class="hidden md:block md:w-2/3">
+    <Card class="hidden md:block md:w-2/3 lg:w-3/4">
       <CardHeader class="flex flex-row justify-between items-center">
         <CardTitle v-if="selectedFriend" class="flex-shrink-0 flex items-center">
           {{selectedFriend.name}}

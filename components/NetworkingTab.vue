@@ -24,15 +24,15 @@
             <div class="flex flex-wrap space-x-2 text-sm mb-3">
               <p class="dark:bg-blue-950 bg-blue-100 rounded-lg pl-2 mb-1 pr-2" v-for="interest in person.interests">{{ interest }}</p>
             </div>
-            <Button v-if="!sentTo.includes(person)" class="bg-gradient-to-t from-primary to-violet-800 hover:from-primary hover:to-violet-500" @click="connect(person)">Connect</Button>
+            <Button v-if="!sentTo.includes(person)" class="outline outline-2 outline-violet-600 bg-violet-900" @click="connect(person)">Connect</Button>
             <Button v-else disabled class="bg-gray-500 cursor-not-allowed">Request Sent</Button>
           </CardContent>
         </Card>
       </div>
       <div class="flex justify-center mt-16">
-        <Button v-if="!loading && currentPage>1" @click="fetchRecommendedPeople(currentPage-1)">Previous</Button>
+        <Button v-if="!loading && currentPage>1" class="outline outline-2 outline-violet-600 bg-violet-900" @click="fetchRecommendedPeople(currentPage-1)">Previous</Button>
         <p v-if="recommendedPeople.length===10 || currentPage>1" class="mx-4">Page {{currentPage}}</p>
-        <Button v-if="!loading && recommendedPeople.length === 10" @click="fetchRecommendedPeople(currentPage+1)">Next</Button>
+        <Button v-if="!loading && recommendedPeople.length === 10" class="outline outline-2 outline-violet-600 bg-violet-900" @click="fetchRecommendedPeople(currentPage+1)">Next</Button>
       </div>
     </div>
   </template>

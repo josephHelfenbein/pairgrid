@@ -5,6 +5,9 @@
           <Loader size="80px" />
         </div>
         <div v-else>
+          <div v-if="messages?.length == 0">
+            <p class="text-center text-gray-500 mt-12 mb-12">No messages yet</p>
+          </div>
           <div
             v-for="message in messages"
             :key="message.id"
