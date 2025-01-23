@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     }
   },
 
-  modules:['@nuxtjs/tailwindcss', 'shadcn-nuxt', '@clerk/nuxt'],
+  modules:['@nuxtjs/tailwindcss', 'shadcn-nuxt', '@clerk/nuxt', '@oku-ui/motion/nuxt'],
   compatibilityDate: '2024-12-20',
   app: {
     head: {
