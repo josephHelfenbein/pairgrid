@@ -16,8 +16,8 @@
               <CardDescription>{{ person.specialty + ', ' + person.occupation }}</CardDescription>
             </CardHeader>
           </div>
-          <CardContent class="flex flex-col justify-between">
-            <div>
+          <CardContent class="flex flex-col justify-between h-full">
+            <div class="flex-grow">
               <p class="mb-2">{{ person.bio }}</p>
               <div class="flex flex-wrap space-x-2 text-sm mb-1">
                 <p class="dark:bg-slate-800 bg-slate-200 rounded-lg pl-2 mb-1 pr-2" v-for="language in person.language">{{ language }}</p>

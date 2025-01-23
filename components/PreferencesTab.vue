@@ -4,7 +4,7 @@
         <CardTitle>Preferences</CardTitle>
       </CardHeader>
       <CardContent class="flex justify-center">
-        <form @submit="onSubmit" class="space-y-6 max-w-3xl ml-5 mr-5">
+        <form @submit="onSubmit" class="space-y-6 w-full max-w-3xl ml-5 mr-5">
           <FormField v-slot="{componentField}" name="bio">
             <FormItem>
               <FormLabel>Bio</FormLabel>
