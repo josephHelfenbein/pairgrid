@@ -178,7 +178,7 @@
       border-color: transparent;
     }
     50% {
-      border-color: #fff;
+      border-color: currentColor;
     }
   }
 
@@ -187,7 +187,7 @@
     overflow: hidden;
     white-space: nowrap;
     max-width: 0;
-    border-right: 3px solid #fff;
+    border-right: 3px solid currentColor;
     animation: typing 3s steps(40) 1s forwards, blink 0.75s step-end 3s infinite;
   }
 </style>
