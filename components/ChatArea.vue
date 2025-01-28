@@ -24,7 +24,7 @@
                 <p class="font-bold text-xs md:text-sm">{{ message.sender || 'Unknown' }}</p>
                 <small class="text-xs text-gray-500">{{ formatTimestamp(message.id) }}</small>
               </div>
-              <p class="text-xs md:text-sm">{{ message.text }}</p>
+              <p class="text-xs md:text-sm" v-bind:class="message.loading ? 'text-gray-500' : ''">{{ message.text }}</p>
             </div>
           </div>
         </div>

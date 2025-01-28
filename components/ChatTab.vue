@@ -399,6 +399,7 @@
         sender: props.user.fullName,
         senderIcon: props.preferences.profilePicture,
         text: newMessage.value,
+        loading: true,
       })
       newMessage.value = ''
       const response = await fetch('https://www.pairgrid.com/api/sendmessage/sendmessage', {
@@ -432,11 +433,15 @@
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
       messages.value = data.map(message => {
-        return {
+        if(message.sender_id == props.user.id && messages.value.find(m => m.text == message.encrypted_content && m.loading)) {
+          messages.value.find(m => m.text == message.encrypted_content && m.loading).loading = false
+        }
+        else return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
           senderIcon: message.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
           text: message.encrypted_content,
+          loading: false,
         }
       })
       chatLoading.value = false
@@ -479,24 +484,16 @@
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
-      if (data.sender_id != props.user.id) {
-        messages.value.push({
-          id: data.created_at,
-          sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
-          senderIcon: data.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
-          text: data.encrypted_content,
-        })
-        setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
-          method: 'GET',
-        }), 2000)
-      } else if(data.sender_id == props.user.id && messages.value[messages.value.length-1].text != data.encrypted_content) {
-        messages.value.push({
-          id: data.created_at,
-          sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
-          senderIcon: data.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
-          text: data.encrypted_content,
-        })
-      }
+      messages.value.push({
+        id: data.created_at,
+        sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
+        senderIcon: data.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
+        text: data.encrypted_content,
+        loading: true,
+      })
+      setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
+        method: 'GET',
+      }), 2000)
     })
     pusher.value.connection.bind('error', (err) => {
       console.error('Pusher connection error:', err);
