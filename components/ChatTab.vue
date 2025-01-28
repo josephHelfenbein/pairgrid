@@ -433,10 +433,7 @@
       if (!response.ok) throw new Error('Failed to fetch messages')
       const data = await response.json()
       messages.value = data.map(message => {
-        if(message.sender_id == props.user.id && messages.value.find(m => m.text == message.encrypted_content && m.loading)) {
-          messages.value.find(m => m.text == message.encrypted_content && m.loading).loading = false
-        }
-        else return {
+        return {
           id: message.created_at,
           sender: message.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
           senderIcon: message.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
@@ -484,12 +481,14 @@
     })
     channel.value = pusher.value.subscribe(newChannel)
     channel.value.bind('new-message', (data) => {
-      messages.value.push({
+      if(data.sender_id == props.user.id && messages.value.find(m => m.text == data.encrypted_content && m.loading == true)) 
+        messages.value.find(m => m.text == data.encrypted_content && m.loading == true).loading = false
+      else messages.value.push({
         id: data.created_at,
         sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
         senderIcon: data.sender_id == props.user.id ? props.preferences.profilePicture : selectedFriend.value.profile_picture,
         text: data.encrypted_content,
-        loading: true,
+        loading: false,
       })
       setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
         method: 'GET',
