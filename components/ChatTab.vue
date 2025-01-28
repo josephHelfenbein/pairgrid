@@ -489,7 +489,7 @@
         setTimeout(fetch(`https://www.pairgrid.com/api/getmessages/getmessages?user_id=${props.user.id}&friend_id=${selectedFriend.value.id}&notification_stopper=true`, {
           method: 'GET',
         }), 2000)
-      } else if(data.sender_id == props.user.id && messages.value[messages.value.length-1] != data.encrypted_content) {
+      } else if(data.sender_id == props.user.id && messages.value[messages.value.length-1].text != data.encrypted_content) {
         messages.value.push({
           id: data.created_at,
           sender: data.sender_id == props.user.id ? props.user.fullName : selectedFriend.value.name,
