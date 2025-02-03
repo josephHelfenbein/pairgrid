@@ -109,16 +109,14 @@
             <div class="mt-6">
               <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
-                  v-if="showRemote"
-                  ref="remoteScreen"
-                  class="absolute w-full h-full object-cover"
+                  ref="localScreen"
+                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded'):'collapse'"
                   autoplay
                   muted
                 ></video>
                 <video
-                  v-if="showLocal"
-                  ref="localScreen"
-                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded'"
+                  ref="remoteScreen"
+                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'collapse'"
                   autoplay
                   muted
                 ></video>
