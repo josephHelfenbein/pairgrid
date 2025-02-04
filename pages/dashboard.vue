@@ -617,6 +617,7 @@
           console.error('No media stream found for remoteAudio.');
         }
         cleanupWebRTC();
+        disableScreenshare();
         callStatus.value = "canceled";
         showLocal.value = false;
         showRemote.value = false;
@@ -644,7 +645,7 @@
           peerConnection.value.ontrack = handleTracks;
 
           let stream;
-          if (callType.value=="outgoing" && screenshareEnabled.value && localScreen.value.srcObject) {
+          if (screenshareEnabled.value && localScreen.value.srcObject) {
             console.log('Requesting screen sharing with audio...');
             
             const displayStream = localScreen.value.srcObject;
