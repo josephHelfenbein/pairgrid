@@ -303,6 +303,21 @@
       callStatus.value = "active";
       startCallTimer();
 
+      if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
+        peerConnection.value = new RTCPeerConnection({
+          iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          ],
+        });
+        peerConnection.value.onicecandidate = (event) => {
+          if (event.candidate) {
+            sendSignalingMessage('ice-candidate', { candidate: event.candidate });
+          }
+        };
+      }
+
       if(screenshareEnabled.value) sendSignalingMessage('enableScreenshare', {});
       else sendSignalingMessage('disableScreenshare', {});
 
@@ -431,6 +446,7 @@
       showRemote.value = false;
       stopCallTimer();
       cleanupWebRTC();
+      disableScreenshare();
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
@@ -459,6 +475,20 @@
       showCallPopup.value = true;
       callType.value = "outgoing";
       callStatus.value = "calling";
+      if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
+        peerConnection.value = new RTCPeerConnection({
+          iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          ],
+        });
+        peerConnection.value.onicecandidate = (event) => {
+          if (event.candidate) {
+            sendSignalingMessage('ice-candidate', { candidate: event.candidate });
+          }
+        };
+      }
       const payload = {
         caller_id: user.value.id,
         callee_id: id,
@@ -496,6 +526,7 @@
   }
 
   const handleTracks = async (event) => {
+    console.log('Received tracks:', event);
     const [audioTrack] = event.streams[0].getAudioTracks();
     const [videoTrack] = event.streams[0].getVideoTracks();
 
