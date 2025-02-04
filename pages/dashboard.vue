@@ -430,6 +430,7 @@
       showLocal.value = false;
       showRemote.value = false;
       stopCallTimer();
+      cleanupWebRTC();
       setTimeout(()=>{showCallPopup.value = false;}, 2500);
     } catch (err) {
       console.error(err)
@@ -504,12 +505,16 @@
       if (remoteAudio.value.setSinkId) {
         await remoteAudio.value.setSinkId('default');
       }
+      console.log('Remote audio track set.');
     }
 
     if (videoTrack) {
       showRemote.value = true;
       remoteScreen.value.srcObject = new MediaStream([videoTrack]);
       await remoteScreen.value.play();
+      console.log('Remote video track received and set on remoteScreen:', videoTrack);
+    } else {
+      console.warn('No remote video track found in event:', event);
     }
   };
   let pendingCandidates = [];
@@ -580,6 +585,7 @@
         } else {
           console.error('No media stream found for remoteAudio.');
         }
+        cleanupWebRTC();
         callStatus.value = "canceled";
         showLocal.value = false;
         showRemote.value = false;
@@ -607,7 +613,7 @@
           peerConnection.value.ontrack = handleTracks;
 
           let stream;
-          if (showLocal.value) {
+          if (callType.value=="outgoing" && screenshareEnabled.value && localScreen.value.srcObject) {
             console.log('Requesting screen sharing with audio...');
             
             const displayStream = localScreen.value.srcObject;
