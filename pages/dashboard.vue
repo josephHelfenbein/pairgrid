@@ -110,13 +110,13 @@
               <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
                   ref="localScreen"
-                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded'):'collapse'"
+                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded z-52'):'collapse'"
                   autoplay
                   muted
                 ></video>
                 <video
                   ref="remoteScreen"
-                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'collapse'"
+                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover z-51':'collapse'"
                   autoplay
                   muted
                 ></video>
