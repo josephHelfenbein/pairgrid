@@ -37,10 +37,11 @@
           class="popup-window fixed z-50 bg-gray-800 text-white w-72 shadow-lg rounded-lg overflow-hidden"
           :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
           ref="callPopup"
-          @mousedown="startDrag"
-          @touchstart="startDrag"
         >
-          <div class="bg-gray-900 p-4 flex items-center justify-between">
+          <div class="bg-gray-900 p-4 flex items-center justify-between cursor-grab"
+            @mousedown="startDrag"  
+            @touchstart="startDrag"
+          >
             <h3 class="text-lg font-semibold">
               {{ callType === 'incoming' ? 'Incoming Call' : 'Call Progress' }}
             </h3>
@@ -124,8 +125,8 @@
             </div>
             <div class="resize-handle absolute bottom-0 right-0 cursor-se-resize p-1"
               @mousedown="startResize"
-              @touchstart="startResize">
-            </div>
+              @touchstart="startResize"
+            ></div>
           </div>
         </div>
       </div>
@@ -191,11 +192,47 @@
   };
   const enableScreenshare = async() =>{
     try{
-      showLocal.value=true;
-      const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      if (localScreen.value) localScreen.value.srcObject = mediaStream
       screenshareEnabled.value = true;
       sendSignalingMessage('enableScreenshare', {});
+      if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
+        peerConnection.value = new RTCPeerConnection({
+          iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          ],
+        });
+        peerConnection.value.onicecandidate = (event) => {
+          if (event.candidate) {
+            sendSignalingMessage('ice-candidate', { candidate: event.candidate });
+          }
+        };
+        peerConnection.value.ontrack = handleTracks;
+      }
+      let stream;
+      console.log('Initializing screen sharing...');
+      showLocal.value=true;
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      
+      stream = new MediaStream([
+        ...displayStream.getVideoTracks(),
+        ...audioStream.getAudioTracks()
+      ])
+
+      if (localScreen.value) {
+        localScreen.value.srcObject = stream
+        await localScreen.value.play()
+      }
+
+      stream.getTracks().forEach((track) => {
+        console.log(`Adding track: ${track.kind}`);
+        peerConnection.value.addTrack(track, stream);
+      });
+      
+      const offer = await peerConnection.value.createOffer();
+      await peerConnection.value.setLocalDescription(offer);
+      sendSignalingMessage('sdp-offer', { sdp: offer });
     } catch(error) {
       console.error('Error enabling screenshare:', error);
       toastUpdate('Error enabling screenshare');
@@ -665,6 +702,9 @@
         }
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
+          if (remoteScreen.value) {
+            remoteScreen.value.srcObject = null
+          }
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
