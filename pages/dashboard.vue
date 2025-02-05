@@ -316,6 +316,7 @@
             sendSignalingMessage('ice-candidate', { candidate: event.candidate });
           }
         };
+        peerConnection.value.ontrack = handleTracks;
       }
 
       if(screenshareEnabled.value) sendSignalingMessage('enableScreenshare', {});
@@ -532,10 +533,10 @@
 
     if (audioTrack) {
       remoteAudio.value.srcObject = new MediaStream([audioTrack]);
-      await remoteAudio.value.play();
       if (remoteAudio.value.setSinkId) {
         await remoteAudio.value.setSinkId('default');
       }
+      await remoteAudio.value.play();
       console.log('Remote audio track set.');
     }
 
@@ -767,6 +768,7 @@
         sendSignalingMessage('ice-candidate', { candidate: event.candidate });
       }
     };
+    peerConnection.value.ontrack = handleTracks;
     remoteAudio.value = new Audio();
     window.addEventListener('resize', centerPopup);
   });
