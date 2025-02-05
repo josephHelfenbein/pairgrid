@@ -574,7 +574,18 @@
         },
         body: JSON.stringify(payload),
       })
-      if(type=="screen") enableScreenshare();
+      if(type=="screen") {
+        try{
+          showLocal.value=true;
+          const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          if (localScreen.value) localScreen.value.srcObject = mediaStream;
+          screenshareEnabled.value = true;
+          sendSignalingMessage('enableScreenshare', {});
+        } catch(error){
+          console.error('Error starting screenshare:', error);
+          toastUpdate('Error starting screenshare');
+        }
+      }
       if (!response.ok) throw new Error('Failed to call user')
     } catch (err) {
       console.error(err)
