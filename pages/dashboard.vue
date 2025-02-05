@@ -528,25 +528,21 @@
 
   const handleTracks = async (event) => {
     console.log('Received tracks:', event);
-    const [audioTrack] = event.streams[0].getAudioTracks();
-    const [videoTrack] = event.streams[0].getVideoTracks();
-
-    if (audioTrack) {
-      remoteAudio.value.srcObject = new MediaStream([audioTrack]);
+    const track = event.track;
+    if (track.kind === "audio") {
+      remoteAudio.value.srcObject = new MediaStream([track]);
       if (remoteAudio.value.setSinkId) {
         await remoteAudio.value.setSinkId('default');
       }
       await remoteAudio.value.play();
       console.log('Remote audio track set.');
-    }
-
-    if (videoTrack) {
+    } else if (track.kind === "video") {
       showRemote.value = true;
-      remoteScreen.value.srcObject = new MediaStream([videoTrack]);
+      remoteScreen.value.srcObject = new MediaStream([track]);
       await remoteScreen.value.play();
-      console.log('Remote video track received and set on remoteScreen:', videoTrack);
+      console.log('Remote video track received and set on remoteScreen:', track);
     } else {
-      console.warn('No remote video track found in event:', event);
+      console.warn('Unexpected track kind:', track.kind);
     }
   };
   let pendingCandidates = [];
