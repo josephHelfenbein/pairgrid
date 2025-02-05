@@ -109,18 +109,22 @@
             <div class="mt-6">
               <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
-                  ref="localScreen"
-                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded z-52'):'collapse'"
+                  ref="remoteScreen"
+                  v-bind:class="(showRemote)?'absolute w-full h-full object-contain':'collapse'"
                   autoplay
                   muted
                 ></video>
                 <video
-                  ref="remoteScreen"
-                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover z-51':'collapse'"
+                  ref="localScreen"
+                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-contain':'absolute bottom-2 right-2 w-24 h-16 object-contain border-2 border-white rounded'):'collapse'"
                   autoplay
                   muted
                 ></video>
               </div>
+            </div>
+            <div class="resize-handle absolute bottom-0 right-0 cursor-se-resize p-1"
+              @mousedown="startResize"
+              @touchstart="startResize">
             </div>
           </div>
         </div>
@@ -160,6 +164,8 @@
   const remoteAudio = ref(null);
   const popupTop = ref(0);
   const popupLeft = ref(0);
+  const popupWidth = ref(288);
+  const popupHeight = ref(400);
   const isDragging = ref(false);
   const callDuration = ref('00:00');
   const screenshareEnabled = ref(false);
@@ -232,6 +238,33 @@
     clearInterval(callInterval);
     callInterval = null;
     callDuration.value = '00:00';
+  };
+
+  const startResize = (event) => {
+    event.preventDefault();
+    const popup = event.target.closest('.popup-window');
+    const startWidth = popup.offsetWidth;
+    const startHeight = popup.offsetHeight;
+    const startX = event.touches ? event.touches[0].clientX : event.clientX;
+    const startY = event.touches ? event.touches[0].clientY : event.clientY;
+    const moveHandler = (e) => {
+      const clientX = e.touches?.[0]?.clientX || e.clientX;
+      const clientY = e.touches?.[0]?.clientY || e.clientY;
+      const newWidth = Math.max(startWidth + clientX - startX, 200);
+      const newHeight = Math.max(startHeight + clientY - startY, 200);
+      popupWidth.value = newWidth;
+      popupHeight.value = newHeight;
+    };
+    const stopHandler = () => {
+      window.removeEventListener('mousemove', moveHandler);
+      window.removeEventListener('mouseup', stopHandler);
+      window.removeEventListener('touchmove', moveHandler);
+      window.removeEventListener('touchend', stopHandler);
+    }
+    window.addEventListener('mousemove', moveHandler);
+    window.addEventListener('mouseup', stopHandler);
+    window.addEventListener('touchmove', moveHandler);
+    window.addEventListener('touchend', stopHandler);
   };
 
   const startDrag = (event) => {
