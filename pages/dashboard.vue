@@ -35,7 +35,7 @@
         <div
           v-if="showCallPopup"
           class="popup-window fixed z-50 bg-gray-800 text-white w-72 shadow-lg rounded-lg overflow-hidden"
-          :style="{ top: popupTop + 'px', left: popupLeft + 'px' }"
+          :style="{ top: popupTop + 'px', left: popupLeft + 'px', width: popupWidth + 'px', height: popupHeight + 'px' }"
           ref="callPopup"
         >
           <div class="bg-gray-900 p-4 flex items-center justify-between cursor-grab"
@@ -43,7 +43,7 @@
             @touchstart="startDrag"
           >
             <h3 class="text-lg font-semibold">
-              {{ callType === 'incoming' ? 'Incoming Call' : 'Call Progress' }}
+              {{ callType === 'incoming' ? ((screenshareEnabled) ? 'Incoming Screenshare Call': 'Incoming Voice Call') : 'Call Progress' }}
             </h3>
           </div>
 
@@ -168,6 +168,7 @@
   const popupWidth = ref(288);
   const popupHeight = ref(400);
   const isDragging = ref(false);
+  const isResizing = ref(false);
   const callDuration = ref('00:00');
   const screenshareEnabled = ref(false);
   const localScreen = ref(null);
@@ -279,12 +280,14 @@
 
   const startResize = (event) => {
     event.preventDefault();
+    isResizing.value = true;
     const popup = event.target.closest('.popup-window');
     const startWidth = popup.offsetWidth;
     const startHeight = popup.offsetHeight;
     const startX = event.touches ? event.touches[0].clientX : event.clientX;
     const startY = event.touches ? event.touches[0].clientY : event.clientY;
     const moveHandler = (e) => {
+      if(!isResizing.value) return;
       const clientX = e.touches?.[0]?.clientX || e.clientX;
       const clientY = e.touches?.[0]?.clientY || e.clientY;
       const newWidth = Math.max(startWidth + clientX - startX, 200);
@@ -293,6 +296,7 @@
       popupHeight.value = newHeight;
     };
     const stopHandler = () => {
+      isResizing.value = false;
       window.removeEventListener('mousemove', moveHandler);
       window.removeEventListener('mouseup', stopHandler);
       window.removeEventListener('touchmove', moveHandler);
