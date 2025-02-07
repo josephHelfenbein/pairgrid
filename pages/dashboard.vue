@@ -194,7 +194,7 @@
   const enableScreenshare = async() =>{
     try{
       screenshareEnabled.value = true;
-      popupHeight.value = 500;
+      popupHeight.value = 400;
       sendSignalingMessage('enableScreenshare', {});
       if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
         peerConnection.value = new RTCPeerConnection({
@@ -254,7 +254,7 @@
     if (popup) {
       popupWidth.value = 300;
       if(!screenshareEnabled.value) popupHeight.value = 200;
-      else popupHeight.value = 500;
+      else popupHeight.value = 400;
 
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
@@ -539,7 +539,7 @@
       showCallPopup.value = true;
       callType.value = "incoming";
       if(type == "screen") {
-        popupHeight.value = 500;
+        popupHeight.value = 400;
         screenshareEnabled.value = true;
       }
       else screenshareEnabled.value = false;
@@ -593,7 +593,7 @@
           const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
           if (localScreen.value) localScreen.value.srcObject = mediaStream;
           screenshareEnabled.value = true;
-          popupHeight.value = 500;
+          popupHeight.value = 400;
           sendSignalingMessage('enableScreenshare', {});
         } catch(error){
           console.error('Error starting screenshare:', error);
@@ -724,7 +724,7 @@
       try {
         if(data.type === 'enableScreenshare' && callType.value !== 'incoming') {
           showRemote.value = true;
-          popupHeight.value = 500;
+          popupHeight.value = 400;
         }
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
