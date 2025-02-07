@@ -111,13 +111,13 @@
               <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
                 <video
                   ref="remoteScreen"
-                  v-bind:class="(showRemote)?'absolute w-full h-full object-contain':'collapse'"
+                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'collapse'"
                   autoplay
                   muted
                 ></video>
                 <video
                   ref="localScreen"
-                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-contain':'absolute bottom-2 right-2 w-24 h-16 object-contain border-2 border-white rounded'):'collapse'"
+                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-cover border-2 border-white rounded'):'collapse'"
                   autoplay
                   muted
                 ></video>
@@ -194,6 +194,7 @@
   const enableScreenshare = async() =>{
     try{
       screenshareEnabled.value = true;
+      popupHeight.value = 500;
       sendSignalingMessage('enableScreenshare', {});
       if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
         peerConnection.value = new RTCPeerConnection({
@@ -241,6 +242,7 @@
   }
   const disableScreenshare = async()=>{
     showLocal.value=false;
+    popupHeight.value = 200;
     const stream = localScreen.value.srcObject;
     if(stream) stream.getTracks().forEach(track => track.stop());
     localScreen.value.srcObject = null;
@@ -251,7 +253,7 @@
     const popup = document.querySelector('.popup-window');
     if (popup) {
       popupWidth.value = 300;
-      if(!showLocal.value && !showRemote.value) popupHeight.value = 200;
+      if(!screenshareEnabled.value) popupHeight.value = 200;
       else popupHeight.value = 500;
 
       const viewportHeight = window.innerHeight;
@@ -536,7 +538,10 @@
       callerName.value = name;
       showCallPopup.value = true;
       callType.value = "incoming";
-      if(type == "screen") screenshareEnabled.value = true;
+      if(type == "screen") {
+        popupHeight.value = 500;
+        screenshareEnabled.value = true;
+      }
       else screenshareEnabled.value = false;
   }
   const triggerOutgoingCall = async (name, id, type) => {
@@ -552,6 +557,7 @@
       callerName.value = name;
       callerID.value = id;
       showCallPopup.value = true;
+      popupHeight.value = 500;
       callType.value = "outgoing";
       callStatus.value = "calling";
       if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
@@ -718,12 +724,14 @@
       try {
         if(data.type === 'enableScreenshare' && callType.value !== 'incoming') {
           showRemote.value = true;
+          popupHeight.value = 500;
         }
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
           if (remoteScreen.value) {
             remoteScreen.value.srcObject = null
           }
+          popupHeight.value = 200;
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
