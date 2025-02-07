@@ -1,7 +1,7 @@
 <template>
     <Card v-if="preferences">
       <CardHeader>
-        <CardTitle>Preferences</CardTitle>
+        <CardTitle>Profile</CardTitle>
       </CardHeader>
       <CardContent class="flex justify-center">
         <form @submit="onSubmit" class="space-y-6 w-full max-w-3xl ml-5 mr-5">
@@ -80,7 +80,7 @@
               </div>
             </div>
           </div>
-          <Button type="submit">Save Preferences</Button>
+          <Button type="submit">Save Profile</Button>
         </form>
       </CardContent>
     </Card>
@@ -247,15 +247,15 @@
     }).then((response)=>{ 
       if(response.ok){
         response.json().then(result=>{
-          console.log('Preferences updated successfully');
+          console.log('Profile updated successfully');
         }).catch(error=>{
           console.error('Error parsing response:', error);
         });
       } else{
-        console.error('Failed to update preferences:', response.statusText);
+        console.error('Failed to update profile:', response.statusText);
       }
     }).catch(error=>{
-      console.error('Error updating preferences:', error);
+      console.error('Error updating profile:', error);
     });
 
     emit('update-preferences', preferences);

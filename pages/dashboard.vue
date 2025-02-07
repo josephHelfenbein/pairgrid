@@ -8,7 +8,7 @@
           <TabsList class="grid w-full grid-cols-3">
             <TabsTrigger value="chat">Chat</TabsTrigger>
             <TabsTrigger value="networking">Networking</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="preferences">Profile</TabsTrigger>
           </TabsList>
           
           <TabsContent value="chat">
@@ -165,8 +165,8 @@
   const remoteAudio = ref(null);
   const popupTop = ref(0);
   const popupLeft = ref(0);
-  const popupWidth = ref(288);
-  const popupHeight = ref(400);
+  const popupWidth = ref(300);
+  const popupHeight = ref(200);
   const isDragging = ref(false);
   const isResizing = ref(false);
   const callDuration = ref('00:00');
@@ -250,14 +250,18 @@
   const centerPopup = () => {
     const popup = document.querySelector('.popup-window');
     if (popup) {
+      popupWidth.value = 300;
+      if(!showLocal.value && !showRemote.value) popupHeight.value = 200;
+      else popupHeight.value = 500;
+
       const viewportHeight = window.innerHeight;
       const viewportWidth = window.innerWidth;
 
-      const popupHeight = popup.offsetHeight;
-      const popupWidth = popup.offsetWidth;
+      const popupOffsetH = popup.offsetHeight;
+      const popupOffsetW = popup.offsetWidth;
 
-      popupTop.value = (viewportHeight - popupHeight) / 2;
-      popupLeft.value = (viewportWidth - popupWidth) / 2;
+      popupTop.value = (viewportHeight - popupOffsetH) / 2;
+      popupLeft.value = (viewportWidth - popupOffsetW) / 2;
     }
   };
   const startCallTimer = () => {
@@ -784,7 +788,7 @@
   })
   const updatePreferences = (updatedPreferences) => {
     Object.assign(preferences, updatedPreferences);
-    toast({description: 'Saved preferences.'});
+    toast({description: 'Saved profile.'});
   }
   const toastUpdate = (message) => {
     toast({description: message});
@@ -802,7 +806,7 @@
         body: JSON.stringify({id: user.value.id}),
       });
       if(!response.ok){
-        throw new Error(`Failed to load preferences: ${response.statusText}`);
+        throw new Error(`Failed to load profile: ${response.statusText}`);
       }
       const data = await response.json();
       Object.assign(preferences, {
@@ -814,7 +818,7 @@
         profilePicture: data.profile_picture || '',
       })
     } catch(error){
-      console.error('Error loading preferences:', error);
+      console.error('Error loading profile:', error);
     }
   }
 
