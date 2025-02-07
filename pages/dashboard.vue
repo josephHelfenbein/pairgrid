@@ -108,16 +108,16 @@
               <p class="text-center text-sm">Call was canceled.</p>
             </div>
             <div class="mt-6">
-              <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="relative w-full h-48 bg-black rounded-lg overflow-hidden">
+              <div v-if="showLocal||(showRemote&&callStatus==='active'&&callType!=='incoming')" class="w-full h-full bg-black rounded-lg">
                 <video
                   ref="remoteScreen"
-                  v-bind:class="(showRemote)?'absolute w-full h-full object-cover':'hidden'"
+                  v-bind:class="(showRemote)?'w-full h-full object-contain':'hidden'"
                   autoplay
                   muted
                 ></video>
                 <video
                   ref="localScreen"
-                  v-bind:class="(showLocal)?((!showRemote)?'absolute w-full h-full object-cover':'absolute bottom-2 right-2 w-24 h-16 object-contain border-2 border-white rounded'):'hidden'"
+                  v-bind:class="(showLocal)?((!showRemote)?'w-full h-full object-contain':'absolute bottom-2 right-2 w-24 h-16 object-contain border-2 border-white rounded'):'hidden'"
                   autoplay
                   muted
                 ></video>
