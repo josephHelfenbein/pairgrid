@@ -557,7 +557,6 @@
       callerName.value = name;
       callerID.value = id;
       showCallPopup.value = true;
-      popupHeight.value = 500;
       callType.value = "outgoing";
       callStatus.value = "calling";
       if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
@@ -594,6 +593,7 @@
           const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
           if (localScreen.value) localScreen.value.srcObject = mediaStream;
           screenshareEnabled.value = true;
+          popupHeight.value = 500;
           sendSignalingMessage('enableScreenshare', {});
         } catch(error){
           console.error('Error starting screenshare:', error);
