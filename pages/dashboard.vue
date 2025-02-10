@@ -700,10 +700,6 @@
       }
     })
     callChannel.bind('webrtc-message', async (data) => {
-      if(callStatus.value != "active"){
-        callStatus.value = "active";
-        startCallTimer();
-      }
       try {
         if(data.type === 'enableScreenshare' && callType.value !== 'incoming') {
           showRemote.value = true;
@@ -715,6 +711,10 @@
           if (!showLocal.value) popupHeight.value = 200;
         }
         if (data.type === 'sdp-offer') {
+          if(callStatus.value != "active"){
+            callStatus.value = "active";
+            startCallTimer();
+          }
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
           for (const pending of pendingCandidates) {
             await peerConnection.value.addIceCandidate(pending);
@@ -760,6 +760,10 @@
             pendingCandidates.push(candidate)
           }
         } else if (data.type === 'sdp-answer') {
+          if(callStatus.value != "active"){
+            callStatus.value = "active";
+            startCallTimer();
+          }
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
           peerConnection.value.ontrack = handleTracks;
