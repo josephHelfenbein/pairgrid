@@ -196,42 +196,18 @@
       screenshareEnabled.value = true;
       popupHeight.value = 400;
       sendSignalingMessage('enableScreenshare', {});
-      if(!peerConnection.value || peerConnection.value.connectionState === 'closed') {
-        peerConnection.value = new RTCPeerConnection({
-          iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          ],
-        });
-        peerConnection.value.onicecandidate = (event) => {
-          if (event.candidate) {
-            sendSignalingMessage('ice-candidate', { candidate: event.candidate });
-          }
-        };
-        peerConnection.value.ontrack = handleTracks;
-      }
-      let stream;
       console.log('Initializing screen sharing...');
       showLocal.value=true;
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true })
-      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      
-      stream = new MediaStream([
-        ...displayStream.getVideoTracks(),
-        ...audioStream.getAudioTracks()
-      ])
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      displayStream.getVideoTracks().forEach((track) => {
+        peerConnection.value.addTrack(track, displayStream);
+      });
 
       if (localScreen.value) {
-        localScreen.value.srcObject = stream
+        localScreen.value.srcObject = displayStream;
         await localScreen.value.play()
       }
 
-      stream.getTracks().forEach((track) => {
-        console.log(`Adding track: ${track.kind}`);
-        peerConnection.value.addTrack(track, stream);
-      });
-      
       const offer = await peerConnection.value.createOffer();
       await peerConnection.value.setLocalDescription(offer);
       sendSignalingMessage('sdp-offer', { sdp: offer });
@@ -242,11 +218,12 @@
   }
   const disableScreenshare = async()=>{
     showLocal.value=false;
-    popupHeight.value = 200;
+    if(!remoteScreen.value) popupHeight.value = 200;
     const stream = localScreen.value.srcObject;
     if(stream) stream.getTracks().forEach(track => track.stop());
     localScreen.value.srcObject = null;
     screenshareEnabled.value = false;
+    sendSignalingMessage('disableScreenshare', {});
   }
 
   const centerPopup = () => {
@@ -724,14 +701,14 @@
       try {
         if(data.type === 'enableScreenshare' && callType.value !== 'incoming') {
           showRemote.value = true;
-          popupHeight.value = 400;
+          if(!showLocal.value) popupHeight.value = 400;
         }
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
           if (remoteScreen.value) {
             remoteScreen.value.srcObject = null
+            popupHeight.value = 200;
           }
-          popupHeight.value = 200;
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
