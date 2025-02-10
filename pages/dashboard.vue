@@ -199,7 +199,13 @@
       console.log('Initializing screen sharing...');
       showLocal.value=true;
       const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      displayStream.getVideoTracks().forEach((track) => {
+      const videoSenders = peerConnection.value.getSenders().filter(
+        sender => sender.track?.kind === 'video'
+      );
+      videoSenders.forEach(sender => {
+        peerConnection.value.removeTrack(sender);
+      });
+      displayStream.getVideoTracks().forEach(track => {
         peerConnection.value.addTrack(track, displayStream);
       });
 
@@ -705,10 +711,8 @@
         }
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
-          if (remoteScreen.value) {
-            remoteScreen.value.srcObject = null
-            popupHeight.value = 200;
-          }
+          if (remoteScreen.value) remoteScreen.value.srcObject = null
+          if (!showLocal.value) popupHeight.value = 200;
         }
         if (data.type === 'sdp-offer') {
           await peerConnection.value.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -735,7 +739,15 @@
             stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           }
             
-          stream.getTracks().forEach((track) => peerConnection.value.addTrack(track, stream));
+          stream.getTracks().forEach((track) => {
+            const senderToRemove = peerConnection.value
+              .getSenders()
+              .find(sender => sender.track && sender.track.kind === track.kind);
+            if (senderToRemove) {
+              peerConnection.value.removeTrack(senderToRemove);
+            }
+            peerConnection.value.addTrack(track, stream);
+          });
           const answer = await peerConnection.value.createAnswer();
           await peerConnection.value.setLocalDescription(answer);
           sendSignalingMessage('sdp-answer', { sdp: answer });
