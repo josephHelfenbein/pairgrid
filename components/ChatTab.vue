@@ -230,7 +230,7 @@
   watch(reactiveSession, async (newSession, oldSession) => {
     if (newSession) {
       try {
-        token.value = await newSession.getToken();
+        token.value = await newSession.getToken({template:'hasura'});
       } catch (error) {
         console.error("Error getting token:", error);
       }
