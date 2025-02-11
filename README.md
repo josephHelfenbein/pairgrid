@@ -30,7 +30,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/josephHelfenbein/pairgrid">
-    <img src="/public/pairgrid-icon.svg" alt="Logo" width="80" height="80">
+    <img src="public/pairgrid-icon.svg" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">PairGrid</h3>
@@ -75,18 +75,29 @@
 <!-- ABOUT THE PROJECT -->
 ## About the Project
 
-(This project is still under construction)
+<div align='center'>
+<img src='public/preview.png' width=500 />
+</div>
 
-PairGrid is a real-time matchmaking platform designed to connect developers with compatible coding partners. Whether you're looking for collaborators who share your interests, tech stack, or coding goals, PairGrid's smart matchmaking system has you covered. Features include real-time chat, video calls with screen sharing, and seamless collaboration tools to help you build amazing projects together. Currently under construction, PairGrid aims to empower developers to connect, code, and create like never before.
+PairGrid is a real-time matchmaking platform designed to connect developers with compatible coding partners. Whether you're looking for collaborators who share your interests, tech stack, or coding goals, PairGrid's smart matchmaking system has you covered. Features include real-time chat, voice calls with screen sharing, and seamless collaboration tools to help you build amazing projects together. PairGrid aims to empower developers to connect, code, and create like never before.
 
 ### How does it work?
 
-Users are able to sign in using Clerk authentication. They then are able to change their preferences and edit their bio, interests, known programming languages, specialty, and occupation. Through this, users are shown on the networking tab by similarity to the user. The user can send friend requests to other users, and see friend requests to themselves on the chat tab. They can use real-time chat messages, video chat, or screensharing with friends.
+Users are able to sign in using Clerk authentication. They then are able to change their preferences and edit their bio, interests, known programming languages, specialty, and occupation. Through this, users are shown on the networking tab by similarity to the user. The user can send friend requests to other users, and see friend requests to themselves on the chat tab. They can use real-time chat messages, voice chat, and/or screensharing with friends.
+
+
+<img src='public/pairgrid-user-diagram.png' height=350 />
 
 The Clerk authentication system connects to the Hasura database using webhooks on user creation, modification, or deletion. Using Go serverless endpoints and GraphQL, the database is able to be updated and queried.
 For real-time chat, the frontend encrypts the messages using a server-side key and sends it to Hasura using a Go serverless endpoint and GraphQL. In the same endpoint, it sends the message information to Pusher. If another user is listening to the Pusher channel (has the chat with the user that sent the message open), then it decrypts the message and displays it. When a chat is opened, it also gets all messages in the conversation from the Hasura database.
 
-For ranking the users by similarity, it uses a SQL function to sort the users from Hasura by weights in descending order, with the weights computed by adding similarities in languages, interests, occupation and specialty. Video chat and screensharing are still to be implemented.
+<img src='public/pairgrid-messaging-diagram.png' height=350 />
+
+For ranking the users by similarity, it uses a SQL function to sort the users from Hasura by weights in descending order, with the weights computed by adding similarities in languages, interests, occupation and specialty.
+
+<img src='public/pairgrid-calling-diagram.png' height=350 />
+
+Voice chat and screensharing are implemented using WebRTC and signaling messages using Go serverless endpoints and Pusher. The calling side sends a request to the receiving side, and they can accept the call. The accepting call sends a WebRTC offer to the calling side with an audio track and, if a screensharing call, a video track. The calling side receives the offer, handles the received tracks, and sends their own audio and video tracks with the WebRTC answer. The accepting side receives the answer, and handles the tracks. If a user wants to enable screensharing in a voice call, they send a new offer with their video track, and the receiving side adds the video track to their peer connection.
 
 
 
@@ -103,6 +114,7 @@ For ranking the users by similarity, it uses a SQL function to sort the users fr
 * [![Hasura][Hasura]][Hasura-url]
 * [![Graphql][Graphql]][Graphql-url]
 * [![Pusher][Pusher]][Pusher-url]
+* [![WebRTC][WebRTC]][WebRTC-url]
 
 
 
@@ -208,7 +220,7 @@ Here are the steps to run the project locally if you want to develop your own pr
 
 7. You can run the website locally with
     ```sh
-    npm run dev
+    pnpm run dev
     ```
     or, if hosting on Vercel, with
     ```sh
@@ -269,3 +281,5 @@ Distributed under the Apache 2.0 License. See `LICENSE.txt` for more information
 [Graphql-url]: https://graphql.org/
 [Pusher]: https://img.shields.io/badge/pusher-300D4F?style=for-the-badge&logo=pusher&logoColor=white
 [Pusher-url]: https://pusher.com/
+[WebRTC]: https://img.shields.io/badge/webrtc-333333?logo=webrtc&style=for-the-badge&logoColor=white
+[WebRTC-url]: https://webrtc.org/

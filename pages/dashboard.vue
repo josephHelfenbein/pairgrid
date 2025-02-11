@@ -166,7 +166,7 @@
   const popupTop = ref(0);
   const popupLeft = ref(0);
   const popupWidth = ref(300);
-  const popupHeight = ref(200);
+  const popupHeight = ref(250);
   const isDragging = ref(false);
   const isResizing = ref(false);
   const callDuration = ref('00:00');
@@ -224,7 +224,7 @@
   }
   const disableScreenshare = async()=>{
     showLocal.value=false;
-    if(!remoteScreen.value) popupHeight.value = 200;
+    if(!remoteScreen.value) popupHeight.value = 250;
     const stream = localScreen.value.srcObject;
     if(stream) stream.getTracks().forEach(track => track.stop());
     localScreen.value.srcObject = null;
@@ -236,7 +236,7 @@
     const popup = document.querySelector('.popup-window');
     if (popup) {
       popupWidth.value = 300;
-      if(!screenshareEnabled.value) popupHeight.value = 200;
+      if(!screenshareEnabled.value) popupHeight.value = 250;
       else popupHeight.value = 400;
 
       const viewportHeight = window.innerHeight;
@@ -279,8 +279,8 @@
       if(!isResizing.value) return;
       const clientX = e.touches?.[0]?.clientX || e.clientX;
       const clientY = e.touches?.[0]?.clientY || e.clientY;
-      const newWidth = Math.max(startWidth + clientX - startX, 200);
-      const newHeight = Math.max(startHeight + clientY - startY, 200);
+      const newWidth = Math.max(startWidth + clientX - startX, 250);
+      const newHeight = Math.max(startHeight + clientY - startY, 250);
       popupWidth.value = newWidth;
       popupHeight.value = newHeight;
     };
@@ -708,7 +708,7 @@
         if(data.type === 'disableScreenshare') {
           showRemote.value = false;
           if (remoteScreen.value) remoteScreen.value.srcObject = null
-          if (!showLocal.value) popupHeight.value = 200;
+          if (!showLocal.value) popupHeight.value = 250;
         }
         if (data.type === 'sdp-offer') {
           if(callStatus.value != "active"){

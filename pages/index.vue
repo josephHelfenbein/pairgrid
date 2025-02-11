@@ -19,7 +19,7 @@
         :transition="{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }"
       >
         <p class="text-sm sm:text-base lg:text-lg text-foreground max-w-xl mx-auto mb-12">
-          Find your perfect coding partner with our real-time matchmaking platform. Connect with developers who share your interests and build amazing things together. (This website is still under construction)
+          Find your perfect coding partner with our real-time matchmaking platform. Connect with developers who share your interests and build amazing things together.
         </p>
       </Motion>
       <div class="flex justify-center gap-4">
@@ -38,16 +38,6 @@
             </Button>
           </Motion>
         </NuxtLink>
-        <Motion
-          :initial="{ y: 20, opacity: 0 }"
-          :animate="{ y: 0, opacity: 1 }"
-          :transition="{ type: 'spring', stiffness: 260, damping: 20, delay: 0.9 }"
-        >
-          <Button size="lg" variant="outline" class="pl-4 pr-4 md:pl-5 md:pr-5 outline outline-2 outline-slate-700">
-            <Play class="md:mr-2 h-5 w-5" />
-            Watch Demo
-          </Button>
-        </Motion>
       </div>
     </section>
 
