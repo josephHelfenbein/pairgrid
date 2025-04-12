@@ -1,1 +1,3 @@
 components/ui/** linguist-vendored
+components/ui/* linguist-vendored
+components/ui/**/* linguist-vendored
